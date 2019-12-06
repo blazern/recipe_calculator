@@ -2,6 +2,7 @@ package korablique.recipecalculator.ui.mainactivity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
@@ -26,6 +27,9 @@ public class MainActivity extends BaseActivity implements HasSupportFragmentInje
     @Inject
     DispatchingAndroidInjector<Fragment> fragmentInjector;
 
+    @Inject
+    MyCoolAuthorizer myCoolAuthorizer;
+
     @Override
     public AndroidInjector<Fragment> supportFragmentInjector() {
         return fragmentInjector;
@@ -34,6 +38,12 @@ public class MainActivity extends BaseActivity implements HasSupportFragmentInje
     @Override
     protected Integer getLayoutId() {
         return R.layout.activity_main_screen;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        myCoolAuthorizer.auth();
     }
 
     public static void openMainScreen(
