@@ -12,23 +12,20 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import korablique.recipecalculator.model.UserNameProvider
 import korablique.recipecalculator.outside.STATUS_ALREADY_REGISTERED
-import korablique.recipecalculator.outside.STATUS_OK
 import korablique.recipecalculator.outside.ServerErrorException
-import korablique.recipecalculator.outside.ServerErrorResponse
-import korablique.recipecalculator.outside.http.HttpClient
-import korablique.recipecalculator.outside.http.TypedRequestResult
+import korablique.recipecalculator.outside.http.*
 import java.lang.Exception
 
 sealed class GetWithRegistrationRequestResult {
     data class Success(val user: ServerUserParams) : GetWithRegistrationRequestResult()
-    data class Failure(val exception: Exception) : GetWithRegistrationRequestResult()
+    data class Failure(val exception: Throwable) : GetWithRegistrationRequestResult()
     object RegistrationParamsTaken : GetWithRegistrationRequestResult()
     object CanceledByUser : GetWithRegistrationRequestResult()
 }
 
 sealed class GetWithAccountMoveRequestResult {
     data class Success(val user: ServerUserParams) : GetWithAccountMoveRequestResult()
-    data class Failure(val exception: Exception) : GetWithAccountMoveRequestResult()
+    data class Failure(val exception: Throwable) : GetWithAccountMoveRequestResult()
     object CanceledByUser : GetWithAccountMoveRequestResult()
 }
 
@@ -38,7 +35,7 @@ class ServerUserParamsRegistry @Inject constructor(
         private val ioExecutor: IOExecutor,
         private val gpAuthorizer: GPAuthorizer,
         private val userNameProvider: UserNameProvider,
-        private val httpClient: HttpClient,
+        private val httpContext: BroccalcHttpContext,
         private val prefsManager: SharedPrefsManager
 ) {
     private val observers = mutableListOf<Observer>()
@@ -94,33 +91,22 @@ class ServerUserParamsRegistry @Inject constructor(
         val name = userNameProvider.userName.toString()
         val url = ("https://blazern.me/broccalc/v1/user/register?"
                 + "name=$name&social_network_type=gp&social_network_token=$token")
-        val responseResult = httpClient.requestWithTypedResponse(url, RegisterResponseFull::class)
-
-        val response = when (responseResult) {
-            is TypedRequestResult.Failure -> {
-                return GetWithRegistrationRequestResult.Failure(responseResult.exception)
-            }
-            is TypedRequestResult.Success -> {
-                responseResult.result.simplify()
-            }
+        val response = httpContext.execute {
+            val response = httpRequestAndUnwrap(url, RegisterResponse::class)
+            val userParams = ServerUserParams(response.user_id, response.client_token)
+            cachedUserParams = userParams
+            BroccalcNetJobResult.Ok(userParams)
         }
 
         when (response) {
-            is RegisterResponse.Ok -> {
-                val userParams = ServerUserParams(response.user_id, response.client_token)
-                cachedUserParams = userParams
-                return GetWithRegistrationRequestResult.Success(userParams)
+            is BroccalcNetJobResult.Ok -> {
+                return GetWithRegistrationRequestResult.Success(response.item)
             }
-            is RegisterResponse.ParseError -> {
-                return GetWithRegistrationRequestResult.Failure(response.exception)
-            }
-            is RegisterResponse.ServerError -> {
-                if (response.err.status == STATUS_ALREADY_REGISTERED) {
+            is BroccalcNetJobResult.Error -> {
+                if (STATUS_ALREADY_REGISTERED == response.tryGetErrorStatus()) {
                     return GetWithRegistrationRequestResult.RegistrationParamsTaken
-                } else {
-                    return GetWithRegistrationRequestResult.Failure(
-                            ServerErrorException(response.err))
                 }
+                return GetWithRegistrationRequestResult.Failure(response.unwrapException())
             }
         }
     }
@@ -148,29 +134,19 @@ class ServerUserParamsRegistry @Inject constructor(
     private suspend fun moveAccountWithGpToken(token: String): GetWithAccountMoveRequestResult {
         val url = ("https://blazern.me/broccalc/v1/user/move_device_account?"
                 + "social_network_type=gp&social_network_token=$token")
-        val responseResult = httpClient.requestWithTypedResponse(url, MoveDeviceAccountResponseFull::class)
-
-        val response = when (responseResult) {
-            is TypedRequestResult.Failure -> {
-                return GetWithAccountMoveRequestResult.Failure(responseResult.exception)
-            }
-            is TypedRequestResult.Success -> {
-                responseResult.result.simplify()
-            }
+        val response = httpContext.execute {
+            val response = httpRequestAndUnwrap(url, MoveDeviceAccountResponse::class)
+            val userParams = ServerUserParams(response.user_id, response.client_token)
+            cachedUserParams = userParams
+            BroccalcNetJobResult.Ok(userParams)
         }
 
         when (response) {
-            is MoveDeviceAccountResponse.Ok -> {
-                val userParams = ServerUserParams(response.user_id, response.client_token)
-                cachedUserParams = userParams
-                return GetWithAccountMoveRequestResult.Success(userParams)
+            is BroccalcNetJobResult.Ok -> {
+                return GetWithAccountMoveRequestResult.Success(response.item)
             }
-            is MoveDeviceAccountResponse.ParseError -> {
-                return GetWithAccountMoveRequestResult.Failure(response.exception)
-            }
-            is MoveDeviceAccountResponse.ServerError -> {
-                return GetWithAccountMoveRequestResult.Failure(
-                        ServerErrorException(response.err))
+            is BroccalcNetJobResult.Error -> {
+                return GetWithAccountMoveRequestResult.Failure(response.unwrapException())
             }
         }
     }

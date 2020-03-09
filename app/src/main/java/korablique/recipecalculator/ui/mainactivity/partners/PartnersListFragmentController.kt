@@ -7,13 +7,12 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.crashlytics.android.Crashlytics
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.FragmentCallbacks
 import korablique.recipecalculator.dagger.FragmentScope
 import korablique.recipecalculator.model.Foodstuff
-import korablique.recipecalculator.outside.partners.GetPartnersResult
+import korablique.recipecalculator.outside.http.BroccalcNetJobResult
 import korablique.recipecalculator.outside.partners.Partner
 import korablique.recipecalculator.outside.partners.PartnersRegistry
 import korablique.recipecalculator.outside.partners.direct.DirectMsgSendResult
@@ -65,16 +64,16 @@ class PartnersListFragmentController @Inject constructor(
         fragment.lifecycleScope.launch {
             val partnersResult = partnersRegistry.getPartners()
             when (partnersResult) {
-                is GetPartnersResult.Ok -> {
-                    updateDisplayedPartners(partnersResult.partners, fragmentView)
+                is BroccalcNetJobResult.Ok -> {
+                    updateDisplayedPartners(partnersResult.item, fragmentView)
                 }
-                is GetPartnersResult.Failure -> {
-                    Toast.makeText(activity, "Unexpected failure: ${partnersResult.exception}", Toast.LENGTH_LONG).show()
-                    // Crashlytics.logException(partnersResult.exception)
-                }
-                is GetPartnersResult.NotLoggedIn -> {
+                is BroccalcNetJobResult.Error.ServerError.NotLoggedIn -> {
                     // TODO: ask user if they want to login or to cancel
                     serverUserParamsObtainer.obtainUserParams()
+                }
+                else -> {
+                    Toast.makeText(activity, "Unexpected failure: partnersResult", Toast.LENGTH_LONG).show()
+                    // Crashlytics.logException(partnersResult.exception)
                 }
             }
         }
