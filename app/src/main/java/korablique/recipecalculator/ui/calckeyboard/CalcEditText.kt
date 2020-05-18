@@ -67,6 +67,10 @@ open class CalcEditText : EditText {
     }
 
     private fun isAcceptableUserInput(str: String): Boolean {
+        if (str.isEmpty()) {
+            // Позволяем очистить вводимый текст
+            return true
+        }
         val value = calcValueAsBigDecimal(str) ?: return false
         if (!isAllowedByNumbersFilters(str)) {
             return false

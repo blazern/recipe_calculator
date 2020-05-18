@@ -240,6 +240,24 @@ class CalcKeyboardTest {
         onView(withId(R.id.calc_edit_text_with_1_digit_after_dot)).check(matches(withText("1.1")))
     }
 
+    @Test
+    fun canEraseAllTypedText() {
+        mainThreadExecutor.execute {
+            val calcEditText = activityRule.activity.findViewById<CalcEditText>(R.id.calc_edit_text)
+            calcEditText.setBounds(0f, 10f)
+        }
+
+        // Открываем клавиатуру
+        onView(withId(R.id.calc_edit_text)).perform(click())
+        // Кликаем на кнопочки на клавиатуре
+        onView(withId(R.id.button_1)).perform(click())
+        onView(withId(R.id.calc_edit_text)).check(matches(withText("1")))
+
+        onView(withId(R.id.button_backspace)).perform(click())
+        // Проверяем, что текст стёрт
+        onView(withId(R.id.calc_edit_text)).check(matches(withText("")))
+    }
+
     private fun getTextOf(viewId: Int): String {
         var text: String? = null
         mainThreadExecutor.execute {
