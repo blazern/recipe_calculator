@@ -12,6 +12,7 @@ import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.executors.MainThreadExecutor
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.database.CreateRecipeResult
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.database.UpdateRecipeResult
@@ -109,7 +110,7 @@ class BucketListActivityRecipeEditingState private constructor(
             } else {
                 // We don't know for which position the dialog is shown
                 ingredientCommentDialog.dismiss()
-                // TODO: report an error
+                Log.e("Ingredient comment dialog is dismissed because ingredient pos is unknown")
             }
         }
 
@@ -196,6 +197,7 @@ class BucketListActivityRecipeEditingState private constructor(
                     result.recipe
                 }
                 is UpdateRecipeResult.UpdatedRecipeNotFound -> {
+                    Log.w("saveAndDisplayRecipe: UpdatedRecipeNotFound")
                     Toast.makeText(activity, R.string.something_went_wrong, Toast.LENGTH_LONG).show()
                     return@launch
                 }

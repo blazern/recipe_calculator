@@ -35,14 +35,16 @@ fun <T:Any> BroccalcNetJobResult.Error<T>.extractException(): Exception {
     }
 }
 
-fun <T:Any> BroccalcNetJobResult<T>.tryGetServerErrorStatus(): String? {
+fun <T:Any> BroccalcNetJobResult<T>.tryGetServerErrorStatus(): String? = tryGetServerError()?.status
+
+fun <T:Any> BroccalcNetJobResult<T>.tryGetServerError(): ServerErrorResponse? {
     return if (this is BroccalcNetJobResult.Error.ServerError) {
         when (this) {
             is BroccalcNetJobResult.Error.ServerError.NotLoggedIn -> {
-                this.e?.status
+                this.e
             }
             is BroccalcNetJobResult.Error.ServerError.Other -> {
-                this.e.status
+                this.e
             }
         }
     } else {

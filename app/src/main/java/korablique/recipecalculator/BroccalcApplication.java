@@ -15,6 +15,7 @@ import dagger.android.HasActivityInjector;
 import dagger.android.HasBroadcastReceiverInjector;
 import dagger.android.HasServiceInjector;
 import io.fabric.sdk.android.Fabric;
+import korablique.recipecalculator.base.logging.Log;
 import korablique.recipecalculator.dagger.Injector;
 import korablique.recipecalculator.dagger.InjectorHolder;
 import korablique.recipecalculator.database.HistoryWorker;
@@ -51,6 +52,7 @@ public class BroccalcApplication extends Application
         if (!BuildConfig.DEBUG) {
             Fabric.with(this, new Crashlytics());
         }
+        Log.INSTANCE.init(this);
         if (!TestEnvironmentDetector.isInTests()) {
             InjectorHolder.getInjector().inject(this);
             historyWorker.updateCache();

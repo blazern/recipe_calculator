@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        app:key="@string/preference_key_send_logs"
+        app:title="@string/send_logs"
+        app:summary="@string/send_logs_description"/>
+</PreferenceScreen>

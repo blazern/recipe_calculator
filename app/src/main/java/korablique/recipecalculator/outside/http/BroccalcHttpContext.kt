@@ -3,6 +3,7 @@ package korablique.recipecalculator.outside.http
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.outside.STATUS_INVALID_CLIENT_TOKEN
 import korablique.recipecalculator.outside.STATUS_OK
 import korablique.recipecalculator.outside.STATUS_USER_NOT_FOUND
@@ -64,22 +65,26 @@ class BroccalcHttpContext @Inject constructor(
             url: String,
             resultType: KClass<T>,
             requestBody: String = ""): BroccalcNetJobResult<T> {
+        Log.i("BroccalcHttpContext.httpRequest, url: $url, body: $requestBody")
+
         val requestResult = try {
              httpClient.request(url, requestBody)
         } catch (e: Exception) {
+            Log.w(e, "BroccalcHttpContext unexpected request error")
             return BroccalcNetJobResult.Error.OtherError(e)
         }
 
         val responseStr = when (requestResult) {
             is RequestResult.Failure -> {
+                Log.w(requestResult.exception, "BroccalcHttpContext request failure")
                 return BroccalcNetJobResult.Error.NetError(requestResult.exception)
             }
             is RequestResult.Success -> {
                 val responseStr = requestResult.response.body
                 if (responseStr == null) {
-                    return BroccalcNetJobResult.Error.ResponseFormatError(
-                            NullPointerException("Response has no body. Request url: $url, body: $requestBody")
-                    )
+                    val errMsg = "Response has no body. Request url: $url, body: $requestBody"
+                    Log.w("BroccalcHttpContext: $errMsg")
+                    return BroccalcNetJobResult.Error.ResponseFormatError(NullPointerException(errMsg))
                 }
                 responseStr
             }
@@ -88,18 +93,18 @@ class BroccalcHttpContext @Inject constructor(
         val generalizedResponse = try {
             responseStrToType(responseStr, GeneralServerResponse::class)
         } catch (e: Exception) {
-            return BroccalcNetJobResult.Error.ResponseFormatError(
-                    Exception("Response couldn't be casted to ${GeneralServerResponse::class}."
-                            + "Response str: $responseStr", e))
+            val errMsg = "Response couldn't be casted to ${GeneralServerResponse::class}. Response str: $responseStr"
+            Log.w("BroccalcHttpContext: $errMsg")
+            return BroccalcNetJobResult.Error.ResponseFormatError(Exception(errMsg, e))
         }
 
         if (generalizedResponse.status != STATUS_OK) {
             val servErr = try {
                 responseStrToType(responseStr, ServerErrorResponse::class)
             } catch (e: java.lang.Exception) {
-                return BroccalcNetJobResult.Error.ResponseFormatError(
-                        Exception("Couldn't transform response error into ${ServerErrorResponse::class}."
-                                + "Response str: $responseStr", e))
+                val errMsg = "Couldn't transform response error into ${ServerErrorResponse::class}. Response str: $responseStr"
+                Log.w("BroccalcHttpContext: $errMsg")
+                return BroccalcNetJobResult.Error.ResponseFormatError(Exception(errMsg, e))
             }
 
             val serverError: BroccalcNetJobResult.Error.ServerError<T> = when (servErr.status) {
@@ -113,6 +118,7 @@ class BroccalcHttpContext @Inject constructor(
                     BroccalcNetJobResult.Error.ServerError.Other(servErr)
                 }
             }
+            Log.w("BroccalcHttpContext: server error response: $serverError")
             serverErrorsObservers.forEach { it.onBroccalcServerError(serverError) }
             return serverError
         }
@@ -120,10 +126,12 @@ class BroccalcHttpContext @Inject constructor(
         val result = try {
             responseStrToType(responseStr, resultType)
         } catch (e: Throwable) {
-            return BroccalcNetJobResult.Error.ResponseFormatError(
-                    Exception("Couldn't transform OK response into $resultType."
-                            + "Response str: $responseStr", e))
+            val errMsg = "Couldn't transform OK response into $resultType. Response str: $responseStr"
+            Log.w("BroccalcHttpContext: $errMsg")
+            return BroccalcNetJobResult.Error.ResponseFormatError(Exception(errMsg, e))
         }
+
+        Log.i("BroccalcHttpContext.httpRequest, response: $responseStr")
         return BroccalcNetJobResult.Ok(result)
     }
 

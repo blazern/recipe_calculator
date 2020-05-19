@@ -5,6 +5,7 @@ import korablique.recipecalculator.DishNutritionCalculator
 import korablique.recipecalculator.DishNutritionCalculator.calculateIngredients
 import korablique.recipecalculator.TestEnvironmentDetector
 import korablique.recipecalculator.WrongThreadException
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.base.prefs.PrefsOwner
 import korablique.recipecalculator.base.prefs.SharedPrefsManager
 import korablique.recipecalculator.database.FoodstuffsList
@@ -43,7 +44,7 @@ class BucketList @Inject constructor(
             try {
                 editedRecipe = Recipe.fromProto(RecipeProtos.Recipe.parseFrom(recipeBytes))
             } catch (e: IOException) {
-                // TODO: report error
+                Log.e(e)
             }
         }
     }

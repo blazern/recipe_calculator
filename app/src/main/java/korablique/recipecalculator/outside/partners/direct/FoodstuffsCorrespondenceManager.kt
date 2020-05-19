@@ -9,9 +9,11 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.CurrentActivityProvider
 import korablique.recipecalculator.base.RxGlobalSubscriptions
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.database.FoodstuffsList
 import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.outside.http.BroccalcNetJobResult
+import korablique.recipecalculator.outside.http.extractException
 import korablique.recipecalculator.outside.partners.Partner
 import korablique.recipecalculator.ui.mainactivity.MainActivity
 import javax.inject.Inject

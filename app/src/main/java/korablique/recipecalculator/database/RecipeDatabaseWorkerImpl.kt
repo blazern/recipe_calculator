@@ -1,6 +1,7 @@
 package korablique.recipecalculator.database
 
 import korablique.recipecalculator.base.executors.IOExecutor
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.database.room.AppDatabase
 import korablique.recipecalculator.database.room.DatabaseHolder
 import korablique.recipecalculator.database.room.IngredientEntity
@@ -26,7 +27,7 @@ class RecipeDatabaseWorkerImpl constructor(
     private suspend fun entityToRecipe(entity: RecipeEntity): Recipe? {
         val recipeFoodstuffs = databaseWorker.requestFoodstuffsByIds(listOf(entity.foodstuffId))
         if (recipeFoodstuffs.size != 1) {
-            // TODO: write to log about the error
+            Log.e("Expected 1 foodstuff, got: $recipeFoodstuffs")
             return null
         }
         val recipeFoodstuff = recipeFoodstuffs[0]
@@ -38,7 +39,7 @@ class RecipeDatabaseWorkerImpl constructor(
         val ingredientsIds = ingredientsEntities.map { it.ingredientFoodstuffId }
         val ingredientsFoodstuffs = databaseWorker.requestFoodstuffsByIds(ingredientsIds)
         if (ingredientsEntities.size != ingredientsFoodstuffs.size) {
-            // TODO: write to log about the error
+            Log.e("Ingredients and their foodstuffs differ: $ingredientsEntities, $ingredientsFoodstuffs")
             return null
         }
         val ingredients = ingredientsEntities.zip(ingredientsFoodstuffs) { entity, foodstuff ->

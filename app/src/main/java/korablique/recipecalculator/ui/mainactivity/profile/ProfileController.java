@@ -1,5 +1,6 @@
 package korablique.recipecalculator.ui.mainactivity.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.content.res.Resources;
 import android.util.Pair;
@@ -39,6 +40,7 @@ import korablique.recipecalculator.ui.NutritionValuesWrapper;
 import korablique.recipecalculator.ui.chart.ChartWrapper;
 import korablique.recipecalculator.ui.mainactivity.partners.PartnersListFragment;
 import korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar;
+import korablique.recipecalculator.ui.settings.SettingsActivity;
 import korablique.recipecalculator.ui.userparameters.UserParametersActivity;
 
 import static korablique.recipecalculator.ui.DecimalUtils.toDecimalString;
@@ -105,6 +107,9 @@ public class ProfileController implements FragmentCallbacks.Observer {
         partnersButton.setOnClickListener(view -> {
             PartnersListFragment.Companion.start(activity);
         });
+
+        View settingsButton = fragmentView.findViewById(R.id.layout_button_settings);
+        settingsButton.setOnClickListener(view -> SettingsActivity.start(activity));
 
         fillChart(fragmentView);
 

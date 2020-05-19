@@ -40,6 +40,8 @@ import korablique.recipecalculator.ui.mainactivity.MainActivity;
 import korablique.recipecalculator.ui.mainactivity.MainScreenActivityModule;
 import korablique.recipecalculator.ui.notifications.FoodReminder;
 import korablique.recipecalculator.ui.notifications.FoodReminderReceiver;
+import korablique.recipecalculator.ui.settings.SettingsActivity;
+import korablique.recipecalculator.ui.settings.SettingsActivityModule;
 import korablique.recipecalculator.ui.splash.SplashScreenActivity;
 import korablique.recipecalculator.ui.splash.SplashScreenActivityModule;
 import korablique.recipecalculator.ui.userparameters.UserParametersActivity;
@@ -146,6 +148,10 @@ public abstract class BroccalcApplicationModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = { BaseActivityModule.class, SplashScreenActivityModule.class })
     abstract SplashScreenActivity contributeSplashScreenActivityInjector();
+
+    @ActivityScope
+    @ContributesAndroidInjector(modules = { BaseActivityModule.class, SettingsActivityModule.class })
+    abstract SettingsActivity contributeSettingsActivity();
 
     @ServiceScope
     @ContributesAndroidInjector(modules = FCMServiceModule.class)

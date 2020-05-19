@@ -18,6 +18,7 @@ import javax.inject.Inject;
 
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.base.ActivityCallbacks;
+import korablique.recipecalculator.base.logging.Log;
 import korablique.recipecalculator.dagger.ActivityScope;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.WeightedFoodstuff;
@@ -147,6 +148,7 @@ public class MainActivityFragmentsController implements
             currentFragment = newShownFragment;
             for (Observer observer : observers) {
                 observer.onMainActivityFragmentSwitch(oldShownFragment, newShownFragment);
+                Log.INSTANCE.i("Switched main fragment to " + newShownFragment.getClass().toString());
             }
         }
     }
