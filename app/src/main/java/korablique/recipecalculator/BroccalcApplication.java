@@ -53,6 +53,7 @@ public class BroccalcApplication extends Application
             Fabric.with(this, new Crashlytics());
         }
         Log.INSTANCE.init(this);
+        Log.INSTANCE.i("Application Cold Start");
         if (!TestEnvironmentDetector.isInTests()) {
             InjectorHolder.getInjector().inject(this);
             historyWorker.updateCache();
