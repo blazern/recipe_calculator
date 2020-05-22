@@ -22,6 +22,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.lang.IllegalArgumentException
 
+private const val UID = "123e4567-e89b-12d3-a456-426655440000"
+private const val TOKEN = "123e4567-e89b-12d3-a456-426655440001"
+private const val UID2 = "123e4567-e89b-12d3-a456-426655440020"
+
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest=Config.NONE)
 class FCMManagerTest {
@@ -59,7 +63,7 @@ class FCMManagerTest {
     fun setUp() {
         netStateDispatcher.setNetworkAvailable(true)
         setServerFcmResponseStatus("ok")
-        setUserParams(ServerUserParams("uid", "token"))
+        setUserParams(ServerUserParams(UID, TOKEN))
     }
 
     private fun setUserParams(userParams: ServerUserParams?) {
@@ -154,7 +158,7 @@ class FCMManagerTest {
         updateFCMToken("mynewtoken")
 
         assertEquals(0, httpClient.getRequestsMatching(".*update_fcm_token.*").size)
-        setUserParams(ServerUserParams("uid", "token"))
+        setUserParams(ServerUserParams(UID, TOKEN))
         assertEquals(1, httpClient.getRequestsMatching(".*update_fcm_token.*").size)
     }
 
@@ -220,7 +224,7 @@ class FCMManagerTest {
         assertEquals(1, httpClient.getRequestsMatching(".*update_fcm_token.*").size)
         setUserParams(
                 ServerUserParams(
-                        userParamsRegistry.getUserParams()!!.uid + "2", "token"))
+                        UID2, TOKEN))
         assertEquals(2, httpClient.getRequestsMatching(".*update_fcm_token.*").size)
     }
 

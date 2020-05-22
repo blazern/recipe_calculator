@@ -20,6 +20,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private const val UID = "123e4567-e89b-12d3-a456-426655440000"
+private const val TOKEN = "123e4567-e89b-12d3-a456-426655440001"
+
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest= Config.NONE)
 class DirectMsgsManagerTest {
@@ -37,7 +40,7 @@ class DirectMsgsManagerTest {
         val httpClient = FakeHttpClient()
         val httpContext = BroccalcHttpContext(httpClient)
         val userParamsRegistry = mock<ServerUserParamsRegistry>()
-        whenever(userParamsRegistry.getUserParams()).thenReturn(ServerUserParams("uid", "token"))
+        whenever(userParamsRegistry.getUserParams()).thenReturn(ServerUserParams(UID, TOKEN))
 
         val manager = DirectMsgsManager(context, mock(), userParamsRegistry, httpContext)
 
@@ -65,7 +68,7 @@ class DirectMsgsManagerTest {
         val httpClient = FakeHttpClient()
         val httpContext = BroccalcHttpContext(httpClient)
         val userParamsRegistry = mock<ServerUserParamsRegistry>()
-        whenever(userParamsRegistry.getUserParams()).thenReturn(ServerUserParams("uid", "token"))
+        whenever(userParamsRegistry.getUserParams()).thenReturn(ServerUserParams(UID, TOKEN))
 
         val manager1 = DirectMsgsManager(context, mock(), userParamsRegistry, httpContext)
         val manager2 = DirectMsgsManager(context, mock(), userParamsRegistry, httpContext)

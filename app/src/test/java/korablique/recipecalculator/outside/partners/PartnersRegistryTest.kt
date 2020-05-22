@@ -20,6 +20,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private const val UID = "123e4567-e89b-12d3-a456-426655440000"
+private const val TOKEN = "123e4567-e89b-12d3-a456-426655440001"
+
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest=Config.NONE)
 class PartnersRegistryTest {
@@ -36,7 +39,7 @@ class PartnersRegistryTest {
             userParamsRegistryObservers.remove(it.arguments[0] as ServerUserParamsRegistry.Observer)
             Unit
         }
-        on { getUserParams() } doReturn ServerUserParams("uid", "token")
+        on { getUserParams() } doReturn ServerUserParams(UID, TOKEN)
     }
 
     val httpClient = FakeHttpClient()

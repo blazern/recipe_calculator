@@ -14,6 +14,7 @@ import korablique.recipecalculator.outside.thirdparty.GPAuthResult
 import korablique.recipecalculator.outside.userparams.ObtainResult
 import korablique.recipecalculator.outside.userparams.ServerUserParams
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry
+import korablique.recipecalculator.util.FakeGPAuthorizer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -21,6 +22,9 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.lang.Exception
+
+private const val UID = "123e4567-e89b-12d3-a456-426655440000"
+private const val TOKEN = "123e4567-e89b-12d3-a456-426655440001"
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -32,8 +36,8 @@ class AuthTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """.trimIndent()))
         }
@@ -43,7 +47,7 @@ class AuthTest : MainActivityTestsBase() {
         val result = interactiveServerUserParamsObtainer.obtainUserParams()
         assertTrue(result is ObtainResult.Success)
         val success = result as ObtainResult.Success
-        assertEquals(ServerUserParams("uid", "token"), success.params)
+        assertEquals(ServerUserParams(UID, TOKEN), success.params)
     }
 
     @Test
@@ -61,8 +65,8 @@ class AuthTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token",
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN",
                     "user_name": "general kenobi"
                 }
             """))
@@ -82,7 +86,7 @@ class AuthTest : MainActivityTestsBase() {
         val result = runBlocking { resultFuture.await() }
         assertEquals("$result", ObtainResult.Success::class, result::class)
         val success = result as ObtainResult.Success
-        assertEquals(ServerUserParams("uid", "token"), success.params)
+        assertEquals(ServerUserParams(UID, TOKEN), success.params)
 
         // Account move should always be accompanied by user name update
         assertEquals(1, fakeHttpClient.getRequestsMatching(".*update_user_name.*").size)
@@ -181,8 +185,8 @@ class AuthTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """))
         }
@@ -191,8 +195,8 @@ class AuthTest : MainActivityTestsBase() {
         assertTrue(result is ObtainResult.Success)
 
         // Assert user params exist at first
-        assertEquals(ServerUserParams("uid", "token"), observedUser)
-        assertEquals(ServerUserParams("uid", "token"), serverUserParamsRegistry.getUserParams())
+        assertEquals(ServerUserParams(UID, TOKEN), observedUser)
+        assertEquals(ServerUserParams(UID, TOKEN), serverUserParamsRegistry.getUserParams())
 
         // Set up failed response and make request so that the response would be received
         fakeHttpClient.setResponse(".*my_cool_request.*") {
@@ -215,12 +219,94 @@ class AuthTest : MainActivityTestsBase() {
             assertTrue(result2 is ObtainResult.Success)
 
             // Assert user params exist again
-            assertEquals(ServerUserParams("uid", "token"), observedUser)
-            assertEquals(ServerUserParams("uid", "token"), serverUserParamsRegistry.getUserParams())
+            assertEquals(ServerUserParams(UID, TOKEN), observedUser)
+            assertEquals(ServerUserParams(UID, TOKEN), serverUserParamsRegistry.getUserParams())
         } else {
             // Assert user params still exist
-            assertEquals(ServerUserParams("uid", "token"), observedUser)
-            assertEquals(ServerUserParams("uid", "token"), serverUserParamsRegistry.getUserParams())
+            assertEquals(ServerUserParams(UID, TOKEN), observedUser)
+            assertEquals(ServerUserParams(UID, TOKEN), serverUserParamsRegistry.getUserParams())
         }
+    }
+
+    @Test
+    fun serverUserParamsNotStored_whenUidIsNotUUID() = runBlocking {
+        // Successful registration with given invalid uid
+        fakeGPAuthorizer.authResult = GPAuthResult.Success("gptoken")
+        fakeHttpClient.setResponse(".*register.*") {
+            RequestResult.Success(Response("""
+                {
+                    "status": "ok",
+                    "user_id": "${UID}invalid_part",
+                    "client_token": "$TOKEN"
+                }
+            """))
+        }
+        mActivityRule.launchActivity(null)
+        val result = interactiveServerUserParamsObtainer.obtainUserParams()
+        assertTrue(result is ObtainResult.Success)
+
+        assertNull(serverUserParamsRegistry.getUserParams())
+    }
+
+    @Test
+    fun serverUserParamsNotStored_whenTokenIsNotUUID() = runBlocking {
+        // Successful registration with given invalid token
+        fakeGPAuthorizer.authResult = GPAuthResult.Success("gptoken")
+        fakeHttpClient.setResponse(".*register.*") {
+            RequestResult.Success(Response("""
+                {
+                    "status": "ok",
+                    "user_id": "$UID",
+                    "client_token": "${TOKEN}invalid_part"
+                }
+            """))
+        }
+        mActivityRule.launchActivity(null)
+        val result = interactiveServerUserParamsObtainer.obtainUserParams()
+        assertTrue(result is ObtainResult.Success)
+
+        assertNull(serverUserParamsRegistry.getUserParams())
+    }
+
+    @Test
+    fun canSetSavedUserParams_directlyFromTest() = runBlocking {
+        val params = ServerUserParams(UID, TOKEN)
+        ServerUserParamsRegistry.storeServerUserParamsPersistently(params, prefsManager)
+        val otherServerUserParamsRegistry1 =
+                ServerUserParamsRegistry(
+                        context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
+                        userNameProvider, httpContext, prefsManager)
+         assertEquals(params, otherServerUserParamsRegistry1.getUserParams())
+
+        ServerUserParamsRegistry.storeServerUserParamsPersistently(null, prefsManager)
+        val otherServerUserParamsRegistry2 =
+                ServerUserParamsRegistry(
+                        context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
+                        userNameProvider, httpContext, prefsManager)
+        assertEquals(null, otherServerUserParamsRegistry2.getUserParams())
+    }
+
+    @Test
+    fun erasesSavedServerUserParamsOnStart_whenUidIsNotUUID() = runBlocking  {
+        val params = ServerUserParams("${UID}invalid_part", TOKEN)
+        ServerUserParamsRegistry.storeServerUserParamsPersistently(params, prefsManager)
+        val otherServerUserParamsRegistry =
+                ServerUserParamsRegistry(
+                        context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
+                        userNameProvider, httpContext, prefsManager)
+        // Null, even though we stored params
+        assertEquals(null, otherServerUserParamsRegistry.getUserParams())
+    }
+
+    @Test
+    fun erasesSavedServerUserParamsOnStart_whenTokenIsNotUUID() = runBlocking {
+        val params = ServerUserParams("UID", "${TOKEN}invalid_part")
+        ServerUserParamsRegistry.storeServerUserParamsPersistently(params, prefsManager)
+        val otherServerUserParamsRegistry =
+                ServerUserParamsRegistry(
+                        context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
+                        userNameProvider, httpContext, prefsManager)
+        // Null, even though we stored params
+        assertEquals(null, otherServerUserParamsRegistry.getUserParams())
     }
 }

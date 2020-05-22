@@ -1,10 +1,12 @@
 package korablique.recipecalculator.outside.userparams
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.executors.IOExecutor
 import korablique.recipecalculator.base.executors.MainThreadExecutor
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.base.prefs.PrefsOwner
 import korablique.recipecalculator.base.prefs.SharedPrefsManager
 import korablique.recipecalculator.model.UserNameProvider
@@ -19,6 +21,7 @@ import korablique.recipecalculator.outside.thirdparty.GPAuthorizer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,6 +38,9 @@ sealed class GetWithAccountMoveRequestResult {
     object CanceledByUser : GetWithAccountMoveRequestResult()
 }
 
+/**
+ * Tested by AuthTest.
+ */
 @Singleton
 class ServerUserParamsRegistry @Inject constructor(
         private val context: Context,
@@ -45,13 +51,30 @@ class ServerUserParamsRegistry @Inject constructor(
         private val httpContext: BroccalcHttpContext,
         private val prefsManager: SharedPrefsManager
 ): BroccalcHttpContext.ServerErrorsObserver {
+    companion object {
+        @VisibleForTesting
+        fun storeServerUserParamsPersistently(
+                params: ServerUserParams?, prefsManager: SharedPrefsManager) {
+            prefsManager.putString(PrefsOwner.USER_PARAMS_REGISTRY, "uid", params?.uid)
+            prefsManager.putString(PrefsOwner.USER_PARAMS_REGISTRY, "token", params?.token)
+        }
+    }
+
     private val observers = mutableListOf<Observer>()
     @Volatile
     private var cachedUserParams: ServerUserParams? = null
         set(value) {
-            field = value
-            prefsManager.putString(PrefsOwner.USER_PARAMS_REGISTRY, "uid", value?.uid)
-            prefsManager.putString(PrefsOwner.USER_PARAMS_REGISTRY, "token", value?.token)
+            if (value != null && (!isUUID(value.token) || !isUUID(value.uid))) {
+                Log.e("Server user params uid or/and token are not UUIDs: $value")
+            }
+
+            val acceptedVal = if (value != null && isUUID(value.token) && isUUID(value.uid)) {
+                value
+            } else {
+                null
+            }
+            field = acceptedVal
+            storeServerUserParamsPersistently(acceptedVal, prefsManager)
             mainThreadExecutor.execute {
                 observers.forEach { it.onUserParamsChange(cachedUserParams) }
             }
@@ -68,6 +91,15 @@ class ServerUserParamsRegistry @Inject constructor(
             cachedUserParams = ServerUserParams(uid, token)
         }
         httpContext.addServerErrorsObserver(this)
+    }
+
+    private fun isUUID(str: String): Boolean {
+        return try {
+            UUID.fromString(str)
+            true
+        } catch(e: IllegalArgumentException) {
+            false
+        }
     }
 
     suspend fun getUserParamsMaybeRegister(context: BaseActivity) = withContext(ioExecutor) {

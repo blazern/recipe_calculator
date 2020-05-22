@@ -21,6 +21,9 @@ import org.hamcrest.CoreMatchers.allOf
 import org.junit.Test
 import org.junit.runner.RunWith
 
+private const val UID = "123e4567-e89b-12d3-a456-426655440000"
+private const val TOKEN = "123e4567-e89b-12d3-a456-426655440001"
+
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 class PartnersListTest : MainActivityTestsBase() {
@@ -31,8 +34,8 @@ class PartnersListTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """.trimIndent()))
         }
@@ -59,8 +62,8 @@ class PartnersListTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """.trimIndent()))
         }
@@ -87,8 +90,8 @@ class PartnersListTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """.trimIndent()))
         }
@@ -139,8 +142,8 @@ class PartnersListTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """.trimIndent()))
         }
@@ -200,8 +203,8 @@ class PartnersListTest : MainActivityTestsBase() {
             RequestResult.Success(Response("""
                 {
                     "status": "ok",
-                    "user_id": "uid",
-                    "client_token": "token"
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
                 }
             """.trimIndent()))
         }
