@@ -171,7 +171,7 @@ public class MainScreenController
 
         fillListsFromArguments();
 
-        subscriptions.subscribe(topList.getMonthTop(), (foodstuffs -> {
+        subscriptions.subscribe(topList.getWeekTop(), (foodstuffs -> {
             if (isTopFilledFromArguments && topAdapterChild != null) {
                 topAdapterChild.clear();
             }

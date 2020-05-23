@@ -347,7 +347,6 @@ public class TopFoodstuffsTest extends MainActivityTestsBase {
         // foodstuff2 в истории более недели в прошлом
         onView(allOf(
                 withText(foodstuff2.getName()),
-                isDescendantOfA(withId(R.id.search_results_layout)),
                 EspressoUtils.matches(isCompletelyBelow(topHeaderMatcher)),
                 EspressoUtils.matches(isCompletelyAbove(allHeaderMatcher))
         )).check(doesNotExist());
@@ -355,7 +354,6 @@ public class TopFoodstuffsTest extends MainActivityTestsBase {
         // foodstuff3 не в истории
         onView(allOf(
                 withText(foodstuff3.getName()),
-                isDescendantOfA(withId(R.id.search_results_layout)),
                 EspressoUtils.matches(isCompletelyBelow(topHeaderMatcher)),
                 EspressoUtils.matches(isCompletelyAbove(allHeaderMatcher))
         )).check(doesNotExist());
@@ -363,7 +361,6 @@ public class TopFoodstuffsTest extends MainActivityTestsBase {
         // foodstuff4 не в истории
         onView(allOf(
                 withText(foodstuff4.getName()),
-                isDescendantOfA(withId(R.id.search_results_layout)),
                 EspressoUtils.matches(isCompletelyBelow(topHeaderMatcher)),
                 EspressoUtils.matches(isCompletelyAbove(allHeaderMatcher))
         )).check(doesNotExist());
