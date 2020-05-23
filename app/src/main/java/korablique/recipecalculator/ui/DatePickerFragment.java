@@ -47,7 +47,9 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
 
         long minTime;
         long maxTime;
-        if (args != null) {
+        if (args != null
+                && args.containsKey(MIN_TIME)
+                && args.containsKey(MAX_TIME)) {
             minTime = args.getLong(MIN_TIME);
             maxTime = args.getLong(MAX_TIME);
         } else {
