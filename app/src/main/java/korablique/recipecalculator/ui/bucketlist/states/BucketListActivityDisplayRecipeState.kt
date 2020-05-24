@@ -59,6 +59,8 @@ class BucketListActivityDisplayRecipeState(
                     recipe, commentLayoutController, activity, bucketList,
                     recipesRepository, mainThreadExecutor))
         }
+
+        commentLayoutController.setEditable(false)
     }
 
     override fun destroyImpl() {

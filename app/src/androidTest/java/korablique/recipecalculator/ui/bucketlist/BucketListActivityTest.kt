@@ -469,8 +469,8 @@ class BucketListActivityTest {
         onView(withId(R.id.button1)).perform(click())
         onView(withId(R.id.recipe_name_edit_text)).perform(replaceText("cake without oil"))
         onView(withId(R.id.total_weight_edit_text)).perform(replaceText("10"))
-        onView(withId(R.id.comment)).perform(replaceText("novel comment"))
         onView(withId(R.id.add_comment_button)).perform(click())
+        onView(withId(R.id.comment)).perform(replaceText("novel comment"))
         onView(withId(R.id.save_as_recipe_button)).perform(click())
 
         // Validate updated recipe
@@ -1505,7 +1505,7 @@ class BucketListActivityTest {
             name: String,
             weight: Int,
             ingredients: List<UIIngredient>,
-            comment: String = "comment"): Recipe {
+            comment: String = ""): Recipe {
         val notSavedRecipe = createRecipe(name, weight, ingredients, comment)
         val recipeResult = recipesRepository.saveRecipeRx(notSavedRecipe).blockingGet()
         return (recipeResult as CreateRecipeResult.Ok).recipe
