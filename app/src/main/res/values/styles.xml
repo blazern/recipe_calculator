@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="textAppearanceLargePopupMenu">@style/PopupMenuStyle</item>
     </style>
 
     <style name="AppTheme.Launcher">
@@ -87,6 +88,12 @@
         <item name="android:fontFamily">Roboto Mono</item>
         <item name="android:textColor">#FFF9F9FB</item>
         <item name="android:textSize">10sp</item>
+    </style>
+
+    <style name="PopupMenuStyle" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="fontFamily">@font/roboto_mono</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/black</item>
     </style>
 
 </resources>
