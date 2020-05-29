@@ -73,7 +73,7 @@ class CalcKeyboardController @Inject constructor() {
         addCalcKeyboardToParent(keyboard, parent)
 
         // Подключим EditText к клавиатуре-калькулятору
-        keyboard.connectWith(editText)
+        keyboard.connectWith(editText, this::onCalcKeyboardWantsToClose)
 
         shownKeyboards[editText] = keyboard
 
@@ -186,5 +186,9 @@ class CalcKeyboardController @Inject constructor() {
         keyboard.visibility = View.INVISIBLE
         parent.removeView(keyboard)
         return true
+    }
+
+    private fun onCalcKeyboardWantsToClose(connectedEditText: CalcEditText) {
+        hideKeyboardFor(connectedEditText)
     }
 }

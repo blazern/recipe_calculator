@@ -17,6 +17,8 @@ import korablique.recipecalculator.test.CalcKeyboardTestActivity
 import korablique.recipecalculator.util.FloatUtils
 import korablique.recipecalculator.util.InjectableActivityTestRule
 import korablique.recipecalculator.util.SyncMainThreadExecutor
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -85,8 +87,8 @@ class CalcKeyboardTest {
         onView(withId(R.id.calc_edit_text)).check(matches(withText("12.9")))
 
         // Стираем символы
-        onView(withId(R.id.button_backspace)).perform(click())
-        onView(withId(R.id.button_backspace)).perform(click())
+        onView(withId(R.id.button_delete)).perform(click())
+        onView(withId(R.id.button_delete)).perform(click())
 
         // Проверяем, что символы стерлись
         onView(withId(R.id.calc_edit_text)).check(matches(withText("12")))
@@ -109,7 +111,7 @@ class CalcKeyboardTest {
 
         // Проверим вычисляемое значение
         val value = getValueOf(R.id.calc_edit_text)
-        assertTrue(FloatUtils.areFloatsEquals(6f, value))
+        assertTrue(FloatUtils.areFloatsEquals(6f, value!!))
     }
 
     @Test
@@ -124,7 +126,7 @@ class CalcKeyboardTest {
         onView(withId(R.id.button_9)).perform(click())
 
         val initialText = getTextOf(R.id.calc_edit_text)
-        onView(withId(R.id.button_backspace)).perform(longClick())
+        onView(withId(R.id.button_delete)).perform(longClick())
         val afterBackspaceText = getTextOf(R.id.calc_edit_text)
 
         // Убеждаемся, что что-то стёрлось (мы не можем контролировать
@@ -154,7 +156,7 @@ class CalcKeyboardTest {
         // 10 в пределах заданных границ
         onView(withId(R.id.calc_edit_text)).check(matches(withText("10")))
 
-        onView(withId(R.id.button_backspace)).perform(click())
+        onView(withId(R.id.button_delete)).perform(click())
         onView(withId(R.id.button_1)).perform(click())
         // 11 за пределами заданных границ
         onView(withId(R.id.calc_edit_text)).check(matches(withText("1")))
@@ -178,7 +180,7 @@ class CalcKeyboardTest {
         // -10 в пределах заданных границ
         onView(withId(R.id.calc_edit_text)).check(matches(withText("-10")))
 
-        onView(withId(R.id.button_backspace)).perform(click())
+        onView(withId(R.id.button_delete)).perform(click())
         onView(withId(R.id.button_1)).perform(click())
         // -11 за пределами заданных границ
         onView(withId(R.id.calc_edit_text)).check(matches(withText("-1")))
@@ -221,7 +223,7 @@ class CalcKeyboardTest {
 
         // Проверим вычисляемое значение
         val value = getValueOf(R.id.edit_progress_text)
-        assertTrue(FloatUtils.areFloatsEquals(50f, value))
+        assertTrue(FloatUtils.areFloatsEquals(50f, value!!))
     }
 
     @Test
@@ -253,9 +255,41 @@ class CalcKeyboardTest {
         onView(withId(R.id.button_1)).perform(click())
         onView(withId(R.id.calc_edit_text)).check(matches(withText("1")))
 
-        onView(withId(R.id.button_backspace)).perform(click())
+        onView(withId(R.id.button_delete)).perform(click())
         // Проверяем, что текст стёрт
         onView(withId(R.id.calc_edit_text)).check(matches(withText("")))
+    }
+
+    @Test
+    fun focusJumping() {
+        // Открываем клавиатуру
+        onView(withId(R.id.calc_edit_text_with_next_focus)).perform(click())
+        onView(withId(R.id.calc_keyboard)).check(matches(isDisplayed()))
+        assertEquals(R.id.calc_edit_text_with_next_focus, getFocusedViewID())
+
+        // Жмякаем enter, проверяем, что фокус сместился
+        onView(withId(R.id.button_enter)).perform(click())
+        assertEquals(R.id.calc_edit_text_without_next_focus, getFocusedViewID())
+
+        // Жмякаем enter ещё раз, проверяем, что клавиатура закрылась
+        onView(withId(R.id.button_enter)).perform(click())
+        onView(withId(R.id.calc_keyboard)).check(doesNotExist())
+    }
+
+    @Test
+    fun bracketsUsage() {
+        onView(withId(R.id.calc_edit_text)).perform(click())
+
+        onView(withId(R.id.button_bracket_left)).perform(click())
+        onView(withId(R.id.button_2)).perform(click())
+        onView(withId(R.id.button_plus)).perform(click())
+        onView(withId(R.id.button_2)).perform(click())
+        onView(withId(R.id.button_bracket_right)).perform(click())
+        onView(withId(R.id.button_multiply)).perform(click())
+        onView(withId(R.id.button_2)).perform(click())
+
+        val value = getValueOf(R.id.calc_edit_text)!!
+        assertEquals(8f, value, 0.000f)
     }
 
     private fun getTextOf(viewId: Int): String {
@@ -267,12 +301,20 @@ class CalcKeyboardTest {
         return text!!
     }
 
-    private fun getValueOf(viewId: Int): Float {
+    private fun getValueOf(viewId: Int): Float? {
         var value: Float? = null
         mainThreadExecutor.execute {
             val calcEditText = activityRule.activity.findViewById<CalcEditText>(viewId)
             value = calcEditText.getCurrentCalculatedValue()
         }
-        return value!!
+        return value
+    }
+
+    private fun getFocusedViewID(): Int? {
+        var id: Int? = null
+        mainThreadExecutor.execute {
+            id = activityRule.activity.currentFocus?.id
+        }
+        return id
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -9,53 +9,108 @@
     android:tag="calc_keyboard_parent">
 
     <TextView
+        android:id="@+id/normal_edit_text_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
         android:text="normal edit text"/>
     <EditText
         android:id="@+id/normal_edit_text"
         style="@style/RobotoMonoText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@+id/normal_edit_text_title"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toStartOf="@id/calc_edit_text"/>
 
     <TextView
+        android:id="@+id/calc_edit_text_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="@+id/calc_edit_text"
         android:text="calc edit text"/>
     <korablique.recipecalculator.ui.calckeyboard.CalcEditText
         android:id="@+id/calc_edit_text"
         style="@style/RobotoMonoText"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/row_fake_top"
+        custom:layout_constraintTop_toBottomOf="@+id/calc_edit_text_title"
+        custom:layout_constraintStart_toEndOf="@id/normal_edit_text"
+        custom:layout_constraintEnd_toEndOf="parent"
         android:maxLength="15"
         custom:min_value="0"
         custom:max_value="99999" />
 
     <TextView
+        android:id="@+id/edit_progress_text_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text"
+        custom:layout_constraintStart_toStartOf="parent"
         android:text="edit progress text"/>
     <korablique.recipecalculator.ui.numbersediting.EditProgressText
         android:id="@+id/edit_progress_text"
         style="@style/RobotoMonoText"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@id/edit_progress_text_title"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toStartOf="@id/calc_edit_text"
         custom:color_underline_filled="@android:color/holo_red_dark"
         custom:progress_max_value="100"/>
 
     <TextView
+        android:id="@+id/calc_edit_text_with_1_digit_after_dot_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="calc edit text with 1 digit after dot allowed"/>
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text"
+        custom:layout_constraintStart_toStartOf="@+id/calc_edit_text_with_1_digit_after_dot"
+        android:text="calc edit text with \n1 digit after dot allowed"/>
     <korablique.recipecalculator.ui.calckeyboard.CalcEditText
         android:id="@+id/calc_edit_text_with_1_digit_after_dot"
         style="@style/RobotoMonoText"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/row_fake_top"
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text_with_1_digit_after_dot_title"
+        custom:layout_constraintStart_toEndOf="@id/edit_progress_text"
+        custom:layout_constraintEnd_toEndOf="parent"
         android:maxLength="15"
         custom:min_value="0"
         custom:max_value="99999"
         custom:digits_after_decimal_dot="1"/>
-</LinearLayout>
+
+    <TextView
+        android:id="@+id/calc_edit_text_with_next_focus_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text_with_1_digit_after_dot"
+        custom:layout_constraintStart_toStartOf="parent"
+        android:text="calc edit text with next focus"/>
+    <korablique.recipecalculator.ui.calckeyboard.CalcEditText
+        android:id="@+id/calc_edit_text_with_next_focus"
+        style="@style/RobotoMonoText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text_with_next_focus_title"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toStartOf="@+id/calc_edit_text_without_next_focus"
+        android:nextFocusDown="@id/calc_edit_text_without_next_focus"/>
+
+    <TextView
+        android:id="@+id/calc_edit_text_without_next_focus_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text_with_1_digit_after_dot"
+        custom:layout_constraintStart_toStartOf="@id/calc_edit_text_without_next_focus"
+        android:text="calc edit text without next focus"/>
+    <korablique.recipecalculator.ui.calckeyboard.CalcEditText
+        android:id="@+id/calc_edit_text_without_next_focus"
+        style="@style/RobotoMonoText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        custom:layout_constraintTop_toBottomOf="@id/calc_edit_text_with_next_focus_title"
+        custom:layout_constraintStart_toEndOf="@+id/calc_edit_text_with_next_focus"
+        custom:layout_constraintEnd_toEndOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

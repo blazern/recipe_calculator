@@ -9,7 +9,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
-import android.widget.Button
 import android.widget.LinearLayout
 
 import korablique.recipecalculator.R
@@ -36,10 +35,17 @@ class CalcKeyboard : LinearLayout {
             R.id.button_plus to "+",
             R.id.button_minus to "-",
             R.id.button_multiply to "×",
-            R.id.button_divide to "÷")
+            R.id.button_divide to "÷",
+            R.id.button_bracket_left to "(",
+            R.id.button_bracket_right to ")")
+
+    data class Connection(
+            val input: InputConnection,
+            val editText: CalcEditText,
+            val hideRequestFun: (CalcEditText)->Unit)
 
     // Подключение к EditText
-    private var inputConnection: InputConnection? = null
+    private var connection: Connection? = null
 
     private var isBackspaseBeingHeld = false
 
@@ -50,36 +56,29 @@ class CalcKeyboard : LinearLayout {
         LayoutInflater.from(context).inflate(R.layout.calc_keyboard, this, true)
         
         // Слушаем клики на каждую кнопочку
-        findViewById<View>(R.id.button_1).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_2).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_3).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_4).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_5).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_6).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_7).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_8).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_9).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_0).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_point).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_plus).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_multiply).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_divide).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_minus).setOnClickListener(this::onButtonClick)
+        for (id in buttonsValues.keys) {
+            findViewById<View>(id).setOnClickListener(this::onButtonClick)
+        }
 
-        findViewById<View>(R.id.button_backspace).setOnClickListener(this::onButtonClick)
-        findViewById<View>(R.id.button_backspace).setOnLongClickListener(this::onBackspaceLongClick)
-        findViewById<View>(R.id.button_backspace).setOnTouchListener(this::onBackspaceKeyEvent)
+        findViewById<View>(R.id.button_delete).setOnClickListener(this::onButtonClick)
+        findViewById<View>(R.id.button_delete).setOnLongClickListener(this::onBackspaceLongClick)
+        findViewById<View>(R.id.button_delete).setOnTouchListener(this::onBackspaceKeyEvent)
+
+        findViewById<View>(R.id.button_enter).setOnClickListener(this::onEnterClick)
     }
 
     /**
      * Подключаем EditText к клавиатуре.
      */
-    fun connectWith(editText: CalcEditText) {
-        this.inputConnection = editText.onCreateInputConnection(EditorInfo())
+    fun connectWith(editText: CalcEditText, hideRequestFun: (CalcEditText)->Unit) {
+        this.connection = Connection(
+                editText.onCreateInputConnection(EditorInfo()),
+                editText,
+                hideRequestFun)
     }
 
     private fun onButtonClick(v: View) {
-        val inputConnection = this.inputConnection
+        val inputConnection = this.connection?.input
         if (inputConnection == null) {
             // Пока нет подключения ни с каким EditText'ом
             return
@@ -91,7 +90,7 @@ class CalcKeyboard : LinearLayout {
         // Чтобы бага не было, перед коммитом нового текста остановим composing старого.
         inputConnection.finishComposingText()
 
-        if (v.id == R.id.button_backspace) {
+        if (v.id == R.id.button_delete) {
             performTextDeletion(inputConnection)
         } else {
             val value = buttonsValues[v.id]
@@ -119,12 +118,12 @@ class CalcKeyboard : LinearLayout {
     }
 
     private fun onBackspaceHoldingTick() {
-        val inputConnection = this.inputConnection
+        val inputConnection = this.connection?.input
         if (inputConnection == null) {
             return
         }
         // Бэкспейс держат в течение INTERVAL_BETWEEN_BACKSPACE_HOLD_DELETIONS, удалим символ
-        onButtonClick(findViewById<View>(R.id.button_backspace))
+        onButtonClick(findViewById<View>(R.id.button_delete))
 
         // Если бекспейс ещё нажат, через несколько мс снова удалим символ!
         if (isBackspaseBeingHeld) {
@@ -138,5 +137,29 @@ class CalcKeyboard : LinearLayout {
             isBackspaseBeingHeld = false
         }
         return false
+    }
+
+    private fun onEnterClick(v: View) {
+        val connection = this.connection
+        if (connection == null) {
+            return
+        }
+
+        val nextFocusId = connection.editText.nextFocusDownId
+        if (nextFocusId == View.NO_ID) {
+            connection.hideRequestFun.invoke(connection.editText)
+            return
+        }
+
+        var root: View = connection.editText
+        while (root.parent is View) {
+            root = root.parent as View
+        }
+        val nextFocus = root.findViewById<View>(nextFocusId)
+        if (nextFocus == null) {
+            connection.hideRequestFun.invoke(connection.editText)
+            return
+        }
+        nextFocus.requestFocus()
     }
 }

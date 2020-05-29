@@ -21,9 +21,10 @@ open class CalcEditText : EditText {
     // NOTE: В начале regex'а ".*", в конце ".+" - это не случайно, ".+"
     // там стоит, чтобы не рисовать серенький результат вычисления для
     // строк вида "2+", но рисовать для строк вида "2+2", т.к. "2+ =2" выглядит глупо.
-    private val textAcceptableForCalcPreviewRegex = Pattern.compile(""".*[\-+×÷].+""")
+    private val textAcceptableForCalcPreviewRegex = Pattern.compile(""".*[\-+×÷()].+""")
     private val extraOperatorsRegex = Pattern.compile(""".*[\-+*/][\-+*/].*""")
-    private val operatorsRegex = Pattern.compile("""[\-+×÷]""")
+    private val operatorsRegex = Pattern.compile("""[\-+×÷()]""")
+    private val operatorsWithoutBracketsRegex = Pattern.compile("""[\-+×÷]""")
     private val numbersFilters = mutableListOf<InputFilter>()
     private var minValue: BigDecimal
     private var maxValue: BigDecimal
@@ -32,6 +33,7 @@ open class CalcEditText : EditText {
     private var currentTextAcceptableForCalcPreview = false
 
     private val textBounds = Rect()
+    private val textWithoutBracketsBounds = Rect()
     private val calculatedValuePaint: Paint
 
     private var isFullyConstructed = false
@@ -67,15 +69,58 @@ open class CalcEditText : EditText {
     }
 
     private fun isAcceptableUserInput(str: String): Boolean {
+        var str = str
+
+        // Закроем незакрытые скобки и удалим лишние, чтобы пользователь
+        // мог эти скобки впоследствии сам дозакрыть, а calcValueAsBigDecimal не сломался
+        // от недозакрытых скобочек.
+        str = normalizeBrackets(str) ?: return false
+
         if (str.isEmpty()) {
             // Позволяем очистить вводимый текст
             return true
         }
+
         val value = calcValueAsBigDecimal(str) ?: return false
         if (!isAllowedByNumbersFilters(str)) {
             return false
         }
         return isAcceptableBigDecimal(value)
+    }
+
+    private fun normalizeBrackets(str: String): String? {
+        var str = str
+
+        // Вырежем открывающиеся скобочки на конце строки
+        var lastExtraLeftBracket = str.length
+        for (index in (str.length-1) downTo 0) {
+            if (str[index] == '(') {
+                lastExtraLeftBracket = index
+            } else {
+                break
+            }
+        }
+        str = str.substring(0, lastExtraLeftBracket)
+        if (str.isEmpty()) {
+            return str
+        }
+
+        val leftBracketsCount = str.count { it == '(' }
+        val rightBracketsCount = str.count { it == ')' }
+        if (rightBracketsCount < leftBracketsCount) {
+            // Закроем недозакрытые скобочки
+            val neededExtraRightBrackets = leftBracketsCount - rightBracketsCount
+            if (operatorsWithoutBracketsRegex.matcher(str.last().toString()).matches()) {
+                str = str.substring(0, str.length - 1) + ")".repeat(neededExtraRightBrackets) + str.last()
+            } else {
+                str += ")".repeat(neededExtraRightBrackets)
+            }
+        } else if (leftBracketsCount < rightBracketsCount) {
+            // Откроем недооткрытые скобочки
+            str = "(".repeat(rightBracketsCount - leftBracketsCount) + str
+        }
+
+        return str
     }
 
     private fun calcValueAsBigDecimal(inputStr: String): BigDecimal? {
@@ -96,12 +141,12 @@ open class CalcEditText : EditText {
             return null
         }
 
-        val lastDigit = str.indexOfLast { it in '0'..'9' }
-        if (lastDigit == -1) {
+        val lastDigitOrBracket = str.indexOfLast { it in '0'..'9' || it == '(' || it == ')' }
+        if (lastDigitOrBracket == -1) {
             return null
         }
-        // Обрежем символы справа, если они не цифры (на случай, если они операторы)
-        val croppedStr = str.substring(0..lastDigit)
+        // Обрежем символы справа, если они операторы
+        val croppedStr = str.substring(0..lastDigitOrBracket)
 
         try {
             return Expression(croppedStr).eval()
@@ -119,8 +164,8 @@ open class CalcEditText : EditText {
         // не пытаясь её дробить на части, но нам нужно уметь фильтровать не всю строку целиком,
         // а числа в ней.
         numbersFilters.forEach { numberFilter ->
-            // Разделим строку вида "2+11-4" на строки ["2", "11", "4"]
-            val numbersStrs = inputStr.split(operatorsRegex)
+            // Разделим строку вида "2+(11-4)" на строки ["2", "11", "4"]
+            val numbersStrs = inputStr.split(operatorsRegex).filter { it.isNotEmpty() }
             numbersStrs.forEach { numberStr ->
                 // mockDest - фальшивое destination для вставки отфильтрованной строки в него,
                 // нужно для того, чтобы filter думал, что numberStr куда-то вставляется и
@@ -203,13 +248,18 @@ open class CalcEditText : EditText {
     // Вычислять границы рисуемого EditText'ом текста дело непростое.
     // Поэтому код вычисления нагло сворован из https://stackoverflow.com/a/52545927
     private fun calculateTextBounds(): Rect {
+        // NOTE: скобки очень длинные,
+        // поэтому не учитываем их в рассчитывании Y позиции отрисовки текста
         val text = getText().toString()
+        val textWithoutBrackets = text.replace("(", "").replace(")", "")
+
         val textPaint = getPaint()
         textPaint.getTextBounds(text, 0, text.length, textBounds)
+        textPaint.getTextBounds(textWithoutBrackets, 0, textWithoutBrackets.length, textWithoutBracketsBounds)
 
         val baseline = getBaseline()
         textBounds.top = baseline + textBounds.top
-        textBounds.bottom = baseline + textBounds.bottom
+        textBounds.bottom = baseline + textWithoutBracketsBounds.bottom
         val startPadding = getPaddingStart()
         textBounds.left += startPadding
         textBounds.right = textPaint.measureText(text).toInt() + startPadding
