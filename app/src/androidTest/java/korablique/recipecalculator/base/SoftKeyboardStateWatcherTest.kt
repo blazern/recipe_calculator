@@ -55,6 +55,7 @@ class SoftKeyboardStateWatcherTest {
         assertFalse(notified)
 
         onView(withId(R.id.normal_edit_text)).perform(click())
+        Thread.sleep(1000) // Giving time to system keyboard
 
         assertTrue(softKeyboardWatcher.isSoftKeyboardShown)
         assertTrue(notified)
@@ -64,6 +65,7 @@ class SoftKeyboardStateWatcherTest {
     fun hidingKeyboardStateWatchingTest() {
         // Showing keyboard
         onView(withId(R.id.normal_edit_text)).perform(click())
+        Thread.sleep(1000) // Giving time to system keyboard
 
         var notified = false
         softKeyboardWatcher.addObserver(object : SoftKeyboardStateWatcher.Observer {
@@ -79,7 +81,7 @@ class SoftKeyboardStateWatcherTest {
             KeyboardHandler(activityRule.activity).hideKeyBoard()
         }
 
-        Thread.sleep(500) // Giving time to system keyboard
+        Thread.sleep(1000) // Giving time to system keyboard
         assertFalse(softKeyboardWatcher.isSoftKeyboardShown)
         assertTrue(notified)
     }
@@ -88,17 +90,18 @@ class SoftKeyboardStateWatcherTest {
     fun closesKeyboardAndCallsCallback() {
         // Showing keyboard
         onView(withId(R.id.normal_edit_text)).perform(click())
+        Thread.sleep(1000) // Giving time to system keyboard
 
         assertTrue(softKeyboardWatcher.isSoftKeyboardShown)
 
         var notified = false
         mainThreadExecutor.execute {
-            softKeyboardWatcher.hideKeyboardAndCall(timeoutMillis = 500) {
+            softKeyboardWatcher.hideKeyboardAndCall(timeoutMillis = 1000) {
                 notified = true
             }
         }
 
-        Thread.sleep(500) // Giving time to system keyboard
+        Thread.sleep(1000) // Giving time to system keyboard
         assertFalse(softKeyboardWatcher.isSoftKeyboardShown)
         assertTrue(notified)
     }
