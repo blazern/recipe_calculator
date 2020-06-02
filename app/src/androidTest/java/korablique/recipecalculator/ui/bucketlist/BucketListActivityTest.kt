@@ -60,7 +60,6 @@ import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Ingredient.Companion.create
 import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.model.Recipe.Companion.create
-import korablique.recipecalculator.model.UserNameProvider
 import korablique.recipecalculator.ui.bucketlist.BucketListActivity.Companion.createIntent
 import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController
 import korablique.recipecalculator.ui.mainactivity.MainActivity
@@ -106,7 +105,6 @@ class BucketListActivityTest {
     private lateinit var foodstuffsList: FoodstuffsList
     private lateinit var recipeDatabaseWorker: RecipeDatabaseWorker
     private lateinit var recipesRepository: RecipesRepository
-    private lateinit var userNameProvider: UserNameProvider
     private lateinit var historyController: HistoryController
     private lateinit var timeProvider: TimeProvider
     private lateinit var currentActivityProvider: CurrentActivityProvider
@@ -139,12 +137,11 @@ class BucketListActivityTest {
                         ioExecutor, databaseHolder, databaseWorker)
                 recipesRepository = RecipesRepository(
                         recipeDatabaseWorker, foodstuffsList, mainThreadExecutor)
-                userNameProvider = UserNameProvider(context)
                 currentActivityProvider = CurrentActivityProvider()
                 bucketList = BucketList(prefsManager)
                 calcKeyboardController = CalcKeyboardController()
                 listOf(mainThreadExecutor, databaseThreadExecutor, databaseWorker,
-                        historyWorker, userParametersWorker, foodstuffsList, userNameProvider,
+                        historyWorker, userParametersWorker, foodstuffsList,
                         timeProvider, currentActivityProvider, bucketList,
                         CalcKeyboardController(), recipesRepository, calcKeyboardController)
             }

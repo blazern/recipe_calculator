@@ -61,6 +61,7 @@ public class UserParametersWorkerTest {
     @Test
     public void canSaveAndRetrieveUserParameters() {
         UserParameters userParameters = new UserParameters(
+                "John Doe",
                 60,
                 Gender.MALE,
                 new LocalDate(1993, 7, 20),
@@ -92,6 +93,7 @@ public class UserParametersWorkerTest {
         // сохраняем в БД параметры пользователя
         userParametersWorker.initCache();
         UserParameters userParameters = new UserParameters(
+                "John Doe",
                 60,
                 Gender.MALE,
                 new LocalDate(1993, 7, 20),
@@ -124,13 +126,16 @@ public class UserParametersWorkerTest {
     public void requestFirstUserParametersWorksCorrectly() {
         LocalDate dateOfBirth = new LocalDate(1989, 10, 10);
         DateTime date1 = new DateTime(2019, 1, 1, 12, 0, DateTimeZone.UTC);
-        UserParameters userParameters1 = new UserParameters(50, Gender.FEMALE, dateOfBirth,
+        UserParameters userParameters1 = new UserParameters(
+                "John Doe", 50, Gender.FEMALE, dateOfBirth,
                 160, 60, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT, date1.getMillis());
         DateTime date2 = new DateTime(2019, 2, 1, 12, 0, DateTimeZone.UTC);
-        UserParameters userParameters2 = new UserParameters(50, Gender.FEMALE, dateOfBirth,
+        UserParameters userParameters2 = new UserParameters(
+                "John Doe", 50, Gender.FEMALE, dateOfBirth,
                 160, 59, Lifestyle.INSIGNIFICANT_ACTIVITY, Formula.HARRIS_BENEDICT, date2.getMillis());
         DateTime date3 = new DateTime(2019, 3, 1, 12, 0, DateTimeZone.UTC);
-        UserParameters userParameters3 = new UserParameters(50, Gender.FEMALE, dateOfBirth,
+        UserParameters userParameters3 = new UserParameters(
+                "John Doe", 50, Gender.FEMALE, dateOfBirth,
                 160, 58, Lifestyle.INSIGNIFICANT_ACTIVITY, Formula.MIFFLIN_JEOR, date3.getMillis());
         userParametersWorker.saveUserParameters(userParameters1);
         userParametersWorker.saveUserParameters(userParameters2);

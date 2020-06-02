@@ -43,10 +43,8 @@ import korablique.recipecalculator.database.room.DatabaseHolder;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.FoodstuffsTopList;
 import korablique.recipecalculator.model.Formula;
-import korablique.recipecalculator.model.FullName;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
-import korablique.recipecalculator.model.UserNameProvider;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.fcm.FCMManager;
 import korablique.recipecalculator.outside.http.BroccalcHttpContext;
@@ -110,7 +108,6 @@ public class MainActivityTestsBase {
     protected List<Long> foodstuffsIds = new ArrayList<>();
     protected BucketList bucketList;
     protected UserParameters userParameters;
-    protected UserNameProvider userNameProvider;
     protected TestingTimeProvider timeProvider;
     protected MainActivityFragmentsController fragmentsController;
     protected MainActivitySelectedDateStorage mainActivitySelectedDateStorage;
@@ -157,7 +154,6 @@ public class MainActivityTestsBase {
                         foodstuffsList = new FoodstuffsList(
                                 databaseWorker, mainThreadExecutor, computationThreadsExecutor);
                         topList = new FoodstuffsTopList(historyWorker, foodstuffsList, timeProvider);
-                        userNameProvider = new UserNameProvider(context);
                         currentActivityProvider = new CurrentActivityProvider();
                         sessionController = new SessionController(context, timeProvider, currentActivityProvider);
                         bucketList = new BucketList(prefsManager);
@@ -172,7 +168,7 @@ public class MainActivityTestsBase {
                                 new ServerUserParamsRegistry(
                                         context,
                                         mainThreadExecutor, ioExecutor, fakeGPAuthorizer,
-                                        userNameProvider, httpContext, prefsManager);
+                                        userParametersWorker, httpContext, prefsManager);
 
                         fakeNetworkStateDispatcher = new FakeNetworkStateDispatcher();
                         fakeNetworkStateDispatcher.setNetworkAvailable(true);
@@ -207,7 +203,7 @@ public class MainActivityTestsBase {
                         calcKeyboardController = new CalcKeyboardController();
 
                         return Arrays.asList(databaseWorker, historyWorker, userParametersWorker,
-                                foodstuffsList, databaseHolder, userNameProvider,
+                                foodstuffsList, databaseHolder,
                                 timeProvider, currentActivityProvider, sessionController,
                                 calcKeyboardController, bucketList, foodstuffsSearchEngine,
                                 serverUserParamsRegistry, httpContext, recipesRepository,
@@ -244,7 +240,7 @@ public class MainActivityTestsBase {
                         interactiveServerUserParamsObtainer =
                                 new InteractiveServerUserParamsObtainer(
                                         activity, activityCallbacks, serverUserParamsRegistry,
-                                        userNameProvider);
+                                        userParametersWorker);
 
                         return Arrays.asList(activity, controller, interactiveServerUserParamsObtainer,
                                 longClickedFoodstuffsHandler);
@@ -293,7 +289,7 @@ public class MainActivityTestsBase {
                         } else if (fragment instanceof ProfileFragment) {
                             ProfileController profileController = new ProfileController(
                                     activity, fragment, fragmentCallbacks, userParametersWorker, subscriptions,
-                                    userNameProvider, timeProvider);
+                                    timeProvider);
                             return Arrays.asList(subscriptions, profileController);
                         } else if (fragment instanceof HistoryFragment) {
                             HistoryController historyController = new HistoryController(
@@ -381,12 +377,10 @@ public class MainActivityTestsBase {
         historyWorker.saveFoodstuffToHistory(timeProvider.now().minusDays(7).toDate(), foodstuffsIds.get(3), 100);
 
         // сохраняем userParameters в БД
-        userParameters = new UserParameters(45, Gender.FEMALE, new LocalDate(1993, 9, 27),
+        userParameters = new UserParameters(
+                "John Doe", 45, Gender.FEMALE, new LocalDate(1993, 9, 27),
                 158, 48, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT, timeProvider.nowUtc().getMillis());
         userParametersWorker.saveUserParameters(userParameters);
-
-        FullName fullName = new FullName("Yulia", "Zhilyaeva");
-        userNameProvider.saveUserName(fullName);
 
         // каждый тест должен сам сделать launchActivity()
     }

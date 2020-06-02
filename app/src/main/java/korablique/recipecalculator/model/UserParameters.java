@@ -11,6 +11,7 @@ import java.util.Objects;
 import korablique.recipecalculator.util.FloatUtils;
 
 public class UserParameters implements Parcelable {
+    private final String name;
     private final float targetWeight;
     private final Gender gender;
     private final LocalDate dateOfBirth;
@@ -21,6 +22,7 @@ public class UserParameters implements Parcelable {
     private final long measurementsTimestamp;
 
     public UserParameters(
+            String name,
             float targetWeight,
             Gender gender,
             LocalDate dateOfBirth,
@@ -29,6 +31,7 @@ public class UserParameters implements Parcelable {
             Lifestyle lifestyle,
             Formula formula,
             long measurementsTimestamp) {
+        this.name = name;
         this.targetWeight = targetWeight;
         this.gender = gender;
         this.dateOfBirth = dateOfBirth;
@@ -40,6 +43,7 @@ public class UserParameters implements Parcelable {
     }
 
     protected UserParameters(Parcel in) {
+        name = in.readString();
         targetWeight = in.readFloat();
         gender = (Gender) in.readSerializable();
         int day = in.readInt();
@@ -61,6 +65,10 @@ public class UserParameters implements Parcelable {
         } else {
             return Goal.MASS_GATHERING;
         }
+    }
+
+    public String getName() {
+        return name;
     }
 
     public float getTargetWeight() {
@@ -113,7 +121,8 @@ public class UserParameters implements Parcelable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserParameters that = (UserParameters) o;
-        return Objects.equals(dateOfBirth, that.dateOfBirth) &&
+        return Objects.equals(name, that.name) &&
+                Objects.equals(dateOfBirth, that.dateOfBirth) &&
                 height == that.height &&
                 FloatUtils.areFloatsEquals(weight, that.weight) &&
                 Objects.equals(lifestyle, that.lifestyle) &&
@@ -147,6 +156,7 @@ public class UserParameters implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(name);
         parcel.writeFloat(targetWeight);
         parcel.writeSerializable(gender);
         parcel.writeInt(dateOfBirth.getDayOfMonth());

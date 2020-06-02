@@ -1,23 +1,21 @@
-package korablique.recipecalculator.model;
+package korablique.recipecalculator.database.room.legacy;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import androidx.annotation.VisibleForTesting;
 
-@Singleton
-public class UserNameProvider {
+public class LegacyUserNameProvider {
     private static final String USER_FIRST_NAME = "USER_FIRST_NAME";
     private static final String USER_LAST_SURNAME = "USER_LAST_SURNAME";
     private Context context;
-    @Inject
-    public UserNameProvider(Context context) {
+    public LegacyUserNameProvider(Context context) {
         this.context = context;
     }
 
-    public void saveUserName(FullName fullName) {
+    @VisibleForTesting
+    public void saveUserName(LegacyFullName fullName) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(USER_FIRST_NAME, fullName.getFirstName());
@@ -25,10 +23,10 @@ public class UserNameProvider {
         editor.apply();
     }
 
-    public FullName getUserName() {
+    public LegacyFullName getUserName() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String userFirstName = prefs.getString(USER_FIRST_NAME, "");
         String userLastName = prefs.getString(USER_LAST_SURNAME, "");
-        return new FullName(userFirstName, userLastName);
+        return new LegacyFullName(userFirstName, userLastName);
     }
 }

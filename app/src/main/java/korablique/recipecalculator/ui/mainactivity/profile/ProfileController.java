@@ -1,6 +1,5 @@
 package korablique.recipecalculator.ui.mainactivity.profile;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.content.res.Resources;
 import android.util.Pair;
@@ -29,12 +28,10 @@ import korablique.recipecalculator.base.RxFragmentSubscriptions;
 import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.dagger.FragmentScope;
 import korablique.recipecalculator.database.UserParametersWorker;
-import korablique.recipecalculator.model.FullName;
 import korablique.recipecalculator.model.GoalCalculator;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.RateCalculator;
 import korablique.recipecalculator.model.Rates;
-import korablique.recipecalculator.model.UserNameProvider;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.ui.NutritionValuesWrapper;
 import korablique.recipecalculator.ui.chart.ChartWrapper;
@@ -52,7 +49,6 @@ public class ProfileController implements FragmentCallbacks.Observer {
     private BaseFragment fragment;
     private UserParametersWorker userParametersWorker;
     private RxFragmentSubscriptions subscriptions;
-    private UserNameProvider userNameProvider;
     private ChartWrapper chartWrapper;
     private TimeProvider timeProvider;
 
@@ -63,14 +59,12 @@ public class ProfileController implements FragmentCallbacks.Observer {
             FragmentCallbacks fragmentCallbacks,
             UserParametersWorker userParametersWorker,
             RxFragmentSubscriptions subscriptions,
-            UserNameProvider userNameProvider,
             TimeProvider timeProvider) {
         this.activity = activity;
         this.fragment = fragment;
         fragmentCallbacks.addObserver(this);
         this.userParametersWorker = userParametersWorker;
         this.subscriptions = subscriptions;
-        this.userNameProvider = userNameProvider;
         this.timeProvider = timeProvider;
     }
 
@@ -78,9 +72,6 @@ public class ProfileController implements FragmentCallbacks.Observer {
     public void onFragmentViewCreated(View fragmentView, Bundle savedInstanceState) {
         LineChart chart = fragmentView.findViewById(R.id.chart);
         chartWrapper = new ChartWrapper(chart);
-
-        FullName userFullName = userNameProvider.getUserName();
-        fillUserName(fragmentView, userFullName);
 
         Single<Optional<UserParameters>> lastParamsSingle =
                 userParametersWorker.requestCurrentUserParameters();
@@ -229,12 +220,15 @@ public class ProfileController implements FragmentCallbacks.Observer {
     }
 
     private void fillUserData(View fragmentView, UserParameters userParameters) {
+        TextView nameView = fragmentView.findViewById(R.id.user_name);
         TextView ageTextView = fragmentView.findViewById(R.id.age);
         TextView heightTextView = fragmentView.findViewById(R.id.height);
         TextView targetWeightTextView = fragmentView.findViewById(R.id.target_weight);
 
         TextView weightMeasurementTextView = fragmentView.findViewById(R.id.current_weight_measurement_value);
         TextView targetWeightMeasurementTextView = fragmentView.findViewById(R.id.target_weight_measurement_value);
+
+        nameView.setText(userParameters.getName());
 
         int age = userParameters.getAge();
         String ageString = fragmentView.getResources().getQuantityString(R.plurals.years_old, age, age);
@@ -269,11 +263,6 @@ public class ProfileController implements FragmentCallbacks.Observer {
         progressBar.setProgress(proteinPercentage, fatsPercentage, carbsPercentage);
     }
 
-    private void fillUserName(View fragmentView, FullName userFullName) {
-        TextView nameView = fragmentView.findViewById(R.id.user_name);
-        nameView.setText(userFullName.toString());
-    }
-
     private void setPercentDoneProgress(int percentDone, View fragmentView) {
         if (percentDone < 100) {
             fragmentView.findViewById(R.id.done_percent_sign).setVisibility(View.VISIBLE);
@@ -295,8 +284,6 @@ public class ProfileController implements FragmentCallbacks.Observer {
 
         Rates rates = RateCalculator.calculate(lastParams);
         fillNutritionRates(fragmentView, rates);
-
-        fillUserName(fragmentView, userNameProvider.getUserName());
 
         float currentWeight = lastParams.getWeight();
         float firstWeight = firstParams.getWeight();

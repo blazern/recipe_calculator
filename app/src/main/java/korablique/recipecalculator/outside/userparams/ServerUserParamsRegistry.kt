@@ -9,7 +9,8 @@ import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.base.prefs.PrefsOwner
 import korablique.recipecalculator.base.prefs.SharedPrefsManager
-import korablique.recipecalculator.model.UserNameProvider
+import korablique.recipecalculator.database.UserParametersWorker
+import korablique.recipecalculator.database.getCurrentUserParametersKx
 import korablique.recipecalculator.outside.STATUS_ALREADY_REGISTERED
 import korablique.recipecalculator.outside.http.BroccalcHttpContext
 import korablique.recipecalculator.outside.http.BroccalcNetJobResult
@@ -47,7 +48,7 @@ class ServerUserParamsRegistry @Inject constructor(
         private val mainThreadExecutor: MainThreadExecutor,
         private val ioExecutor: IOExecutor,
         private val gpAuthorizer: GPAuthorizer,
-        private val userNameProvider: UserNameProvider,
+        private val userParamsWorker: UserParametersWorker,
         private val httpContext: BroccalcHttpContext,
         private val prefsManager: SharedPrefsManager
 ): BroccalcHttpContext.ServerErrorsObserver {
@@ -123,7 +124,7 @@ class ServerUserParamsRegistry @Inject constructor(
     }
 
     private suspend fun registerWithGpToken(token: String): GetWithRegistrationRequestResult {
-        val name = userNameProvider.userName.toString()
+        val name = userParamsWorker.getCurrentUserParametersKx()?.name ?: ""
         val url = ("${serverAddr(context)}/v1/user/register?"
                 + "name=$name&social_network_type=gp&social_network_token=$token")
 

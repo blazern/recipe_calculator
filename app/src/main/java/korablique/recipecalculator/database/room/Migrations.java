@@ -1,15 +1,22 @@
 package korablique.recipecalculator.database.room;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
+
+import korablique.recipecalculator.base.Function1arg;
 import korablique.recipecalculator.database.FoodstuffsContract;
 import korablique.recipecalculator.database.HistoryContract;
 import korablique.recipecalculator.database.IngredientContract;
-import korablique.recipecalculator.database.LegacyDatabaseValues;
+import korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues;
 import korablique.recipecalculator.database.RecipeContract;
 import korablique.recipecalculator.database.UserParametersContract;
+import korablique.recipecalculator.database.room.legacy.LegacyDatabaseUpdater;
+import korablique.recipecalculator.database.room.legacy.LegacyUserNameProvider;
+import korablique.recipecalculator.database.room.legacy.LegacyFullName;
 
 import static korablique.recipecalculator.database.IngredientContract.INGREDIENT_TABLE_NAME;
 import static korablique.recipecalculator.database.RecipeContract.RECIPE_TABLE_NAME;
@@ -186,6 +193,52 @@ public class Migrations {
                     + "index_" + INGREDIENT_TABLE_NAME + "_" + IngredientContract.COLUMN_NAME_INGREDIENT_FOODSTUFF_ID
                     + " ON " + INGREDIENT_TABLE_NAME
                     + "(" + IngredientContract.COLUMN_NAME_INGREDIENT_FOODSTUFF_ID + ")");
+        }
+    };
+
+    static final Function1arg<Migration, Context> MIGRATION_7_8 = (context) -> new Migration(7, 8) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Add 'name' column
+
+            String tmpTableName = USER_PARAMETERS_TABLE_NAME + "tmp";
+            database.execSQL(
+                    "CREATE TABLE " + tmpTableName +" (" +
+                            UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_NAME + " TEXT NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_TARGET_WEIGHT + " REAL NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_GENDER + " INTEGER NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_DAY_OF_BIRTH + " INTEGER NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH + " INTEGER NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH + " INTEGER NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_HEIGHT + " INTEGER NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_USER_WEIGHT + " REAL NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_LIFESTYLE + " INTEGER NOT NULL, " +
+                            UserParametersContract.COLUMN_NAME_FORMULA + " INTEGER NOT NULL," +
+                            UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP + " INTEGER NOT NULL)");
+
+            LegacyUserNameProvider legacyUserNameProvider = new LegacyUserNameProvider(context);
+            LegacyFullName name = legacyUserNameProvider.getUserName();
+
+            database.execSQL("INSERT INTO " + tmpTableName +
+                    " SELECT " +
+                    UserParametersContract.ID + ", " +
+                    "? AS " + UserParametersContract.COLUMN_NAME_NAME + ", " +
+                    UserParametersContract.COLUMN_NAME_TARGET_WEIGHT + ", " +
+                    UserParametersContract.COLUMN_NAME_GENDER + ", " +
+                    UserParametersContract.COLUMN_NAME_DAY_OF_BIRTH + ", " +
+                    UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH + ", " +
+                    UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH + ", " +
+                    UserParametersContract.COLUMN_NAME_HEIGHT + ", " +
+                    UserParametersContract.COLUMN_NAME_USER_WEIGHT + ", " +
+                    UserParametersContract.COLUMN_NAME_LIFESTYLE + ", " +
+                    UserParametersContract.COLUMN_NAME_FORMULA + ", " +
+                    UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP +
+                    " FROM " + USER_PARAMETERS_TABLE_NAME,
+                    new Object[]{ name.toString() });
+
+            database.execSQL("DROP TABLE " + USER_PARAMETERS_TABLE_NAME);
+            database.execSQL("ALTER TABLE " + tmpTableName + " RENAME TO " + USER_PARAMETERS_TABLE_NAME);
         }
     };
 

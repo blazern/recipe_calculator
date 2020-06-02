@@ -1,4 +1,4 @@
-package korablique.recipecalculator.database.room;
+package korablique.recipecalculator.database.room.legacy;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import korablique.recipecalculator.database.FoodstuffsContract;
 import korablique.recipecalculator.database.HistoryContract;
-import korablique.recipecalculator.database.LegacyDatabaseValues;
 import korablique.recipecalculator.database.UserParametersContract;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
@@ -27,8 +26,8 @@ import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_D
 import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_FOODSTUFF_ID;
 import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_WEIGHT;
 import static korablique.recipecalculator.database.HistoryContract.HISTORY_TABLE_NAME;
-import static korablique.recipecalculator.database.LegacyDatabaseValues.COLUMN_NAME_COEFFICIENT;
-import static korablique.recipecalculator.database.LegacyDatabaseValues.COLUMN_NAME_GOAL;
+import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_COEFFICIENT;
+import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_GOAL;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_AGE;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_FORMULA;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_GENDER;

@@ -50,6 +50,7 @@ public class EntityConverter {
 
     public static UserParameters toUserParameters(UserParametersEntity entity) {
         return new UserParameters(
+                entity.getName(),
                 entity.getTargetWeight(),
                 Gender.fromId(entity.getGenderId()),
                 new LocalDate(entity.getYearOfBirth(), entity.getMonthOfBirth(), entity.getDayOfBirth()),
@@ -66,6 +67,7 @@ public class EntityConverter {
         int month = dateOfBirth.getMonthOfYear();
         int year = dateOfBirth.getYear();
         return new UserParametersEntity(
+                userParameters.getName(),
                 userParameters.getTargetWeight(),
                 userParameters.getGender().getId(),
                 day, month, year,

@@ -275,14 +275,14 @@ class AuthTest : MainActivityTestsBase() {
         val otherServerUserParamsRegistry1 =
                 ServerUserParamsRegistry(
                         context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
-                        userNameProvider, httpContext, prefsManager)
+                        userParametersWorker, httpContext, prefsManager)
          assertEquals(params, otherServerUserParamsRegistry1.getUserParams())
 
         ServerUserParamsRegistry.storeServerUserParamsPersistently(null, prefsManager)
         val otherServerUserParamsRegistry2 =
                 ServerUserParamsRegistry(
                         context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
-                        userNameProvider, httpContext, prefsManager)
+                        userParametersWorker, httpContext, prefsManager)
         assertEquals(null, otherServerUserParamsRegistry2.getUserParams())
     }
 
@@ -293,7 +293,7 @@ class AuthTest : MainActivityTestsBase() {
         val otherServerUserParamsRegistry =
                 ServerUserParamsRegistry(
                         context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
-                        userNameProvider, httpContext, prefsManager)
+                        userParametersWorker, httpContext, prefsManager)
         // Null, even though we stored params
         assertEquals(null, otherServerUserParamsRegistry.getUserParams())
     }
@@ -305,7 +305,7 @@ class AuthTest : MainActivityTestsBase() {
         val otherServerUserParamsRegistry =
                 ServerUserParamsRegistry(
                         context, mainThreadExecutor, ioExecutor, FakeGPAuthorizer(),
-                        userNameProvider, httpContext, prefsManager)
+                        userParametersWorker, httpContext, prefsManager)
         // Null, even though we stored params
         assertEquals(null, otherServerUserParamsRegistry.getUserParams())
     }

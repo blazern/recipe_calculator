@@ -1,6 +1,6 @@
-package korablique.recipecalculator.model
+package korablique.recipecalculator.database.room.legacy
 
-class FullName(val firstName: String, val lastName: String) {
+class LegacyFullName(val firstName: String, val lastName: String) {
     override fun toString(): String {
         return if (lastName.isEmpty()) {
             firstName

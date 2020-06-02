@@ -40,10 +40,8 @@ import korablique.recipecalculator.base.RxActivitySubscriptions;
 import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.Formula;
-import korablique.recipecalculator.model.FullName;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
-import korablique.recipecalculator.model.UserNameProvider;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry;
 import korablique.recipecalculator.ui.DatePickerFragment;
@@ -67,8 +65,6 @@ public class UserParametersActivity extends BaseActivity {
     UserParametersWorker userParametersWorker;
     @Inject
     RxActivitySubscriptions subscriptions;
-    @Inject
-    UserNameProvider userNameProvider;
     @Inject
     TimeProvider timeProvider;
     @Inject
@@ -134,12 +130,9 @@ public class UserParametersActivity extends BaseActivity {
         saveUserParamsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String name = nameEditText.getText().toString();
-                FullName fullName = new FullName(name, "");
-                userNameProvider.saveUserName(fullName);
-                serverUserParamsRegistry.updateUserNameIgnoreResult(fullName.toString());
-
                 UserParameters userParameters = extractUserParameters();
+                serverUserParamsRegistry.updateUserNameIgnoreResult(userParameters.getName());
+
                 Completable callback = userParametersWorker.saveUserParameters(userParameters);
                 subscriptions.subscribe(callback, () -> {
                     // если пользователь первый раз открыл приложение и у него ещё нет данных,
@@ -227,7 +220,6 @@ public class UserParametersActivity extends BaseActivity {
             if (userParametersOptional.isPresent()) {
                 UserParameters oldUserParams = userParametersOptional.get();
                 fillWithOldUserParameters(oldUserParams);
-                nameEditText.setText(userNameProvider.getUserName().toString());
             } else {
                 // Let's not confuse the user by showing them complex formulas names on first start
                 findViewById(R.id.formula_text_view).setVisibility(View.GONE);
@@ -239,11 +231,11 @@ public class UserParametersActivity extends BaseActivity {
         if (BuildConfig.DEBUG) {
             findViewById(R.id.personal_info_title).setOnClickListener(v -> {
                 UserParameters debugUserParams = new UserParameters(
+                        "Debug Name",
                         65, Gender.MALE, LocalDate.parse("1993-07-15"),
                         165, 62, Lifestyle.PASSIVE_LIFESTYLE,
                         Formula.HARRIS_BENEDICT, 0);
                 fillWithOldUserParameters(debugUserParams);
-                nameEditText.setText("Debug Name");
             });
         }
     }
@@ -349,6 +341,8 @@ public class UserParametersActivity extends BaseActivity {
     }
 
     private UserParameters extractUserParameters() {
+        String name = nameEditText.getText().toString();
+
         float targetWeight = Float.parseFloat(targetWeightEditText.getText().toString());
 
         Gender gender;
@@ -372,10 +366,13 @@ public class UserParametersActivity extends BaseActivity {
 
         long nowTimestamp = timeProvider.nowUtc().getMillis();
 
-        return new UserParameters(targetWeight, gender, dateOfBirth, height, weight, lifestyle, formula, nowTimestamp);
+        return new UserParameters(name, targetWeight, gender, dateOfBirth,
+                height, weight, lifestyle, formula, nowTimestamp);
     }
 
     private void fillWithOldUserParameters(UserParameters oldUserParams) {
+        nameEditText.setText(oldUserParams.getName());
+
         Spinner lifestyleSpinner = findViewById(R.id.lifestyle_spinner);
         Spinner formulaSpinner = findViewById(R.id.formula_spinner);
 

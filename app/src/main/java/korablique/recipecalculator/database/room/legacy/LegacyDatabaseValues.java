@@ -1,4 +1,4 @@
-package korablique.recipecalculator.database;
+package korablique.recipecalculator.database.room.legacy;
 
 import korablique.recipecalculator.util.FloatUtils;
 import korablique.recipecalculator.model.Formula;

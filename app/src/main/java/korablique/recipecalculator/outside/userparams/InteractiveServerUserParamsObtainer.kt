@@ -6,7 +6,8 @@ import korablique.recipecalculator.R
 import korablique.recipecalculator.base.ActivityCallbacks
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.dagger.ActivityScope
-import korablique.recipecalculator.model.UserNameProvider
+import korablique.recipecalculator.database.UserParametersWorker
+import korablique.recipecalculator.database.getCurrentUserParametersKx
 import korablique.recipecalculator.outside.http.BroccalcNetJobResult
 import korablique.recipecalculator.outside.http.extractException
 import korablique.recipecalculator.ui.TwoOptionsDialog
@@ -31,7 +32,7 @@ open class InteractiveServerUserParamsObtainer @Inject constructor(
         private val activity: BaseActivity,
         private val activityCallbacks: ActivityCallbacks,
         private val serverUserParamsRegistry: ServerUserParamsRegistry,
-        private val userNameProvider: UserNameProvider
+        private val userParamsWorker: UserParametersWorker
 ) : ActivityCallbacks.Observer {
     init {
         if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED)) {
@@ -70,8 +71,8 @@ open class InteractiveServerUserParamsObtainer @Inject constructor(
         val paramsResult2 = serverUserParamsRegistry.getUserParamsMaybeMoveAccount(activity)
         when (paramsResult2) {
             is GetWithAccountMoveRequestResult.Success -> {
-                val updateResult = serverUserParamsRegistry
-                        .updateUserName(userNameProvider.userName.toString())
+                val name = userParamsWorker.getCurrentUserParametersKx()?.name ?: ""
+                val updateResult = serverUserParamsRegistry.updateUserName(name)
                 if (updateResult is BroccalcNetJobResult.Error) {
                     return ObtainResult.Failure(updateResult.extractException())
                 }

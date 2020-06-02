@@ -1,5 +1,6 @@
 package korablique.recipecalculator.database.room;
 
+import android.content.Context;
 import android.database.Cursor;
 
 import org.junit.Assert;
@@ -13,14 +14,17 @@ import androidx.room.testing.MigrationTestHelper;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory;
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import korablique.recipecalculator.database.DatabaseUtils;
+import korablique.recipecalculator.database.room.legacy.LegacyUserNameProvider;
+import korablique.recipecalculator.database.room.legacy.LegacyFullName;
 import korablique.recipecalculator.util.FloatUtils;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static korablique.recipecalculator.database.IngredientContract.INGREDIENT_TABLE_NAME;
 import static korablique.recipecalculator.database.RecipeContract.RECIPE_TABLE_NAME;
+import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_NAME;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_TARGET_WEIGHT;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_USER_WEIGHT;
 import static korablique.recipecalculator.database.UserParametersContract.USER_PARAMETERS_TABLE_NAME;
@@ -29,6 +33,8 @@ import static korablique.recipecalculator.database.room.Migrations.MIGRATION_3_4
 import static korablique.recipecalculator.database.room.Migrations.MIGRATION_4_5;
 import static korablique.recipecalculator.database.room.Migrations.MIGRATION_5_6;
 import static korablique.recipecalculator.database.room.Migrations.MIGRATION_6_7;
+import static korablique.recipecalculator.database.room.Migrations.MIGRATION_7_8;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -39,7 +45,7 @@ public class MigrationTest {
     public MigrationTestHelper helper;
 
     public MigrationTest() {
-        helper = new MigrationTestHelper(InstrumentationRegistry.getInstrumentation(),
+        helper = new MigrationTestHelper(getInstrumentation(),
                 AppDatabase.class.getCanonicalName(),
                 new FrameworkSQLiteOpenHelperFactory());
     }
@@ -134,5 +140,30 @@ public class MigrationTest {
         SupportSQLiteDatabase db = helper.runMigrationsAndValidate(TEST_DB, 7, true, MIGRATION_6_7);
         Assert.assertTrue(DatabaseUtils.tableExists(db, RECIPE_TABLE_NAME));
         Assert.assertTrue(DatabaseUtils.tableExists(db, INGREDIENT_TABLE_NAME));
+    }
+
+    @Test
+    public void migrate7To8() throws IOException {
+        Context context = getInstrumentation().getTargetContext();
+        LegacyUserNameProvider legacyUserNameProvider = new LegacyUserNameProvider(context);
+        legacyUserNameProvider.saveUserName(new LegacyFullName("John", "Doe"));
+
+        SupportSQLiteDatabase db = helper.createDatabase(TEST_DB, 7);
+        int id = 1, targetWeight = 45, genderId = 1, birthDay = 25, birthMonth = 3, birthYear = 1993,
+                height = 158, weight = 48, lifestyleId = 0, formulaId = 0, measurementsTime = 123;
+        db.execSQL("INSERT INTO " + USER_PARAMETERS_TABLE_NAME + " VALUES ("
+                + id + ", " + targetWeight + ", " + genderId + ", " +
+                birthDay + ", " + birthMonth + ", " + birthYear + ", " + height + ", " +
+                weight + ", " + lifestyleId + ", " + formulaId + ", " + measurementsTime + ")");
+
+        db = helper.runMigrationsAndValidate(
+                TEST_DB, 8, true, MIGRATION_7_8.call(context));
+
+        Cursor cursor = db.query("SELECT * FROM " + USER_PARAMETERS_TABLE_NAME);
+        assertEquals(1, cursor.getCount());
+        while (cursor.moveToNext()) {
+            String name = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_NAME));
+            Assert.assertEquals(legacyUserNameProvider.getUserName().toString(), name);
+        }
     }
 }

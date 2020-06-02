@@ -1,5 +1,6 @@
 package korablique.recipecalculator.database.room;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -12,6 +13,7 @@ import static korablique.recipecalculator.database.UserParametersContract.COLUMN
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_LIFESTYLE;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH;
+import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_NAME;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_TARGET_WEIGHT;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_USER_WEIGHT;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH;
@@ -22,7 +24,11 @@ public class UserParametersEntity {
     @ColumnInfo(name = UserParametersContract.ID)
     @PrimaryKey(autoGenerate = true)
     private long id;
-    
+
+    @NonNull
+    @ColumnInfo(name = COLUMN_NAME_NAME)
+    private String name;
+
     @ColumnInfo(name = COLUMN_NAME_TARGET_WEIGHT)
     private float targetWeight;
 
@@ -54,6 +60,7 @@ public class UserParametersEntity {
     private long measurementsTimestamp;
 
     public UserParametersEntity(
+            String name,
             float targetWeight,
             int genderId,
             int dayOfBirth,
@@ -64,6 +71,7 @@ public class UserParametersEntity {
             int lifestyleId,
             int formulaId,
             long measurementsTimestamp) {
+        this.name = name;
         this.targetWeight = targetWeight;
         this.genderId = genderId;
         this.dayOfBirth = dayOfBirth;
@@ -74,6 +82,14 @@ public class UserParametersEntity {
         this.lifestyleId = lifestyleId;
         this.formulaId = formulaId;
         this.measurementsTimestamp = measurementsTimestamp;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public float getTargetWeight() {

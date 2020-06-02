@@ -57,7 +57,7 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
         String currentWeightString = toDecimalString(userParameters.getWeight());
         onView(withId(R.id.current_weight_measurement_value)).check(matches(withText(currentWeightString)));
 
-        onView(withId(R.id.user_name)).check(matches(withText(userNameProvider.getUserName().toString())));
+        onView(withId(R.id.user_name)).check(matches(withText(userParameters.getName())));
         DateTime measurementsDate = new DateTime(userParameters.getMeasurementsTimestamp());
         String measurementsDateString = measurementsDate.toString(mActivityRule.getActivity().getString(R.string.date_format));
         onView(withId(R.id.last_measurement_date_measurement_value)).check(matches(withText(measurementsDateString)));
@@ -92,7 +92,8 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
         clearAllData();
         // сохраняем параметры на дату в прошлом 12.8+1.2019 12:00
         DateTime lastDate = new DateTime(2019, 8, 12, 12, 12, 0, DateTimeZone.UTC);
-        UserParameters lastParams = new UserParameters(45, Gender.FEMALE, new LocalDate(1993, 9, 27),
+        UserParameters lastParams = new UserParameters(
+                "John Doe", 45, Gender.FEMALE, new LocalDate(1993, 9, 27),
                 158, 49.6f, Lifestyle.ACTIVE_LIFESTYLE, Formula.HARRIS_BENEDICT, lastDate.getMillis());
         userParametersWorker.saveUserParameters(lastParams);
 
@@ -136,7 +137,7 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
         for (int monthIndex = 24; monthIndex >= 1; --monthIndex) {
             for (int measurementIndex = 0; measurementIndex < 5; ++measurementIndex) {
                 UserParameters userParameters = new UserParameters(
-                        65, Gender.MALE, new LocalDate(1993, 7, 20), 165, 65+monthIndex+measurementIndex,
+                        "John Doe", 65, Gender.MALE, new LocalDate(1993, 7, 20), 165, 65+monthIndex+measurementIndex,
                         Lifestyle.PROFESSIONAL_SPORTS, Formula.MIFFLIN_JEOR, measurementTime.getMillis());
                 userParametersWorker.saveUserParameters(userParameters);
             }

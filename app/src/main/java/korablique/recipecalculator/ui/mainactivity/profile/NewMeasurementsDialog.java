@@ -82,6 +82,7 @@ public class NewMeasurementsDialog extends BaseBottomDialog {
                 EditText newWeightView = dialogLayout.findViewById(R.id.new_measurement_value);
                 float newWeight = Float.parseFloat(newWeightView.getText().toString());
                 UserParameters paramsWithNewWeight = new UserParameters(
+                        lastParams.getName(),
                         lastParams.getTargetWeight(),
                         lastParams.getGender(),
                         lastParams.getDateOfBirth(),

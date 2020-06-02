@@ -13,7 +13,6 @@ import korablique.recipecalculator.R;
 import korablique.recipecalculator.base.BaseFragment;
 import korablique.recipecalculator.base.RxFragmentSubscriptions;
 import korablique.recipecalculator.database.UserParametersWorker;
-import korablique.recipecalculator.model.UserNameProvider;
 
 public class ProfileFragment extends BaseFragment {
     @Inject
@@ -22,8 +21,6 @@ public class ProfileFragment extends BaseFragment {
     UserParametersWorker userParametersWorker;
     @Inject
     RxFragmentSubscriptions subscriptions;
-    @Inject
-    UserNameProvider userNameProvider;
 
     @Override
     protected View createView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

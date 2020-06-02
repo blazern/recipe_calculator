@@ -27,7 +27,7 @@ import korablique.recipecalculator.database.DatabaseThreadExecutor;
 import korablique.recipecalculator.database.DatabaseUtils;
 import korablique.recipecalculator.database.FoodstuffsContract;
 import korablique.recipecalculator.database.HistoryContract;
-import korablique.recipecalculator.database.LegacyDatabaseValues;
+import korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues;
 import korablique.recipecalculator.database.UserParametersContract;
 import korablique.recipecalculator.database.room.AppDatabase;
 import korablique.recipecalculator.database.room.DatabaseHolder;
@@ -48,8 +48,8 @@ import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_D
 import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_FOODSTUFF_ID;
 import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_WEIGHT;
 import static korablique.recipecalculator.database.HistoryContract.HISTORY_TABLE_NAME;
-import static korablique.recipecalculator.database.LegacyDatabaseValues.COLUMN_NAME_COEFFICIENT;
-import static korablique.recipecalculator.database.LegacyDatabaseValues.COLUMN_NAME_GOAL;
+import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_COEFFICIENT;
+import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_GOAL;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_AGE;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_FORMULA;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_GENDER;
@@ -57,8 +57,8 @@ import static korablique.recipecalculator.database.UserParametersContract.COLUMN
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_LIFESTYLE;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_USER_WEIGHT;
 import static korablique.recipecalculator.database.UserParametersContract.USER_PARAMETERS_TABLE_NAME;
-import static korablique.recipecalculator.database.room.LegacyDatabaseUpdater.COLUMN_NAME_VERSION;
-import static korablique.recipecalculator.database.room.LegacyDatabaseUpdater.TABLE_DATABASE_VERSION;
+import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseUpdater.COLUMN_NAME_VERSION;
+import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseUpdater.TABLE_DATABASE_VERSION;
 import static korablique.recipecalculator.database.room.Migrations.MIGRATION_1_2;
 
 /**
