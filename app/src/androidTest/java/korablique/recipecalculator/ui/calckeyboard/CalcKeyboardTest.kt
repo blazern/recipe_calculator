@@ -14,6 +14,7 @@ import androidx.test.runner.AndroidJUnit4
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.CurrentActivityProvider
 import korablique.recipecalculator.test.CalcKeyboardTestActivity
+import korablique.recipecalculator.util.EspressoUtils.isNotDisplayed
 import korablique.recipecalculator.util.FloatUtils
 import korablique.recipecalculator.util.InjectableActivityTestRule
 import korablique.recipecalculator.util.SyncMainThreadExecutor
@@ -266,12 +267,18 @@ class CalcKeyboardTest {
         onView(withId(R.id.calc_edit_text_with_next_focus)).perform(click())
         onView(withId(R.id.calc_keyboard)).check(matches(isDisplayed()))
         assertEquals(R.id.calc_edit_text_with_next_focus, getFocusedViewID())
+        // Проверяем, что enter кнопки нет, но есть кнопка смены фокуса
+        onView(withId(R.id.button_next)).check(matches(isDisplayed()))
+        onView(withId(R.id.button_enter)).check(isNotDisplayed())
 
-        // Жмякаем enter, проверяем, что фокус сместился
-        onView(withId(R.id.button_enter)).perform(click())
+        // Жмякаем next, проверяем, что фокус сместился
+        onView(withId(R.id.button_next)).perform(click())
         assertEquals(R.id.calc_edit_text_without_next_focus, getFocusedViewID())
+        // Проверяем, что появилась enter, а кнопка смены фокуса ушла
+        onView(withId(R.id.button_next)).check(isNotDisplayed())
+        onView(withId(R.id.button_enter)).check(matches(isDisplayed()))
 
-        // Жмякаем enter ещё раз, проверяем, что клавиатура закрылась
+        // Жмякаем enter, проверяем, что клавиатура закрылась
         onView(withId(R.id.button_enter)).perform(click())
         onView(withId(R.id.calc_keyboard)).check(doesNotExist())
     }

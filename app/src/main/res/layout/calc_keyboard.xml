@@ -1,6 +1,6 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/calc_keyboard"
     android:layout_width="match_parent"
     android:layout_height="280dp"
@@ -232,5 +232,13 @@
             android:layout_weight="1"
             android:src="@drawable/ic_calc_keyboard_enter_selector"
             android:background="@null"/>
+        <ImageButton
+            android:id="@+id/button_next"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:src="@drawable/ic_calc_keyboard_next_selector"
+            android:background="@null"
+            tools:visibility="gone"/>
     </LinearLayout>
 </LinearLayout>

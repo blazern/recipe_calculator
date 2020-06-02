@@ -12,6 +12,7 @@ import android.view.inputmethod.InputConnection
 import android.widget.LinearLayout
 
 import korablique.recipecalculator.R
+import korablique.recipecalculator.base.logging.Log
 
 const val INTERVAL_BETWEEN_BACKSPACE_HOLD_DELETIONS = 70L
 
@@ -65,6 +66,7 @@ class CalcKeyboard : LinearLayout {
         findViewById<View>(R.id.button_delete).setOnTouchListener(this::onBackspaceKeyEvent)
 
         findViewById<View>(R.id.button_enter).setOnClickListener(this::onEnterClick)
+        findViewById<View>(R.id.button_next).setOnClickListener(this::onNextFocusClick)
     }
 
     /**
@@ -75,6 +77,13 @@ class CalcKeyboard : LinearLayout {
                 editText.onCreateInputConnection(EditorInfo()),
                 editText,
                 hideRequestFun)
+        if (findNextFocus() != null) {
+            findViewById<View>(R.id.button_enter).visibility = View.GONE
+            findViewById<View>(R.id.button_next).visibility = View.VISIBLE
+        } else {
+            findViewById<View>(R.id.button_enter).visibility = View.VISIBLE
+            findViewById<View>(R.id.button_next).visibility = View.GONE
+        }
     }
 
     private fun onButtonClick(v: View) {
@@ -144,22 +153,39 @@ class CalcKeyboard : LinearLayout {
         if (connection == null) {
             return
         }
+        connection.hideRequestFun.invoke(connection.editText)
+    }
+
+    private fun onNextFocusClick(v: View) {
+        val connection = this.connection
+        if (connection == null) {
+            return
+        }
+
+        val nextFocus = findNextFocus()
+        if (nextFocus == null) {
+            Log.e("onNextFocusClick invoked but nextFocus == null")
+            connection.hideRequestFun.invoke(connection.editText)
+            return
+        }
+        nextFocus.requestFocus()
+    }
+
+    private fun findNextFocus(): View? {
+        val connection = this.connection
+        if (connection == null) {
+            return null
+        }
 
         val nextFocusId = connection.editText.nextFocusDownId
         if (nextFocusId == View.NO_ID) {
-            connection.hideRequestFun.invoke(connection.editText)
-            return
+            return null
         }
 
         var root: View = connection.editText
         while (root.parent is View) {
             root = root.parent as View
         }
-        val nextFocus = root.findViewById<View>(nextFocusId)
-        if (nextFocus == null) {
-            connection.hideRequestFun.invoke(connection.editText)
-            return
-        }
-        nextFocus.requestFocus()
+        return root.findViewById(nextFocusId)
     }
 }
