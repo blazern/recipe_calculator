@@ -2,13 +2,19 @@ package korablique.recipecalculator.database;
 
 import org.joda.time.DateTime;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import korablique.recipecalculator.base.Function0arg;
 import korablique.recipecalculator.base.Optional;
+import korablique.recipecalculator.base.RxGlobalSubscriptions;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.database.room.AppDatabase;
 import korablique.recipecalculator.database.room.DatabaseHolder;
@@ -16,21 +22,38 @@ import korablique.recipecalculator.database.room.UserParametersDao;
 import korablique.recipecalculator.database.room.UserParametersEntity;
 import korablique.recipecalculator.model.UserParameters;
 
+@Singleton
 public class UserParametersWorker {
     private DatabaseHolder databaseHolder;
+    private final List<Observer> observers = new ArrayList<>();
     private final DatabaseThreadExecutor databaseThreadExecutor;
     private final MainThreadExecutor mainThreadExecutor;
+    private final RxGlobalSubscriptions globalSubscriptions;
     private volatile Single<Optional<UserParameters>> cachedCurrentUserParameters;
     private volatile Single<Optional<UserParameters>> cachedFirstUserParameters;
 
+    public interface Observer {
+        void onCurrentUserParametersChanged(UserParameters userParams);
+    }
 
+    @Inject
     public UserParametersWorker(
             DatabaseHolder databaseHolder,
             MainThreadExecutor mainThreadExecutor,
-            DatabaseThreadExecutor databaseThreadExecutor) {
+            DatabaseThreadExecutor databaseThreadExecutor,
+            RxGlobalSubscriptions globalSubscriptions) {
         this.databaseHolder = databaseHolder;
         this.mainThreadExecutor = mainThreadExecutor;
         this.databaseThreadExecutor = databaseThreadExecutor;
+        this.globalSubscriptions = globalSubscriptions;
+    }
+
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    public void removeObserver(Observer observer) {
+        observers.remove(observer);
     }
 
     public void initCache() {
@@ -138,13 +161,7 @@ public class UserParametersWorker {
                 .observeOn(mainThreadExecutor.asScheduler())
                 .cache();
 
-        // Сразу подписываемся на получивщийся Completable, чтобы форсировать немедленный
-        // старт операции без ожидания подписчиков (кажется естественным, что клиенты могут вызывать
-        // saveUserParameters и не особо интересоваться моментом, когда сохранение будет завершено,
-        // т.е. вообще не подписываться на Completable).
-        result.subscribe();
-
-        // Мы вставили новые параметры пользователя в БД, нужно не забыть
+        // Мы вставляем новые параметры пользователя в БД, нужно не забыть
         // обновить закешированное значение.
         cachedCurrentUserParameters = Single.just(Optional.of(userParameters));
 
@@ -163,6 +180,13 @@ public class UserParametersWorker {
                     return Single.just(Optional.of(userParameters));
                 }
             });
+
+        Disposable d = result.subscribe(() -> {
+            for (Observer observer : observers) {
+                observer.onCurrentUserParametersChanged(userParameters);
+            }
+        });
+        globalSubscriptions.add(d);
 
         return result;
     }

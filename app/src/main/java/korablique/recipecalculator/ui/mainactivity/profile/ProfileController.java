@@ -44,7 +44,7 @@ import static korablique.recipecalculator.ui.DecimalUtils.toDecimalString;
 import static korablique.recipecalculator.util.SpinnerTuner.startTuningSpinner;
 
 @FragmentScope
-public class ProfileController implements FragmentCallbacks.Observer {
+public class ProfileController implements FragmentCallbacks.Observer, UserParametersWorker.Observer {
     private BaseActivity activity;
     private BaseFragment fragment;
     private UserParametersWorker userParametersWorker;
@@ -69,25 +69,16 @@ public class ProfileController implements FragmentCallbacks.Observer {
     }
 
     @Override
+    public void onFragmentDestroy() {
+        userParametersWorker.removeObserver(this);
+    }
+
+    @Override
     public void onFragmentViewCreated(View fragmentView, Bundle savedInstanceState) {
         LineChart chart = fragmentView.findViewById(R.id.chart);
         chartWrapper = new ChartWrapper(chart);
 
-        Single<Optional<UserParameters>> lastParamsSingle =
-                userParametersWorker.requestCurrentUserParameters();
-
-        Single<Optional<UserParameters>> firstParamsSingle =
-                userParametersWorker.requestFirstUserParameters();
-
-        Single<Pair<Optional<UserParameters>, Optional<UserParameters>>> singlePair = firstParamsSingle.zipWith(lastParamsSingle,
-                Pair::create);
-
-        subscriptions.subscribe(singlePair, new Consumer<Pair<Optional<UserParameters>, Optional<UserParameters>>>() {
-            @Override
-            public void accept(Pair<Optional<UserParameters>, Optional<UserParameters>> firstAndLastParams) {
-                fillProfile(firstAndLastParams.first.get(), firstAndLastParams.second.get(), fragmentView);
-            }
-        });
+        fillProfile(fragmentView);
 
         View editProfileButton = fragmentView.findViewById(R.id.layout_button_edit);
         editProfileButton.setOnClickListener(view -> {
@@ -129,6 +120,26 @@ public class ProfileController implements FragmentCallbacks.Observer {
                     fillChart(fragmentView);
                 })
                 .tune();
+
+        userParametersWorker.addObserver(this);
+    }
+
+    private void fillProfile(View fragmentView) {
+        Single<Optional<UserParameters>> lastParamsSingle =
+                userParametersWorker.requestCurrentUserParameters();
+
+        Single<Optional<UserParameters>> firstParamsSingle =
+                userParametersWorker.requestFirstUserParameters();
+
+        Single<Pair<Optional<UserParameters>, Optional<UserParameters>>> singlePair = firstParamsSingle.zipWith(lastParamsSingle,
+                Pair::create);
+
+        subscriptions.subscribe(singlePair, new Consumer<Pair<Optional<UserParameters>, Optional<UserParameters>>>() {
+            @Override
+            public void accept(Pair<Optional<UserParameters>, Optional<UserParameters>> firstAndLastParams) {
+                fillProfile(firstAndLastParams.first.get(), firstAndLastParams.second.get(), fragmentView);
+            }
+        });
     }
 
     private void fillChart(View fragmentView) {
@@ -290,5 +301,11 @@ public class ProfileController implements FragmentCallbacks.Observer {
         float targetWeight = lastParams.getTargetWeight();
         int percentDone = GoalCalculator.calculateProgressPercentage(currentWeight, firstWeight, targetWeight);
         setPercentDoneProgress(percentDone, fragmentView);
+    }
+
+    @Override
+    public void onCurrentUserParametersChanged(UserParameters userParams) {
+        fillProfile(fragment.getView());
+        fillChart(fragment.getView());
     }
 }

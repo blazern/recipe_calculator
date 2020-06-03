@@ -150,7 +150,8 @@ public class MainActivityTestsBase {
                                 databaseHolder, mainThreadExecutor, databaseThreadExecutor,
                                 timeProvider);
                         userParametersWorker = new UserParametersWorker(
-                                databaseHolder, mainThreadExecutor, databaseThreadExecutor);
+                                databaseHolder, mainThreadExecutor, databaseThreadExecutor,
+                                new RxGlobalSubscriptions());
                         foodstuffsList = new FoodstuffsList(
                                 databaseWorker, mainThreadExecutor, computationThreadsExecutor);
                         topList = new FoodstuffsTopList(historyWorker, foodstuffsList, timeProvider);

@@ -83,15 +83,6 @@ public abstract class BroccalcApplicationModule {
 
     @Provides
     @Singleton
-    public static UserParametersWorker provideUserParametersWorker(
-            DatabaseHolder databaseHolder,
-            MainThreadExecutor mainThreadExecutor,
-            DatabaseThreadExecutor databaseThreadExecutor) {
-        return new UserParametersWorker(databaseHolder, mainThreadExecutor, databaseThreadExecutor);
-    }
-
-    @Provides
-    @Singleton
     public static HttpClient provideHttpClient() {
         return new HttpClientImpl();
     }

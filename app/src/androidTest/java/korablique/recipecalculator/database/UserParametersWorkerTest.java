@@ -19,6 +19,7 @@ import androidx.test.runner.AndroidJUnit4;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import korablique.recipecalculator.base.Optional;
+import korablique.recipecalculator.base.RxGlobalSubscriptions;
 import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.database.room.DatabaseHolder;
 import korablique.recipecalculator.model.Formula;
@@ -30,6 +31,7 @@ import korablique.recipecalculator.InstantMainThreadExecutor;
 import korablique.recipecalculator.util.TestingTimeProvider;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -55,7 +57,8 @@ public class UserParametersWorkerTest {
 
         userParametersWorker =
                 new UserParametersWorker(
-                        databaseHolder, new InstantMainThreadExecutor(), spiedDatabaseThreadExecutor);
+                        databaseHolder, new InstantMainThreadExecutor(),
+                        spiedDatabaseThreadExecutor, new RxGlobalSubscriptions());
     }
 
     @Test
@@ -147,5 +150,27 @@ public class UserParametersWorkerTest {
             retrievedParams[0] = params.get();
         });
         Assert.assertEquals(userParameters1, retrievedParams[0]);
+    }
+
+    @Test
+    public void notifiesObservers_aboutNewUserParameters() {
+        UserParameters userParameters = new UserParameters(
+                "John Doe",
+                60,
+                Gender.MALE,
+                new LocalDate(1993, 7, 20),
+                165,
+                64,
+                Lifestyle.INSIGNIFICANT_ACTIVITY,
+                Formula.HARRIS_BENEDICT,
+                timeProvider.nowUtc().getMillis());
+
+        UserParametersWorker.Observer observer = mock(UserParametersWorker.Observer.class);
+        userParametersWorker.addObserver(observer);
+        verify(observer, never()).onCurrentUserParametersChanged(any());
+
+        userParametersWorker.saveUserParameters(userParameters);
+
+        verify(observer).onCurrentUserParametersChanged(userParameters);
     }
 }

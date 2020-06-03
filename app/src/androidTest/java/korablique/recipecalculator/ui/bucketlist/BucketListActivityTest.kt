@@ -40,6 +40,7 @@ import korablique.recipecalculator.base.CurrentActivityProvider
 import korablique.recipecalculator.base.FragmentCallbacks
 import korablique.recipecalculator.base.RxActivitySubscriptions
 import korablique.recipecalculator.base.RxFragmentSubscriptions
+import korablique.recipecalculator.base.RxGlobalSubscriptions
 import korablique.recipecalculator.base.TimeProvider
 import korablique.recipecalculator.base.executors.IOExecutor
 import korablique.recipecalculator.base.executors.MainThreadExecutor
@@ -130,7 +131,8 @@ class BucketListActivityTest {
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor,
                         timeProvider)
                 userParametersWorker = UserParametersWorker(
-                        databaseHolder, mainThreadExecutor, databaseThreadExecutor)
+                        databaseHolder, mainThreadExecutor, databaseThreadExecutor,
+                        RxGlobalSubscriptions())
                 foodstuffsList = FoodstuffsList(databaseWorker, mainThreadExecutor,
                         InstantComputationsThreadsExecutor())
                 recipeDatabaseWorker = RecipeDatabaseWorkerImpl(

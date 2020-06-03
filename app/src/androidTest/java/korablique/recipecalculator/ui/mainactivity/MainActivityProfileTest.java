@@ -45,8 +45,26 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
         mActivityRule.launchActivity(null);
         onView(allOf(withText(R.string.profile), withEffectiveVisibility(VISIBLE)))
                 .perform(click());
-        // сейчас в UserParametersWorker'е только одни параметры.
-        // проверяем, что они отображаются в профиле
+
+        verifyCorrectDisplayedUserParams();
+
+        // новые userParameters
+        userParameters = new UserParameters(
+                userParameters.getName() + "new",
+                userParameters.getTargetWeight() + 1,
+                Gender.MALE,
+                userParameters.getDateOfBirth().plusDays(400),
+                userParameters.getHeight() - 10,
+                userParameters.getWeight() + 10,
+                Lifestyle.ACTIVE_LIFESTYLE,
+                Formula.MIFFLIN_JEOR,
+                timeProvider.nowUtc().getMillis());
+        userParametersWorker.saveUserParameters(userParameters);
+
+        verifyCorrectDisplayedUserParams();
+    }
+
+    private void verifyCorrectDisplayedUserParams() {
         String ageString = String.valueOf(userParameters.getAge());
         onView(withId(R.id.age)).check(matches((withText(containsString(ageString)))));
         onView(withId(R.id.height)).check(matches(withText(String.valueOf(userParameters.getHeight()))));

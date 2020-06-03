@@ -45,7 +45,8 @@ import korablique.recipecalculator.ui.mainactivity.MainActivitySelectedDateStora
 @FragmentScope
 public class HistoryPageController implements
         FragmentCallbacks.Observer,
-        HistoryWorker.HistoryChangeObserver {
+        HistoryWorker.HistoryChangeObserver,
+        UserParametersWorker.Observer {
     private static final int CARD_BUTTON_TEXT_RES = R.string.save;
     private LocalDate date;
     private BaseActivity context;
@@ -83,19 +84,11 @@ public class HistoryPageController implements
             historyWorker.editWeightInHistoryEntry(replacedItemId, newFoodstuff.getWeight());
 
             // update wrappers
-            Nutrition updatedNutrition = Nutrition.zero();
-            for (HistoryEntry entry : adapter.getItems()) {
-                updatedNutrition = updatedNutrition.plus(Nutrition.of(entry.getFoodstuff()));
-            }
             Single<Optional<UserParameters>> currentUserParamsSingle = userParametersWorker.requestCurrentUserParameters();
-            Nutrition finalUpdatedNutrition = updatedNutrition;
             subscriptions.subscribe(currentUserParamsSingle, new Consumer<Optional<UserParameters>>() {
                 @Override
                 public void accept(Optional<UserParameters> userParametersOptional) {
-                    UserParameters currentUserParams = userParametersOptional.get();
-                    Rates rates = RateCalculator.calculate(currentUserParams);
-                    nutritionProgressWrapper.setProgresses(finalUpdatedNutrition, rates);
-                    nutritionValuesWrapper.setNutrition(finalUpdatedNutrition, rates);
+                    updateNutritionProgress(userParametersOptional.get());
                 }
             });
         }
@@ -108,20 +101,26 @@ public class HistoryPageController implements
             historyWorker.deleteEntryFromHistory(removingItem);
 
             // update wrappers
-            Nutrition updatedNutrition = nutritionValuesWrapper.getCurrentNutrition()
-                    .minus(Nutrition.of(foodstuff));
             Single<Optional<UserParameters>> currentUserParamsSingle = userParametersWorker.requestCurrentUserParameters();
             subscriptions.subscribe(currentUserParamsSingle, new Consumer<Optional<UserParameters>>() {
                 @Override
                 public void accept(Optional<UserParameters> userParametersOptional) {
-                    UserParameters currentUserParams = userParametersOptional.get();
-                    Rates rates = RateCalculator.calculate(currentUserParams);
-                    nutritionProgressWrapper.setProgresses(updatedNutrition, rates);
-                    nutritionValuesWrapper.setNutrition(updatedNutrition, rates);
+                    updateNutritionProgress(userParametersOptional.get());
                 }
             });
         }
     };
+
+    private void updateNutritionProgress(UserParameters userParameters) {
+        Nutrition nutrition = Nutrition.zero();
+        for (HistoryEntry entry : adapter.getItems()) {
+            nutrition = nutrition.plus(Nutrition.of(entry.getFoodstuff()));
+        }
+
+        Rates rates = RateCalculator.calculate(userParameters);
+        nutritionProgressWrapper.setProgresses(nutrition, rates);
+        nutritionValuesWrapper.setNutrition(nutrition, rates);
+    }
 
     @Inject
     public HistoryPageController(
@@ -203,10 +202,12 @@ public class HistoryPageController implements
         updateWrappers();
 
         historyWorker.addHistoryChangeObserver(this);
+        userParametersWorker.addObserver(this);
     }
 
     @Override
     public void onFragmentDestroy() {
+        userParametersWorker.removeObserver(this);
         historyWorker.removeHistoryChangeObserver(this);
         adapter.destroy();
     }
@@ -264,21 +265,8 @@ public class HistoryPageController implements
                 card.setUpButton1(onAddFoodstuffButtonClickListener, CARD_BUTTON_TEXT_RES);
                 card.setOnDeleteButtonClickListener(onDeleteButtonClickListener);
             });
-            updateWrappers(historyEntries, currentUserParams);
+            updateNutritionProgress(currentUserParams);
         });
-    }
-
-    private void updateWrappers(List<HistoryEntry> historyEntries, UserParameters currentUserParams) {
-        Nutrition totalNutrition = Nutrition.zero();
-        for (HistoryEntry entry : historyEntries) {
-            WeightedFoodstuff foodstuff = entry.getFoodstuff();
-            totalNutrition = totalNutrition.plus(Nutrition.of(foodstuff));
-        }
-
-        // заполнение заголовка с БЖУК
-        Rates rates = RateCalculator.calculate(currentUserParams);
-        nutritionValuesWrapper.setNutrition(totalNutrition, rates);
-        nutritionProgressWrapper.setProgresses(totalNutrition, rates);
     }
 
     @Override
@@ -289,5 +277,10 @@ public class HistoryPageController implements
         if (fragmentView != null && !fragmentView.isShown()) {
             updateWrappers();
         }
+    }
+
+    @Override
+    public void onCurrentUserParametersChanged(UserParameters userParams) {
+        updateNutritionProgress(userParams);
     }
 }

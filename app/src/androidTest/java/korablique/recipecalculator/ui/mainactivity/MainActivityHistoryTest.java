@@ -32,10 +32,14 @@ import java.util.List;
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.database.FoodstuffsList;
 import korablique.recipecalculator.model.Foodstuff;
+import korablique.recipecalculator.model.Formula;
+import korablique.recipecalculator.model.Gender;
+import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.NewHistoryEntry;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.RateCalculator;
 import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.util.EspressoUtils;
 
@@ -106,12 +110,14 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         Foodstuff deletedFoodstuff = foodstuffs[0];
         onView(allOf(
                 withText(containsString(deletedFoodstuff.getName())),
+                isDescendantOfA(withId(R.id.history_list)),
                 isCompletelyDisplayed())).perform(click());
         // нажать на кнопку удаления в карточке
         onView(withId(R.id.frame_layout_button_delete)).perform(click());
         // проверить, что элемент удалился
         onView(allOf(
                 withText(containsString(deletedFoodstuff.getName())),
+                isDescendantOfA(withId(R.id.history_list)),
                 isCompletelyDisplayed())).check(doesNotExist());
         // проверить заголовок с БЖУ
         Nutrition totalNutrition = Nutrition.of(foodstuffs[5].withWeight(100))
@@ -193,7 +199,7 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
     }
 
     @Test
-    public void todaysTotalNutritionDisplayedInHistory() {
+    public void todaysTotalNutritionAndNormsDisplayedInHistory() {
         addFoodstuffsToday();
         mActivityRule.launchActivity(null);
 
@@ -217,6 +223,26 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         Matcher<View> caloriesMatcher = allOf(withParent(withId(R.id.calories_layout)), withId(R.id.nutrition_text_view), isCompletelyDisplayed());
         onView(caloriesMatcher).check(matches(withText(toDecimalString(totalNutrition.getCalories()))));
 
+        checkNutritionNorms(totalNutrition, rates);
+
+        // новые userParameters
+        userParameters = new UserParameters(
+                userParameters.getName() + "new",
+                userParameters.getTargetWeight() + 1,
+                Gender.MALE,
+                userParameters.getDateOfBirth().plusDays(400),
+                userParameters.getHeight() - 10,
+                userParameters.getWeight() + 10,
+                Lifestyle.ACTIVE_LIFESTYLE,
+                Formula.MIFFLIN_JEOR,
+                timeProvider.nowUtc().getMillis());
+        userParametersWorker.saveUserParameters(userParameters);
+
+        Rates newRates = RateCalculator.calculate(userParameters);
+        checkNutritionNorms(totalNutrition, newRates);
+    }
+
+    private void checkNutritionNorms(Nutrition totalNutrition, Rates rates) {
         // проверяем значения норм БЖУК
         Matcher<View> proteinRateMatcher = allOf(
                 withParent(withId(R.id.protein_layout)),
@@ -240,7 +266,7 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
                 withParent(withId(R.id.calories_layout)),
                 withId(R.id.of_n_grams),
                 isCompletelyDisplayed());
-        onView(caloriesRateMatcher).check(matches(withText(containsString(String.valueOf(Math.round(totalNutrition.getCalories()))))));
+        onView(caloriesRateMatcher).check(matches(withText(containsString(String.valueOf(Math.round(rates.getCalories()))))));
 
         // проверяем прогресс
         Matcher<View> proteinProgress = allOf(
