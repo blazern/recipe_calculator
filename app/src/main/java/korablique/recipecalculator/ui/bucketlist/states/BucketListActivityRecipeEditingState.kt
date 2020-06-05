@@ -267,6 +267,7 @@ class BucketListActivityRecipeEditingState private constructor(
                     newIngredients.forEach { newTotalWeight += it.weight }
 
                     recipe = recipe.copy(ingredients = newIngredients, weight = newTotalWeight)
+                    recipe = recipe.recalculateNutrition()
                     bucketList.setRecipe(recipe)
                     onRecipeUpdated(recipe)
                     updateSaveButtonsEnability()
@@ -293,6 +294,7 @@ class BucketListActivityRecipeEditingState private constructor(
                         newIngredients.forEach { newTotalWeight += it.weight }
 
                         recipe = recipe.copy(ingredients = newIngredients, weight = newTotalWeight)
+                        recipe = recipe.recalculateNutrition()
                         bucketList.setRecipe(recipe)
                         onRecipeUpdated(bucketList.getRecipe())
                         updateSaveButtonsEnability()

@@ -3,6 +3,7 @@ package korablique.recipecalculator.ui.pluralprogressbar
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
+import korablique.recipecalculator.TestEnvironmentDetector
 
 /**
  * Animates progress changes.
@@ -14,6 +15,11 @@ class AnimatedPluralProgressBar : PluralProgressBar {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
 
     override fun setProgress(progress: Array<Float>) {
+        if (TestEnvironmentDetector.isInTests()) {
+            super.setProgress(progress)
+            return
+        }
+
         // Cancel last animation
         progressAnimators.forEach { it.cancel() }
 

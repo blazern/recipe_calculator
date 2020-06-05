@@ -53,7 +53,7 @@ class BucketList @Inject constructor(
         checkCurrentThread()
 
         editedRecipe = editedRecipe.copy(ingredients = editedRecipe.ingredients + ingredients)
-        recalculateNutrition()
+        editedRecipe = editedRecipe.recalculateNutrition()
         updatePersistentState()
         for (ingredient in ingredients) {
             for (observer in observers) {
@@ -66,7 +66,7 @@ class BucketList @Inject constructor(
         checkCurrentThread()
 
         editedRecipe = editedRecipe.copy(ingredients = editedRecipe.ingredients + ingredient)
-        recalculateNutrition()
+        editedRecipe = editedRecipe.recalculateNutrition()
         updatePersistentState()
         for (observer in observers) {
             observer.onIngredientAdded(ingredient)
@@ -77,7 +77,7 @@ class BucketList @Inject constructor(
         checkCurrentThread()
 
         editedRecipe = editedRecipe.copy(ingredients = editedRecipe.ingredients - ingredient)
-        recalculateNutrition()
+        editedRecipe = editedRecipe.recalculateNutrition()
         updatePersistentState()
         for (observer in observers) {
             observer.onIngredientRemoved(ingredient)
@@ -107,29 +107,6 @@ class BucketList @Inject constructor(
 
     fun getRecipe(): Recipe = editedRecipe
 
-    private fun recalculateNutrition() {
-        var nutrition = calculateIngredients(editedRecipe.ingredients, editedRecipe.weight.toDouble())
-        nutrition = normalizeFoodstuffNutrition(nutrition);
-        editedRecipe = editedRecipe.copy(foodstuff = editedRecipe.foodstuff.recreateWithNutrition(nutrition))
-    }
-
-    /**
-     * When sum of protein, fats and carbs is greater than 100, then we should not create
-     * a foodstuff with such nutrition, and must normalize the nutrition before foodstuff creation.
-     */
-    private fun normalizeFoodstuffNutrition(nutrition: Nutrition): Nutrition {
-        val gramsSum = nutrition.protein + nutrition.fats + nutrition.carbs
-        if (gramsSum <= 100f) {
-            return nutrition
-        }
-        val factor = 100f / gramsSum
-        return Nutrition.withValues(
-                nutrition.protein * factor,
-                nutrition.fats * factor,
-                nutrition.carbs * factor,
-                nutrition.calories * factor)
-    }
-
     fun setName(name: String) {
         editedRecipe = editedRecipe.copy(foodstuff = editedRecipe.foodstuff.recreateWithName(name))
         updatePersistentState()
@@ -142,7 +119,7 @@ class BucketList @Inject constructor(
 
     fun setTotalWeight(weight: Float) {
         editedRecipe = editedRecipe.copy(weight = weight)
-        recalculateNutrition()
+        editedRecipe = editedRecipe.recalculateNutrition()
         updatePersistentState()
     }
 

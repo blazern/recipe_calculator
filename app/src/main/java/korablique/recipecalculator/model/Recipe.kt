@@ -2,6 +2,7 @@ package korablique.recipecalculator.model
 
 import android.os.Parcel
 import android.os.Parcelable
+import korablique.recipecalculator.DishNutritionCalculator
 import korablique.recipecalculator.database.room.RecipeEntity
 import korablique.recipecalculator.model.proto.RecipeProtos
 
@@ -59,6 +60,29 @@ data class Recipe(
 
     val name: String get() = foodstuff.name
     val isFromDB: Boolean get() = id > 0
+
+    fun recalculateNutrition(): Recipe {
+        var nutrition = DishNutritionCalculator.calculateIngredients(ingredients, weight.toDouble())
+        nutrition = normalizeFoodstuffNutrition(nutrition)
+        return copy(foodstuff = foodstuff.recreateWithNutrition(nutrition))
+    }
+
+    /**
+     * When sum of protein, fats and carbs is greater than 100, then we should not create
+     * a foodstuff with such nutrition, and must normalize the nutrition before foodstuff creation.
+     */
+    private fun normalizeFoodstuffNutrition(nutrition: Nutrition): Nutrition {
+        val gramsSum = nutrition.protein + nutrition.fats + nutrition.carbs
+        if (gramsSum <= 100f) {
+            return nutrition
+        }
+        val factor = 100f / gramsSum
+        return Nutrition.withValues(
+                nutrition.protein * factor,
+                nutrition.fats * factor,
+                nutrition.carbs * factor,
+                nutrition.calories * factor)
+    }
 
     override fun describeContents(): Int {
         return 0
