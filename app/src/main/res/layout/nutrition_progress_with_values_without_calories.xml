@@ -7,7 +7,7 @@
     android:background="#FFFFFF">
 
     <!--прогресс-бар-->
-    <korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar
+    <korablique.recipecalculator.ui.pluralprogressbar.AnimatedPluralProgressBar
         android:id="@+id/new_nutrition_progress_bar"
         android:layout_width="match_parent"
         android:layout_height="10dp"
