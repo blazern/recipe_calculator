@@ -258,15 +258,15 @@ public class ProfileController implements FragmentCallbacks.Observer, UserParame
 
     private void fillNutritionRates(View fragmentView, Rates rates) {
         NutritionValuesWrapper nutritionValues = new NutritionValuesWrapper(
-                fragmentView.getContext(),
-                fragmentView.findViewById(R.id.nutrition_parent_layout));
+                fragmentView.findViewById(R.id.nutrition_parent_layout),
+                false);
         Nutrition nutrition = Nutrition.from(rates);
         nutritionValues.setNutrition(nutrition);
 
         TextView calorieIntakeView = fragmentView.findViewById(R.id.calorie_intake);
         calorieIntakeView.setText(toDecimalString(rates.getCalories()));
 
-        PluralProgressBar progressBar = fragmentView.findViewById(R.id.new_nutrition_progress_bar);
+        PluralProgressBar progressBar = fragmentView.findViewById(R.id.nutrition_progress_bar);
         float nutritionSum = (float) (nutrition.getProtein() + nutrition.getFats() + nutrition.getCarbs());
         float proteinPercentage = (float) nutrition.getProtein() / nutritionSum * 100;
         float fatsPercentage = (float) nutrition.getFats() / nutritionSum * 100;

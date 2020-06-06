@@ -1,6 +1,5 @@
 package korablique.recipecalculator.ui.card;
 
-
 import android.content.Context;
 import android.text.Editable;
 import android.view.LayoutInflater;
@@ -11,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter;
 
@@ -86,9 +86,9 @@ public class Card {
         updateMainButtonsEnability();
 
         nameTextView = cardLayout.findViewById(R.id.foodstuff_name_text_view);
-        ViewGroup nutritionLayout = cardLayout.findViewById(R.id.nutrition_progress_with_values);
-        pluralProgressBar = nutritionLayout.findViewById(R.id.new_nutrition_progress_bar);
-        nutritionValuesWrapper = new NutritionValuesWrapper(context, nutritionLayout);
+        ConstraintLayout nutritionLayout = cardLayout.findViewById(R.id.nutrition_progress_with_values);
+        pluralProgressBar = nutritionLayout.findViewById(R.id.nutrition_progress_bar);
+        nutritionValuesWrapper = new NutritionValuesWrapper(nutritionLayout);
 
         editButton.setVisibility(View.GONE);
         closeButton.setVisibility(View.GONE);
@@ -128,7 +128,6 @@ public class Card {
                 (float) foodstuffNutrition.getProtein(),
                 (float) foodstuffNutrition.getFats(),
                 (float) foodstuffNutrition.getCarbs());
-        nutritionValuesWrapper.setFoodstuff(foodstuff);
 
         if (weight != null) {
             weightEditText.setText(toDecimalString(weight));
@@ -208,10 +207,10 @@ public class Card {
         return Foodstuff
                 .withId(receivedFoodstuff.getId())
                 .withName(nameTextView.getText().toString())
-                .withNutrition(nutritionValuesWrapper.getFoodstuff().getProtein(),
-                        nutritionValuesWrapper.getFoodstuff().getFats(),
-                        nutritionValuesWrapper.getFoodstuff().getCarbs(),
-                        nutritionValuesWrapper.getFoodstuff().getCalories())
+                .withNutrition(receivedFoodstuff.getProtein(),
+                        receivedFoodstuff.getFats(),
+                        receivedFoodstuff.getCarbs(),
+                        receivedFoodstuff.getCalories())
                 .withWeight(weight);
     }
 

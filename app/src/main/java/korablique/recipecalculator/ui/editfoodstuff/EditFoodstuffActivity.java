@@ -73,7 +73,7 @@ public class EditFoodstuffActivity extends BaseActivity {
         calcKeyboardController.useCalcKeyboardWith(carbsEditText, this);
         calcKeyboardController.useCalcKeyboardWith(caloriesEditText, this);
 
-        pluralProgressBar = findViewById(R.id.new_nutrition_progress_bar);
+        pluralProgressBar = findViewById(R.id.nutrition_progress_bar);
         pluralProgressBar.setProgress(0, 0, 0);
         updateSaveButtonEnability();
         TextWatcher nutritionChangeWatcher = new TextWatcherAdapter() {

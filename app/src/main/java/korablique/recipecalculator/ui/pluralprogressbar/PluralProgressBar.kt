@@ -122,6 +122,10 @@ open class PluralProgressBar : View {
     }
 
     open fun setProgress(progress: Array<Float>) {
+        setProgressImpl(progress)
+    }
+
+    protected fun setProgressImpl(progress: Array<Float>, throwIfInvalidSum: Boolean = true) {
         progress.forEachIndexed { index, value ->
             bars[index].progress = value
         }
@@ -139,7 +143,7 @@ open class PluralProgressBar : View {
             }
             val varsValuesStr = barsValues.joinToString()
 
-            if (BuildConfig.DEBUG) {
+            if (BuildConfig.DEBUG && throwIfInvalidSum) {
                 throw IllegalStateException("Sum of all progresses must be <=100, but is $totalProgress, progress: $varsValuesStr")
             }
         }

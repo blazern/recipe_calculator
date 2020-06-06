@@ -79,6 +79,12 @@ public class SessionTestingHelper {
         // Рестарт активити
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         instrumentation.runOnMainSync(() -> activityTestRule.getActivity().recreate());
+        // Попытка исправить флакучесть
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new Error(e);
+        }
 
         secondSessionRunnable.run();
     }

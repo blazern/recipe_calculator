@@ -239,7 +239,7 @@
             android:layout_marginEnd="9dp" />
 
         <korablique.recipecalculator.ui.pluralprogressbar.AnimatedPluralProgressBar
-            android:id="@+id/new_nutrition_progress_bar"
+            android:id="@+id/nutrition_progress_bar"
             android:layout_width="match_parent"
             android:layout_height="30dp"
             android:layout_marginBottom="20dp"

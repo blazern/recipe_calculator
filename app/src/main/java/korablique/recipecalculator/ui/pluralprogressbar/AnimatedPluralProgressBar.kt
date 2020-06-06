@@ -1,5 +1,6 @@
 package korablique.recipecalculator.ui.pluralprogressbar
 
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
@@ -42,8 +43,22 @@ class AnimatedPluralProgressBar : PluralProgressBar {
             // Let's start the animation!
             progressAnimators[index].addUpdateListener {
                 displayedProgress[index] = progressAnimators[index].animatedValue as Float
-                super.setProgress(displayedProgress)
+                setProgressImpl(displayedProgress, throwIfInvalidSum = false)
             }
+
+            var finishedAnimations = 0
+            progressAnimators[index].addListener(object : Animator.AnimatorListener {
+                override fun onAnimationEnd(animation: Animator?) {
+                    finishedAnimations += 1
+                    if (finishedAnimations == progress.size) {
+                        this@AnimatedPluralProgressBar.setProgressImpl(
+                                displayedProgress, throwIfInvalidSum = true)
+                    }
+                }
+                override fun onAnimationRepeat(animation: Animator?) {}
+                override fun onAnimationCancel(animation: Animator?) {}
+                override fun onAnimationStart(animation: Animator?) {}
+            })
             progressAnimators[index].start()
         }
     }

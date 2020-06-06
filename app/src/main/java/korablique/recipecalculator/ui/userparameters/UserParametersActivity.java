@@ -42,14 +42,19 @@ import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
+import korablique.recipecalculator.model.Nutrition;
+import korablique.recipecalculator.model.RateCalculator;
+import korablique.recipecalculator.model.Rates;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry;
 import korablique.recipecalculator.ui.DatePickerFragment;
 import korablique.recipecalculator.ui.DecimalUtils;
+import korablique.recipecalculator.ui.NutritionValuesWrapper;
 import korablique.recipecalculator.ui.TextWatcherAfterTextChangedAdapter;
 import korablique.recipecalculator.ui.inputfilters.GeneralDateFormatInputFilter;
 import korablique.recipecalculator.ui.inputfilters.NumericBoundsInputFilter;
 import korablique.recipecalculator.ui.mainactivity.MainScreenLoader;
+import korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar;
 
 import static korablique.recipecalculator.util.SpinnerTuner.startTuningSpinner;
 
@@ -83,6 +88,9 @@ public class UserParametersActivity extends BaseActivity {
 
     private Set<EditText> editedEditTexts = new HashSet<>();
 
+    private NutritionValuesWrapper nutritionValuesWrapper;
+    private PluralProgressBar nutritionProgressBar;
+
     @Override
     protected Integer getLayoutId() {
         return R.layout.activity_user_parameters;
@@ -108,8 +116,8 @@ public class UserParametersActivity extends BaseActivity {
         });
 
         // гендер
-        radioMale.setOnCheckedChangeListener((buttonView, isChecked) -> updateSaveButtonEnability());
-        radioFemale.setOnCheckedChangeListener((buttonView, isChecked) -> updateSaveButtonEnability());
+        radioMale.setOnCheckedChangeListener((buttonView, isChecked) -> updateVisualState());
+        radioFemale.setOnCheckedChangeListener((buttonView, isChecked) -> updateVisualState());
 
         // образ жизни
         Spinner lifestyleSpinner = findViewById(R.id.lifestyle_spinner);
@@ -119,13 +127,28 @@ public class UserParametersActivity extends BaseActivity {
                     String description = getResources().getStringArray(
                             R.array.physical_activity_description_array)[position];
                     ((TextView) findViewById(R.id.description)).setText(description);
+                    updateVisualState();
                 })
                 .tune();
 
         // формула
         startTuningSpinner(findViewById(R.id.formula_spinner))
                 .withItems(R.array.formula_array)
+                .onItemSelected((pos, id) -> {
+                    String name = getResources().getStringArray(
+                            R.array.formula_array)[pos];
+                    if (name.equals(getString(R.string.manually))) {
+                        nutritionValuesWrapper.setEditable(true);
+                    } else {
+                        nutritionValuesWrapper.setEditable(false);
+                    }
+                    updateVisualState();
+                })
                 .tune();
+
+        nutritionValuesWrapper = new NutritionValuesWrapper(
+                findViewById(R.id.nutrition_parent_layout));
+        nutritionProgressBar = findViewById(R.id.nutrition_progress_bar);
 
         saveUserParamsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -150,8 +173,8 @@ public class UserParametersActivity extends BaseActivity {
             }
         });
 
-        DateTime minBirthdayDate = timeProvider.now().minusYears(100);
-        DateTime maxBirthdayDate = timeProvider.now().minusYears(14);
+        DateTime minBirthdayDate = timeProvider.now().minusYears(MAX_AGE);
+        DateTime maxBirthdayDate = timeProvider.now().minusYears(MIN_AGE);
 
         findViewById(R.id.calendar_button).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -192,7 +215,7 @@ public class UserParametersActivity extends BaseActivity {
         addInputFilter(heightEditText, NumericBoundsInputFilter.withBounds(0, MAX_HEIGHT));
 
         TextWatcher textWatcher =
-                new TextWatcherAfterTextChangedAdapter(editable -> updateSaveButtonEnability());
+                new TextWatcherAfterTextChangedAdapter(editable -> updateVisualState());
         birthdayEditText.addTextChangedListener(textWatcher);
         nameEditText.addTextChangedListener(textWatcher);
         targetWeightEditText.addTextChangedListener(textWatcher);
@@ -203,7 +226,7 @@ public class UserParametersActivity extends BaseActivity {
             if (!hasFocus) {
                 // lost focus
                 editedEditTexts.add((EditText) v);
-                updateAllHintsStates();
+                updateVisualState();
             }
         };
         birthdayEditText.setOnFocusChangeListener(focusWatcher);
@@ -213,7 +236,7 @@ public class UserParametersActivity extends BaseActivity {
         weightEditText.setOnFocusChangeListener(focusWatcher);
 
         // run once to disable if empty
-        updateSaveButtonEnability();
+        updateVisualState();
 
         Single<Optional<UserParameters>> oldUserParamsSingle = userParametersWorker.requestCurrentUserParameters();
         subscriptions.subscribe(oldUserParamsSingle, userParametersOptional -> {
@@ -225,6 +248,8 @@ public class UserParametersActivity extends BaseActivity {
                 findViewById(R.id.formula_text_view).setVisibility(View.GONE);
                 findViewById(R.id.formula_spinner).setVisibility(View.GONE);
                 findViewById(R.id.line4).setVisibility(View.GONE);
+                findViewById(R.id.nutrition_parent_layout).setVisibility(View.GONE);
+                findViewById(R.id.nutrition_norms_text_view).setVisibility(View.GONE);
             }
         });
 
@@ -261,9 +286,10 @@ public class UserParametersActivity extends BaseActivity {
         context.startActivity(intent);
     }
 
-    private void updateAllHintsStates() {
+    private void updateVisualState() {
         updateIvalidValuesHints();
         updateSaveButtonEnability();
+        updateNutritionNorms();
     }
 
     private void updateIvalidValuesHints() {
@@ -340,7 +366,14 @@ public class UserParametersActivity extends BaseActivity {
         return min <= number && number <= max;
     }
 
+    @Nullable
     private UserParameters extractUserParameters() {
+        if (targetWeightEditText.getText().length() == 0
+                || heightEditText.getText().length() == 0
+                || weightEditText.getText().length() == 0) {
+            return null;
+        }
+
         String name = nameEditText.getText().toString();
 
         float targetWeight = Float.parseFloat(targetWeightEditText.getText().toString());
@@ -348,12 +381,17 @@ public class UserParametersActivity extends BaseActivity {
         Gender gender;
         if (radioMale.isChecked()) {
             gender = Gender.MALE;
-        } else {
+        } else if (radioFemale.isChecked()) {
             gender = Gender.FEMALE;
+        } else {
+            return null;
         }
 
         String dateOfBirthString = birthdayEditText.getText().toString();
         LocalDate dateOfBirth = parseDateOfBirth(dateOfBirthString);
+        if (dateOfBirth == null) {
+            return null;
+        }
 
         int height = Integer.parseInt(heightEditText.getText().toString());
         float weight = Float.parseFloat(weightEditText.getText().toString());
@@ -368,6 +406,22 @@ public class UserParametersActivity extends BaseActivity {
 
         return new UserParameters(name, targetWeight, gender, dateOfBirth,
                 height, weight, lifestyle, formula, nowTimestamp);
+    }
+
+    private void updateNutritionNorms() {
+        UserParameters userParameters = extractUserParameters();
+        if (userParameters != null) {
+            Rates rates = RateCalculator.calculate(userParameters);
+            nutritionValuesWrapper.setNutrition(Nutrition.from(rates));
+            float nutritionSum = rates.getProtein() + rates.getFats() + rates.getCarbs();
+            float proteinPercentage = rates.getProtein() / nutritionSum * 100;
+            float fatsPercentage = rates.getFats() / nutritionSum * 100;
+            float carbsPercentage = rates.getCarbs() / nutritionSum * 100;
+            nutritionProgressBar.setProgress(proteinPercentage, fatsPercentage, carbsPercentage);
+        } else {
+            nutritionValuesWrapper.setNutrition(Nutrition.zero());
+            nutritionProgressBar.setProgress(0f, 0f, 0f);
+        }
     }
 
     private void fillWithOldUserParameters(UserParameters oldUserParams) {

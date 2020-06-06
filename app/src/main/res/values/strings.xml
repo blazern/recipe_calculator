@@ -32,6 +32,7 @@
     <string name="weight">Вес</string>
     <string name="physical_activity">Коэффициент физ. активности:</string>
     <string name="formula">Формула рассчета калорий</string>
+    <string name="recommended_nutrition">Рекомендуемое БЖУК</string>
     <string name="set_goal">Настройка цели</string>
     <string name="calc_result_dialog_text">Масса готового продукта - %1$.1f грамм\n
         Белки - %2$.1f\n
@@ -196,6 +197,7 @@
     <string name="send_logs_description">Отправить или сохранить собираемые приложением логи</string>
     <string name="preference_key_send_logs">logs</string>
     <string name="no_logs_yet">Логов пока нет</string>
+    <string name="manually">Вручную</string>
 
     <string-array name="physical_activity_array">
         <item name="passive_lifestyle">Сидячий образ жизни</item>
@@ -216,6 +218,7 @@
     <string-array name="formula_array">
         <item name="harris_benedict">Харриса-Бенедикта</item>
         <item name="mifflin_jeor">Миффлина-Джеора</item>
+        <item name="manually">@string/manually</item>
     </string-array>
 
     <string-array name="history_period_array">

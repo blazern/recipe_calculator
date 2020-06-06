@@ -96,10 +96,9 @@ class BucketListActivityController @Inject constructor(
     }
 
     override fun onActivityCreate(savedInstanceState: Bundle?) {
-        pluralProgressBar = findViewById(R.id.new_nutrition_progress_bar)
+        pluralProgressBar = findViewById(R.id.nutrition_progress_bar)
         nutritionValuesWrapper = NutritionValuesWrapper(
-                activity,
-                findViewById<ViewGroup>(R.id.nutrition_progress_with_values))
+                findViewById<ConstraintLayout>(R.id.nutrition_progress_with_values))
 
         adapter = BucketListAdapter(activity)
         findViewById<RecyclerView>(R.id.ingredients_list).adapter = adapter

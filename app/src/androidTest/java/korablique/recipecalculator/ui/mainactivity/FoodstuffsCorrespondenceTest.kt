@@ -123,25 +123,30 @@ class FoodstuffsCorrespondenceTest : MainActivityTestsBase() {
                 withText(name),
                 isDescendantOfA(withId(R.id.foodstuff_card_layout))
         )).check(matches(isDisplayed()))
+
         onView(allOf(
                 withText("1"),
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
-                isDescendantOfA(withId(R.id.protein_layout))
+                isDescendantOfA(withId(R.id.protein_layout)),
+                withId(R.id.nutrition_text_view)
         )).check(matches(isDisplayed()))
         onView(allOf(
                 withText("2"),
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
-                isDescendantOfA(withId(R.id.fats_layout))
+                isDescendantOfA(withId(R.id.fats_layout)),
+                withId(R.id.nutrition_text_view)
         )).check(matches(isDisplayed()))
         onView(allOf(
                 withText("3"),
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
-                isDescendantOfA(withId(R.id.carbs_layout))
+                isDescendantOfA(withId(R.id.carbs_layout)),
+                withId(R.id.nutrition_text_view)
         )).check(matches(isDisplayed()))
         onView(allOf(
                 withText("4"),
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
-                isDescendantOfA(withId(R.id.calories_layout))
+                isDescendantOfA(withId(R.id.calories_layout)),
+                withId(R.id.nutrition_text_view)
         )).check(matches(isDisplayed()))
 
         onView(withId(R.id.button_close)).perform(click())

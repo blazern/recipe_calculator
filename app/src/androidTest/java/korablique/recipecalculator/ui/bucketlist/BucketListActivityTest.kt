@@ -30,7 +30,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.LargeTest
 import androidx.test.rule.ActivityTestRule
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import korablique.recipecalculator.InstantComputationsThreadsExecutor
 import korablique.recipecalculator.InstantDatabaseThreadExecutor
 import korablique.recipecalculator.InstantIOExecutor

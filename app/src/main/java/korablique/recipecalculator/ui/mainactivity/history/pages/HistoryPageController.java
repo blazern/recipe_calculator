@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -192,9 +193,8 @@ public class HistoryPageController implements
 
     private void initializeView() {
         // обёртки заголовка с БЖУК (значений и прогрессов БЖУК)
-        ViewGroup nutritionHeaderParentLayout = fragmentView.findViewById(R.id.nutrition_parent_layout);
-        nutritionValuesWrapper = new HistoryNutritionValuesWrapper(
-                context, nutritionHeaderParentLayout);
+        ConstraintLayout nutritionHeaderParentLayout = fragmentView.findViewById(R.id.nutrition_parent_layout);
+        nutritionValuesWrapper = new HistoryNutritionValuesWrapper(nutritionHeaderParentLayout);
         nutritionProgressWrapper = new NutritionProgressWrapper(nutritionHeaderParentLayout);
 
         initHistoryList(fragmentView);
