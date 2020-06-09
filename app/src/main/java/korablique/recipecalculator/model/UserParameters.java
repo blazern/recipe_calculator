@@ -5,6 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import org.joda.time.LocalDate;
+import org.joda.time.Period;
 
 import java.util.Calendar;
 import java.util.Objects;
@@ -88,17 +89,8 @@ public class UserParameters implements Parcelable {
         return dateOfBirth;
     }
 
-    public int getAge() {
-        Calendar dateOfBirthCalendar = Calendar.getInstance();
-        dateOfBirthCalendar.setTime(dateOfBirth.toDate());
-        Calendar today = Calendar.getInstance();
-
-        int age = today.get(Calendar.YEAR) - dateOfBirthCalendar.get(Calendar.YEAR);
-
-        if (today.get(Calendar.DAY_OF_YEAR) < dateOfBirthCalendar.get(Calendar.DAY_OF_YEAR)){
-            --age;
-        }
-        return age;
+    public int getAge(LocalDate now) {
+        return new Period(dateOfBirth, now).getYears();
     }
 
     public int getHeight() {
@@ -135,6 +127,17 @@ public class UserParameters implements Parcelable {
         return new UserParameters(
                 name, targetWeight, gender, dateOfBirth, height, weight,
                 lifestyle, formula, rates, newTime);
+    }
+
+    public UserParameters recalculateRates(LocalDate now) {
+        if (formula == Formula.MANUAL) {
+            return this;
+        }
+        int age = new Period(dateOfBirth, now).getYears();
+        Nutrition newRates = RateCalculator.calculate(
+                targetWeight, gender, age, height, weight, lifestyle, formula);
+        return new UserParameters(name, targetWeight, gender, dateOfBirth, height,
+                weight, lifestyle, formula, newRates, measurementsTimestamp);
     }
 
     @Override

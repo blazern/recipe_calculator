@@ -146,7 +146,7 @@ class BucketListActivityTest {
                         timeProvider)
                 userParametersWorker = UserParametersWorker(
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor,
-                        RxGlobalSubscriptions())
+                        RxGlobalSubscriptions(), timeProvider)
                 foodstuffsList = FoodstuffsList(databaseWorker, mainThreadExecutor,
                         InstantComputationsThreadsExecutor())
                 recipeDatabaseWorker = RecipeDatabaseWorkerImpl(

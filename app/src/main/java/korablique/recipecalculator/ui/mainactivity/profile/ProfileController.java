@@ -241,7 +241,7 @@ public class ProfileController implements FragmentCallbacks.Observer, UserParame
 
         nameView.setText(userParameters.getName());
 
-        int age = userParameters.getAge();
+        int age = userParameters.getAge(timeProvider.now().toLocalDate());
         String ageString = fragmentView.getResources().getQuantityString(R.plurals.years_old, age, age);
         ageTextView.setText(ageString);
 

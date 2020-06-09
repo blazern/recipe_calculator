@@ -88,7 +88,7 @@ class UserParametersActivityTest {
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor)
                 userParametersWorker = UserParametersWorker(
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor,
-                        RxGlobalSubscriptions())
+                        RxGlobalSubscriptions(), timeProvider)
 
                 val historyWorker = HistoryWorker(
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor, timeProvider)

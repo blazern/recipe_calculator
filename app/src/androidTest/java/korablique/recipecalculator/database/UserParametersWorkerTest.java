@@ -31,6 +31,8 @@ import korablique.recipecalculator.InstantDatabaseThreadExecutor;
 import korablique.recipecalculator.InstantMainThreadExecutor;
 import korablique.recipecalculator.util.TestingTimeProvider;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -45,7 +47,7 @@ public class UserParametersWorkerTest {
     private DatabaseHolder databaseHolder;
     private UserParametersWorker userParametersWorker;
     private DatabaseThreadExecutor spiedDatabaseThreadExecutor;
-    private TimeProvider timeProvider;
+    private TestingTimeProvider timeProvider;
 
     @Before
     public void setUp() throws IOException {
@@ -59,7 +61,8 @@ public class UserParametersWorkerTest {
         userParametersWorker =
                 new UserParametersWorker(
                         databaseHolder, new InstantMainThreadExecutor(),
-                        spiedDatabaseThreadExecutor, new RxGlobalSubscriptions());
+                        spiedDatabaseThreadExecutor, new RxGlobalSubscriptions(),
+                        timeProvider);
     }
 
     @Test
@@ -90,7 +93,7 @@ public class UserParametersWorkerTest {
         retrievedParamsObservable.subscribe((params) -> {
             retrievedParams[0] = params.get();
         });
-        Assert.assertEquals(userParameters, retrievedParams[0]);
+        assertEquals(userParameters, retrievedParams[0]);
     }
 
     @Test
@@ -155,7 +158,7 @@ public class UserParametersWorkerTest {
         firstParamsSingle.subscribe((params) -> {
             retrievedParams[0] = params.get();
         });
-        Assert.assertEquals(userParameters1, retrievedParams[0]);
+        assertEquals(userParameters1, retrievedParams[0]);
     }
 
     @Test
@@ -179,5 +182,57 @@ public class UserParametersWorkerTest {
         userParametersWorker.saveUserParameters(userParameters);
 
         verify(observer).onCurrentUserParametersChanged(userParameters);
+    }
+
+    @Test
+    public void recreatesLatestParamsWithUpdateRates_whenAgeChanges() {
+        UserParameters initialParams = new UserParameters(
+                "John Doe",
+                60,
+                Gender.MALE,
+                new LocalDate(1993, 7, 20),
+                165,
+                64,
+                Lifestyle.INSIGNIFICANT_ACTIVITY,
+                Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(10, 20, 30, 40),
+                timeProvider.nowUtc().getMillis())
+                .recalculateRates(timeProvider.now().toLocalDate());
+
+        userParametersWorker.initCache();
+        userParametersWorker.saveUserParameters(initialParams);
+
+        assertEquals(initialParams,
+                userParametersWorker.requestCurrentUserParameters().blockingGet().get());
+
+        // New worker with old date
+        userParametersWorker =
+                new UserParametersWorker(
+                        databaseHolder, new InstantMainThreadExecutor(),
+                        spiedDatabaseThreadExecutor, new RxGlobalSubscriptions(),
+                        timeProvider);
+        userParametersWorker.initCache();
+        assertEquals(initialParams,
+                userParametersWorker.requestCurrentUserParameters().blockingGet().get());
+
+        // New worker with new date
+        timeProvider.setTime(timeProvider.now().plusYears(1));
+        userParametersWorker =
+                new UserParametersWorker(
+                        databaseHolder, new InstantMainThreadExecutor(),
+                        spiedDatabaseThreadExecutor, new RxGlobalSubscriptions(),
+                        timeProvider);
+        userParametersWorker.initCache();
+
+        // Verify initial and current params no longer equal
+        UserParameters updatedParams = userParametersWorker
+                .requestCurrentUserParameters().blockingGet().get();
+        assertNotEquals(initialParams, updatedParams);
+
+        // Verify initial params become equal to current when rates are recalculated
+        // because of age.
+        UserParameters initialParamsWithUpdatedRates =
+                initialParams.recalculateRates(timeProvider.now().toLocalDate());
+        assertEquals(initialParamsWithUpdatedRates, updatedParams);
     }
 }

@@ -66,7 +66,7 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
     }
 
     private void verifyCorrectDisplayedUserParams() {
-        String ageString = String.valueOf(userParameters.getAge());
+        String ageString = String.valueOf(userParameters.getAge(timeProvider.now().toLocalDate()));
         onView(withId(R.id.age)).check(matches((withText(containsString(ageString)))));
         onView(withId(R.id.height)).check(matches(withText(String.valueOf(userParameters.getHeight()))));
 

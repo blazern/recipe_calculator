@@ -12,9 +12,11 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
+import korablique.recipecalculator.TestEnvironmentDetector;
 import korablique.recipecalculator.base.Function0arg;
 import korablique.recipecalculator.base.Optional;
 import korablique.recipecalculator.base.RxGlobalSubscriptions;
+import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.database.room.AppDatabase;
 import korablique.recipecalculator.database.room.DatabaseHolder;
@@ -29,6 +31,7 @@ public class UserParametersWorker {
     private final DatabaseThreadExecutor databaseThreadExecutor;
     private final MainThreadExecutor mainThreadExecutor;
     private final RxGlobalSubscriptions globalSubscriptions;
+    private final TimeProvider timeProvider;
     private volatile Single<Optional<UserParameters>> cachedCurrentUserParameters;
     private volatile Single<Optional<UserParameters>> cachedFirstUserParameters;
 
@@ -41,11 +44,13 @@ public class UserParametersWorker {
             DatabaseHolder databaseHolder,
             MainThreadExecutor mainThreadExecutor,
             DatabaseThreadExecutor databaseThreadExecutor,
-            RxGlobalSubscriptions globalSubscriptions) {
+            RxGlobalSubscriptions globalSubscriptions,
+            TimeProvider timeProvider) {
         this.databaseHolder = databaseHolder;
         this.mainThreadExecutor = mainThreadExecutor;
         this.databaseThreadExecutor = databaseThreadExecutor;
         this.globalSubscriptions = globalSubscriptions;
+        this.timeProvider = timeProvider;
     }
 
     public void addObserver(Observer observer) {
@@ -62,10 +67,28 @@ public class UserParametersWorker {
         // Форсируем моментальный старт ленивого запроса, чтобы запрос в БД фактически стартовал.
         cachedCurrentUserParameters.subscribe();
         cachedFirstUserParameters.subscribe();
+        maybeCreateParamsWithUpdatedRates();
+    }
+
+    private void maybeCreateParamsWithUpdatedRates() {
+        Disposable d = requestCurrentUserParameters().subscribe((params) -> {
+            if (!params.isPresent()) {
+                return;
+            }
+            UserParameters paramsWithRecalculatedRates =
+                    params.get().recalculateRates(timeProvider.now().toLocalDate());
+            if (!paramsWithRecalculatedRates.equals(params.get())) {
+                saveUserParameters(paramsWithRecalculatedRates);
+            }
+        });
+        globalSubscriptions.add(d);
     }
 
     public Single<Optional<UserParameters>> requestCurrentUserParameters() {
         if (cachedCurrentUserParameters == null) {
+            if (!TestEnvironmentDetector.isInTests()) {
+                throw new IllegalStateException("initCache call missed");
+            }
             cachedCurrentUserParameters = requestCurrentUserParametersObservable();
         }
         return cachedCurrentUserParameters;
@@ -81,6 +104,9 @@ public class UserParametersWorker {
 
     public Single<Optional<UserParameters>> requestFirstUserParameters() {
         if (cachedFirstUserParameters == null) {
+            if (!TestEnvironmentDetector.isInTests()) {
+                throw new IllegalStateException("initCache call missed");
+            }
             cachedFirstUserParameters = requestFirstUserParametersObservable();
         }
         return cachedFirstUserParameters;

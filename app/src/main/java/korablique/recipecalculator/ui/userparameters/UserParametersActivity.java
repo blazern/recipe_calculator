@@ -21,7 +21,6 @@ import com.redmadrobot.inputmask.MaskedTextChangedListener;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormat;
 
 import java.util.ArrayList;
@@ -43,8 +42,6 @@ import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
-import korablique.recipecalculator.model.Nutrition;
-import korablique.recipecalculator.model.RateCalculator;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry;
@@ -422,23 +419,16 @@ public class UserParametersActivity extends BaseActivity {
 
         long nowTimestamp = timeProvider.nowUtc().getMillis();
 
-        DateTime now = timeProvider.now();
-        int age = new Period(dateOfBirth, now.toLocalDate()).getYears();
-
-        Nutrition rates;
-        if (formula != Formula.MANUAL) {
-            rates = RateCalculator.calculate(
-                    targetWeight, gender, age, height, weight, lifestyle, formula);
-        } else {
-            double protein = nutritionValuesWrapper.getProteinValue();
-            double fats = nutritionValuesWrapper.getFatsValue();
-            double carbs = nutritionValuesWrapper.getCarbsValue();
-            double calories = nutritionValuesWrapper.getCaloriesValue();
-            rates = Nutrition.withValues(protein, fats, carbs, calories);
-        }
+        double protein = nutritionValuesWrapper.getProteinValue();
+        double fats = nutritionValuesWrapper.getFatsValue();
+        double carbs = nutritionValuesWrapper.getCarbsValue();
+        double calories = nutritionValuesWrapper.getCaloriesValue();
+        Nutrition manualRates = Nutrition.withValues(protein, fats, carbs, calories);
 
         return new UserParameters(name, targetWeight, gender, dateOfBirth,
-                height, weight, lifestyle, formula, rates, nowTimestamp);
+                height, weight, lifestyle, formula, manualRates, nowTimestamp)
+                .recalculateRates(timeProvider.now().toLocalDate());
+
     }
 
     private void updateNutritionNorms() {
