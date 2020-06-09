@@ -11,6 +11,7 @@ import korablique.recipecalculator.database.room.DatabaseHolder
 import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.util.TestingTimeProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,7 +26,7 @@ import java.lang.RuntimeException
 @LargeTest
 class RecipeDatabaseWorkerTest {
     val context = InstrumentationRegistry.getInstrumentation().targetContext
-    val dbHolder = DatabaseHolder(context, InstantDatabaseThreadExecutor())
+    val dbHolder = DatabaseHolder(context, TestingTimeProvider(), InstantDatabaseThreadExecutor())
     lateinit var databaseWorker: DatabaseWorker
     lateinit var recipeDatabaseWorker: RecipeDatabaseWorkerImpl
 

@@ -81,16 +81,9 @@ public class NewMeasurementsDialog extends BaseBottomDialog {
                 // создать новый UserParameters, содержащий старые данные + новый вес + новая дата
                 EditText newWeightView = dialogLayout.findViewById(R.id.new_measurement_value);
                 float newWeight = Float.parseFloat(newWeightView.getText().toString());
-                UserParameters paramsWithNewWeight = new UserParameters(
-                        lastParams.getName(),
-                        lastParams.getTargetWeight(),
-                        lastParams.getGender(),
-                        lastParams.getDateOfBirth(),
-                        lastParams.getHeight(),
-                        newWeight,
-                        lastParams.getLifestyle(),
-                        lastParams.getFormula(),
-                        timeProvider.nowUtc().getMillis());
+                UserParameters paramsWithNewWeight = lastParams
+                        .recreateWithWeight(newWeight)
+                        .recreateWithMeasurementTime(timeProvider.nowUtc().getMillis());
                 onSaveNewMeasurementsListener.onSave(paramsWithNewWeight);
                 dismiss();
             }

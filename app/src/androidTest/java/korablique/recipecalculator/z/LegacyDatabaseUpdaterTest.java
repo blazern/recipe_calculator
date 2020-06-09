@@ -35,6 +35,7 @@ import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Goal;
 import korablique.recipecalculator.model.Lifestyle;
+import korablique.recipecalculator.util.TestingTimeProvider;
 
 import static korablique.recipecalculator.database.FoodstuffsContract.COLUMN_NAME_CALORIES;
 import static korablique.recipecalculator.database.FoodstuffsContract.COLUMN_NAME_CARBS;
@@ -50,7 +51,7 @@ import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_W
 import static korablique.recipecalculator.database.HistoryContract.HISTORY_TABLE_NAME;
 import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_COEFFICIENT;
 import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_GOAL;
-import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_AGE;
+import static korablique.recipecalculator.database.UserParametersContract.DEPRECATED_COLUMN_NAME_AGE;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_FORMULA;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_GENDER;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_HEIGHT;
@@ -85,7 +86,8 @@ public class LegacyDatabaseUpdaterTest {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         DatabaseThreadExecutor databaseThreadExecutor = new InstantDatabaseThreadExecutor();
-        DatabaseHolder databaseHolder = new DatabaseHolder(context, databaseThreadExecutor);
+        DatabaseHolder databaseHolder = new DatabaseHolder(
+                context, new TestingTimeProvider(), databaseThreadExecutor);
 
         dbFile = databaseHolder.getDBFile();
         deleteDatabase(databaseHolder);
@@ -110,7 +112,8 @@ public class LegacyDatabaseUpdaterTest {
     @After
     public void tearDown() {
         DatabaseThreadExecutor databaseThreadExecutor = new InstantDatabaseThreadExecutor();
-        DatabaseHolder databaseHolder = new DatabaseHolder(context, databaseThreadExecutor);
+        DatabaseHolder databaseHolder = new DatabaseHolder(
+                context, new TestingTimeProvider(), databaseThreadExecutor);
         deleteDatabase(databaseHolder);
     }
 
@@ -181,7 +184,7 @@ public class LegacyDatabaseUpdaterTest {
                     UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     COLUMN_NAME_GOAL + " TEXT, " +
                     COLUMN_NAME_GENDER + " TEXT, " +
-                    COLUMN_NAME_AGE + " INTEGER, " +
+                    DEPRECATED_COLUMN_NAME_AGE + " INTEGER, " +
                     COLUMN_NAME_HEIGHT + " INTEGER, " +
                     COLUMN_NAME_USER_WEIGHT + " INTEGER, " +
                     COLUMN_NAME_COEFFICIENT + " REAL, " +
@@ -253,7 +256,7 @@ public class LegacyDatabaseUpdaterTest {
                     UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     COLUMN_NAME_GOAL + " TEXT, " +
                     COLUMN_NAME_GENDER + " TEXT, " +
-                    COLUMN_NAME_AGE + " INTEGER, " +
+                    DEPRECATED_COLUMN_NAME_AGE + " INTEGER, " +
                     COLUMN_NAME_HEIGHT + " INTEGER, " +
                     COLUMN_NAME_USER_WEIGHT + " INTEGER, " +
                     COLUMN_NAME_COEFFICIENT + " REAL, " +
@@ -267,7 +270,7 @@ public class LegacyDatabaseUpdaterTest {
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_GOAL, userGoal);
             values.put(COLUMN_NAME_GENDER, userGender);
-            values.put(COLUMN_NAME_AGE, userAge);
+            values.put(DEPRECATED_COLUMN_NAME_AGE, userAge);
             values.put(COLUMN_NAME_HEIGHT, userHeight);
             values.put(COLUMN_NAME_USER_WEIGHT, userWeight);
             values.put(COLUMN_NAME_COEFFICIENT, coefficient);
@@ -283,7 +286,7 @@ public class LegacyDatabaseUpdaterTest {
         while (cursor.moveToNext()) {
             goalId = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_GOAL));
             genderId = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_GENDER));
-            age = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_AGE));
+            age = cursor.getInt(cursor.getColumnIndex(DEPRECATED_COLUMN_NAME_AGE));
             height = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_HEIGHT));
             weight = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_USER_WEIGHT));
             lifestyleId = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_LIFESTYLE));

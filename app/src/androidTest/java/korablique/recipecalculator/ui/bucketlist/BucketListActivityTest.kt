@@ -133,7 +133,8 @@ class BucketListActivityTest {
             .withSingletones {
                 cleanAllPrefs(context)
                 databaseThreadExecutor = InstantDatabaseThreadExecutor()
-                databaseHolder = DatabaseHolder(context, databaseThreadExecutor)
+                databaseHolder = DatabaseHolder(
+                        context, TestingTimeProvider(), databaseThreadExecutor)
                 databaseHolder.database.clearAllTables()
                 prefsManager = SharedPrefsManager(context)
                 mainThreadExecutor = SyncMainThreadExecutor()
@@ -1342,55 +1343,60 @@ class BucketListActivityTest {
 
     @Test
     fun cookingMode() {
-        // Create recipe
-        clearAllData(foodstuffsList, historyWorker, databaseHolder)
-        val initialRecipe = createSavedRecipe(
-                "cake", 333,
-                listOf(UIIngredient("dough", "111"), UIIngredient("oil", "222")))
-        val recipeDividedBy10 = createSavedRecipe(
-                "cake", 33,
-                listOf(UIIngredient("dough", "11"), UIIngredient("oil", "22")))
-        val recipe0 = createSavedRecipe(
-                "cake", 0,
-                listOf(UIIngredient("dough", "0"), UIIngredient("oil", "0")))
-        val startIntent = createIntent(
-                InstrumentationRegistry.getTargetContext(),
-                initialRecipe)
-        activityRule.launchActivity(startIntent)
+        try {
+            // Create recipe
+            clearAllData(foodstuffsList, historyWorker, databaseHolder)
+            val initialRecipe = createSavedRecipe(
+                    "cake", 333,
+                    listOf(UIIngredient("dough", "111"), UIIngredient("oil", "222")))
+            val recipeDividedBy10 = createSavedRecipe(
+                    "cake", 33,
+                    listOf(UIIngredient("dough", "11"), UIIngredient("oil", "22")))
+            val recipe0 = createSavedRecipe(
+                    "cake", 0,
+                    listOf(UIIngredient("dough", "0"), UIIngredient("oil", "0")))
+            val startIntent = createIntent(
+                    InstrumentationRegistry.getTargetContext(),
+                    initialRecipe)
+            activityRule.launchActivity(startIntent)
 
-        verifyRecipeDisplayingState(initialRecipe)
+            verifyRecipeDisplayingState(initialRecipe)
 
-        // Switch and verify state
-        onView(withId(R.id.button_cooking)).perform(click())
-        verifyCookingState(initialRecipe)
+            // Switch and verify state
+            onView(withId(R.id.button_cooking)).perform(click())
+            verifyCookingState(initialRecipe)
 
-        // Divide total weight by 10
-        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("33"))
-        verifyCookingState(recipeDividedBy10)
-        // Return original weight
-        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("333"))
-        verifyCookingState(initialRecipe)
+            // Divide total weight by 10
+            onView(withId(R.id.total_weight_edit_text)).perform(replaceText("33"))
+            verifyCookingState(recipeDividedBy10)
+            // Return original weight
+            onView(withId(R.id.total_weight_edit_text)).perform(replaceText("333"))
+            verifyCookingState(initialRecipe)
 
-        // Divide dough weight by 10
-        onView(allOf(
-                withParent(hasDescendant(withText("dough"))),
-                withId(R.id.extra_info_block_editable)))
-                .perform(replaceText("11"))
-        verifyCookingState(recipeDividedBy10)
-        // Return original dough weight
-        onView(allOf(
-                withParent(hasDescendant(withText("dough"))),
-                withId(R.id.extra_info_block_editable)))
-                .perform(replaceText("111"))
-        verifyCookingState(initialRecipe)
+            // Divide dough weight by 10
+            onView(allOf(
+                    withParent(hasDescendant(withText("dough"))),
+                    withId(R.id.extra_info_block_editable)))
+                    .perform(replaceText("11"))
+            verifyCookingState(recipeDividedBy10)
+            // Return original dough weight
+            onView(allOf(
+                    withParent(hasDescendant(withText("dough"))),
+                    withId(R.id.extra_info_block_editable)))
+                    .perform(replaceText("111"))
+            verifyCookingState(initialRecipe)
 
-        // Set total weight to 0
-        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("0"))
-        verifyCookingState(recipe0)
+            // Set total weight to 0
+            onView(withId(R.id.total_weight_edit_text)).perform(replaceText("0"))
+            verifyCookingState(recipe0)
 
-        // Exit the cooking mode and verify that the weight are unchanged
-        onView(withId(R.id.button_close)).perform(click())
-        verifyRecipeDisplayingState(initialRecipe)
+            // Exit the cooking mode and verify that the weight are unchanged
+            onView(withId(R.id.button_close)).perform(click())
+            verifyRecipeDisplayingState(initialRecipe)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 
     @Test

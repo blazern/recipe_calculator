@@ -23,7 +23,15 @@ public class TestingTimeProvider implements TimeProvider {
             return time;
         }
     }
-    private ActualTimeSource timeSource = new ActualTimeSource();
+    private ActualTimeSource timeSource;
+
+    public TestingTimeProvider() {
+        timeSource = new ActualTimeSource();
+    }
+
+    public TestingTimeProvider(DateTime time) {
+        timeSource = new ActualTimeSource(time);
+    }
 
     public void setTime(DateTime time) {
         this.timeSource = new ActualTimeSource(time);

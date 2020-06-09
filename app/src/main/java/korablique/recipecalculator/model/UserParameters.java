@@ -1,5 +1,6 @@
 package korablique.recipecalculator.model;
 
+import android.annotation.SuppressLint;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -19,6 +20,7 @@ public class UserParameters implements Parcelable {
     private final float weight;
     private final Lifestyle lifestyle;
     private final Formula formula;
+    private final Nutrition rates;
     private final long measurementsTimestamp;
 
     public UserParameters(
@@ -30,6 +32,7 @@ public class UserParameters implements Parcelable {
             float weight,
             Lifestyle lifestyle,
             Formula formula,
+            Nutrition rates,
             long measurementsTimestamp) {
         this.name = name;
         this.targetWeight = targetWeight;
@@ -39,6 +42,7 @@ public class UserParameters implements Parcelable {
         this.weight = weight;
         this.lifestyle = lifestyle;
         this.formula = formula;
+        this.rates = rates;
         this.measurementsTimestamp = measurementsTimestamp;
     }
 
@@ -54,6 +58,7 @@ public class UserParameters implements Parcelable {
         weight = in.readFloat();
         lifestyle = (Lifestyle) in.readSerializable();
         formula = (Formula) in.readSerializable();
+        rates = (Nutrition) in.readSerializable();
         measurementsTimestamp = in.readLong();
     }
 
@@ -112,8 +117,24 @@ public class UserParameters implements Parcelable {
         return formula;
     }
 
+    public Nutrition getRates() {
+        return rates;
+    }
+
     public long getMeasurementsTimestamp() {
         return measurementsTimestamp;
+    }
+
+    public UserParameters recreateWithWeight(float newWeight) {
+        return new UserParameters(
+                name, targetWeight, gender, dateOfBirth, height, newWeight,
+                lifestyle, formula, rates, measurementsTimestamp);
+    }
+
+    public UserParameters recreateWithMeasurementTime(long newTime) {
+        return new UserParameters(
+                name, targetWeight, gender, dateOfBirth, height, weight,
+                lifestyle, formula, rates, newTime);
     }
 
     @Override
@@ -129,6 +150,7 @@ public class UserParameters implements Parcelable {
                 FloatUtils.areFloatsEquals(targetWeight, that.targetWeight) &&
                 Objects.equals(gender, that.gender) &&
                 Objects.equals(formula, that.formula) &&
+                Objects.equals(rates, that.rates) &&
                 measurementsTimestamp == that.measurementsTimestamp;
     }
 
@@ -166,7 +188,17 @@ public class UserParameters implements Parcelable {
         parcel.writeFloat(weight);
         parcel.writeSerializable(lifestyle);
         parcel.writeSerializable(formula);
+        parcel.writeSerializable(rates);
         parcel.writeLong(measurementsTimestamp);
+    }
+
+    @SuppressLint("DefaultLocale")
+    @Override
+    public String toString() {
+        return String.format("{name: %s, targetWeight: %f, gender: %s, birthday: %s, "
+                + "height: %d, weight: %f, lifestyle: %s, formula: %s, rates: %s, measurementsTimestamp: %d}",
+                name, targetWeight, gender.toString(), dateOfBirth.toString(), height, weight,
+                lifestyle.toString(), formula.toString(), rates.toString(), measurementsTimestamp);
     }
 }
 

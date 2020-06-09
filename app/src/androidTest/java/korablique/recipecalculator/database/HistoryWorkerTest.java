@@ -55,7 +55,8 @@ public class HistoryWorkerTest {
         context = InstrumentationRegistry.getTargetContext();
 
         DatabaseThreadExecutor databaseThreadExecutor = new InstantDatabaseThreadExecutor();
-        databaseHolder = Mockito.spy(new DatabaseHolder(context, databaseThreadExecutor));
+        databaseHolder = Mockito.spy(new DatabaseHolder(
+                context, new TestingTimeProvider(), databaseThreadExecutor));
         databaseHolder.getDatabase().clearAllTables();
         databaseWorker = new DatabaseWorker(
                 databaseHolder, new InstantMainThreadExecutor(), databaseThreadExecutor);

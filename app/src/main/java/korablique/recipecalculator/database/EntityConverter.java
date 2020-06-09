@@ -11,6 +11,7 @@ import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.HistoryEntry;
 import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.NewHistoryEntry;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 
 public class EntityConverter {
@@ -58,6 +59,10 @@ public class EntityConverter {
                 entity.getWeight(),
                 Lifestyle.fromId(entity.getLifestyleId()),
                 Formula.fromId(entity.getFormulaId()),
+                Nutrition.withValues(entity.getRateProtein(),
+                        entity.getRateFats(),
+                        entity.getRateCarbs(),
+                        entity.getRateCalories()),
                 entity.getMeasurementsTimestamp());
     }
 
@@ -67,6 +72,7 @@ public class EntityConverter {
         int month = dateOfBirth.getMonthOfYear();
         int year = dateOfBirth.getYear();
         return new UserParametersEntity(
+                0,
                 userParameters.getName(),
                 userParameters.getTargetWeight(),
                 userParameters.getGender().getId(),
@@ -75,6 +81,10 @@ public class EntityConverter {
                 userParameters.getWeight(),
                 userParameters.getLifestyle().getId(),
                 userParameters.getFormula().getId(),
+                userParameters.getRates().getProtein(),
+                userParameters.getRates().getFats(),
+                userParameters.getRates().getCarbs(),
+                userParameters.getRates().getCalories(),
                 userParameters.getMeasurementsTimestamp());
     }
 }

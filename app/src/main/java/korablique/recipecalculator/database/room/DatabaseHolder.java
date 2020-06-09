@@ -12,6 +12,7 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.VisibleForTesting;
 import androidx.room.Room;
 
+import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.util.FileSystemUtils;
 import korablique.recipecalculator.TestEnvironmentDetector;
 import korablique.recipecalculator.database.DatabaseThreadExecutor;
@@ -34,11 +35,15 @@ public class DatabaseHolder {
     private static final String DATABASE_NAME = "Main.db";
     private final Context context;
     private final DatabaseThreadExecutor databaseThreadExecutor;
+    private final TimeProvider timeProvider;
     private AppDatabase db;
 
     @Inject
-    public DatabaseHolder(Context context, DatabaseThreadExecutor databaseThreadExecutor) {
+    public DatabaseHolder(Context context,
+                          TimeProvider timeProvider,
+                          DatabaseThreadExecutor databaseThreadExecutor) {
         this.context = context;
+        this.timeProvider = timeProvider;
         this.databaseThreadExecutor = databaseThreadExecutor;
     }
 
@@ -76,7 +81,7 @@ public class DatabaseHolder {
         builder.setQueryExecutor(databaseThreadExecutor::execute);
         // Сообщим о миграциях.
         builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
-                MIGRATION_6_7, MIGRATION_7_8.call(context));
+                MIGRATION_6_7, MIGRATION_7_8.call(context, timeProvider));
         // Позволим работу на главном потоке в тестах.
         if (TestEnvironmentDetector.isInTests()) {
             builder.allowMainThreadQueries();

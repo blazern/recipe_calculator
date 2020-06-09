@@ -28,7 +28,7 @@ import static korablique.recipecalculator.database.HistoryContract.COLUMN_NAME_W
 import static korablique.recipecalculator.database.HistoryContract.HISTORY_TABLE_NAME;
 import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_COEFFICIENT;
 import static korablique.recipecalculator.database.room.legacy.LegacyDatabaseValues.COLUMN_NAME_GOAL;
-import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_AGE;
+import static korablique.recipecalculator.database.UserParametersContract.DEPRECATED_COLUMN_NAME_AGE;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_FORMULA;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_GENDER;
 import static korablique.recipecalculator.database.UserParametersContract.COLUMN_NAME_HEIGHT;
@@ -127,7 +127,7 @@ public class LegacyDatabaseUpdater {
                     UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     COLUMN_NAME_GOAL + " INTEGER, " +
                     COLUMN_NAME_GENDER + " INTEGER, " +
-                    COLUMN_NAME_AGE + " INTEGER, " +
+                    DEPRECATED_COLUMN_NAME_AGE + " INTEGER, " +
                     COLUMN_NAME_HEIGHT + " INTEGER, " +
                     COLUMN_NAME_USER_WEIGHT + " INTEGER, " +
                     COLUMN_NAME_LIFESTYLE + " INTEGER, " +
@@ -145,7 +145,7 @@ public class LegacyDatabaseUpdater {
                 Gender gender = LegacyDatabaseValues.convertGender(genderStr);
                 int genderId = gender.getId();
 
-                int age = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_AGE));
+                int age = cursor.getInt(cursor.getColumnIndex(DEPRECATED_COLUMN_NAME_AGE));
                 int height = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_HEIGHT));
                 int weight = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_USER_WEIGHT));
 
@@ -161,7 +161,7 @@ public class LegacyDatabaseUpdater {
                 values.put(UserParametersContract.ID, id);
                 values.put(COLUMN_NAME_GOAL, goalId);
                 values.put(COLUMN_NAME_GENDER, genderId);
-                values.put(COLUMN_NAME_AGE, age);
+                values.put(DEPRECATED_COLUMN_NAME_AGE, age);
                 values.put(COLUMN_NAME_HEIGHT, height);
                 values.put(COLUMN_NAME_USER_WEIGHT, weight);
                 values.put(COLUMN_NAME_LIFESTYLE, lifestyleId);
@@ -221,7 +221,7 @@ public class LegacyDatabaseUpdater {
                 UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COLUMN_NAME_GOAL + " INTEGER, " +
                 COLUMN_NAME_GENDER + " INTEGER, " +
-                COLUMN_NAME_AGE + " INTEGER, " +
+                DEPRECATED_COLUMN_NAME_AGE + " INTEGER, " +
                 COLUMN_NAME_HEIGHT + " INTEGER, " +
                 COLUMN_NAME_USER_WEIGHT + " INTEGER, " +
                 COLUMN_NAME_LIFESTYLE + " INTEGER, " +

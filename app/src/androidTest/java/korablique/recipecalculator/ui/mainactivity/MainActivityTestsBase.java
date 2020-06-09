@@ -45,6 +45,8 @@ import korablique.recipecalculator.model.FoodstuffsTopList;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
+import korablique.recipecalculator.model.Nutrition;
+import korablique.recipecalculator.model.RateCalculator;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.fcm.FCMManager;
 import korablique.recipecalculator.outside.http.BroccalcHttpContext;
@@ -142,10 +144,10 @@ public class MainActivityTestsBase {
                     .withSingletones(() -> {
                         PrefsCleaningHelper.INSTANCE.cleanAllPrefs(context);
                         prefsManager = new SharedPrefsManager(context);
-                        databaseHolder = new DatabaseHolder(context, databaseThreadExecutor);
+                        timeProvider = new TestingTimeProvider();
+                        databaseHolder = new DatabaseHolder(context, timeProvider, databaseThreadExecutor);
                         databaseWorker = new DatabaseWorker(
                                 databaseHolder, mainThreadExecutor, databaseThreadExecutor);
-                        timeProvider = new TestingTimeProvider();
                         historyWorker = new HistoryWorker(
                                 databaseHolder, mainThreadExecutor, databaseThreadExecutor,
                                 timeProvider);
@@ -380,7 +382,9 @@ public class MainActivityTestsBase {
         // сохраняем userParameters в БД
         userParameters = new UserParameters(
                 "John Doe", 45, Gender.FEMALE, new LocalDate(1993, 9, 27),
-                158, 48, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT, timeProvider.nowUtc().getMillis());
+                158, 48, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(100, 130, 200, 1700),
+                timeProvider.nowUtc().getMillis());
         userParametersWorker.saveUserParameters(userParameters);
 
         // каждый тест должен сам сделать launchActivity()

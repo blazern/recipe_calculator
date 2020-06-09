@@ -15,7 +15,7 @@ import korablique.recipecalculator.util.FloatUtils;
 public class RateCalculatorTest {
     @Test
     public void ratesCalculatedCorrectly() {
-        Rates rates1 = RateCalculator.calculate(
+        Nutrition rates1 = RateCalculator.calculate(
                 40,
                 Gender.FEMALE,
                 24,
@@ -28,7 +28,7 @@ public class RateCalculatorTest {
         Assert.assertTrue("Fats", FloatUtils.areFloatsEquals(45, rates1.getFats()));
         Assert.assertTrue("Carbs", FloatUtils.areFloatsEquals(146.05344f, rates1.getCarbs()));
 
-        Rates rates2 = RateCalculator.calculate(
+        Nutrition rates2 = RateCalculator.calculate(
                 70,
                 Gender.MALE,
                 24,

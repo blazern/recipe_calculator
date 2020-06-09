@@ -1,13 +1,20 @@
 package korablique.recipecalculator.database.room;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import korablique.recipecalculator.base.Function1arg;
+import org.joda.time.LocalDate;
+import org.joda.time.Period;
+
+import korablique.recipecalculator.base.Function2arg;
+import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.database.FoodstuffsContract;
 import korablique.recipecalculator.database.HistoryContract;
 import korablique.recipecalculator.database.IngredientContract;
@@ -17,6 +24,11 @@ import korablique.recipecalculator.database.UserParametersContract;
 import korablique.recipecalculator.database.room.legacy.LegacyDatabaseUpdater;
 import korablique.recipecalculator.database.room.legacy.LegacyUserNameProvider;
 import korablique.recipecalculator.database.room.legacy.LegacyFullName;
+import korablique.recipecalculator.model.Formula;
+import korablique.recipecalculator.model.Gender;
+import korablique.recipecalculator.model.Lifestyle;
+import korablique.recipecalculator.model.Nutrition;
+import korablique.recipecalculator.model.RateCalculator;
 
 import static korablique.recipecalculator.database.IngredientContract.INGREDIENT_TABLE_NAME;
 import static korablique.recipecalculator.database.RecipeContract.RECIPE_TABLE_NAME;
@@ -61,7 +73,7 @@ public class Migrations {
                             UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                             LegacyDatabaseValues.COLUMN_NAME_GOAL + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_GENDER + " INTEGER NOT NULL, " +
-                            UserParametersContract.COLUMN_NAME_AGE + " INTEGER NOT NULL, " +
+                            UserParametersContract.DEPRECATED_COLUMN_NAME_AGE + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_HEIGHT + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_USER_WEIGHT + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_LIFESTYLE + " INTEGER NOT NULL, " +
@@ -87,7 +99,7 @@ public class Migrations {
                             UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_TARGET_WEIGHT + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_GENDER + " INTEGER NOT NULL, " +
-                            UserParametersContract.COLUMN_NAME_AGE + " INTEGER NOT NULL, " +
+                            UserParametersContract.DEPRECATED_COLUMN_NAME_AGE + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_HEIGHT + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_USER_WEIGHT + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_LIFESTYLE + " INTEGER NOT NULL, " +
@@ -105,7 +117,7 @@ public class Migrations {
                             UserParametersContract.ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_TARGET_WEIGHT + " REAL NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_GENDER + " INTEGER NOT NULL, " +
-                            UserParametersContract.COLUMN_NAME_AGE + " INTEGER NOT NULL, " +
+                            UserParametersContract.DEPRECATED_COLUMN_NAME_AGE + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_HEIGHT + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_USER_WEIGHT + " REAL NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_LIFESTYLE + " INTEGER NOT NULL, " +
@@ -196,10 +208,11 @@ public class Migrations {
         }
     };
 
-    static final Function1arg<Migration, Context> MIGRATION_7_8 = (context) -> new Migration(7, 8) {
+    static final Function2arg<Migration, Context, TimeProvider> MIGRATION_7_8 =
+            (context, timeProvider) -> new Migration(7, 8) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add 'name' column
+            // Add name and rates columns
 
             String tmpTableName = USER_PARAMETERS_TABLE_NAME + "tmp";
             database.execSQL(
@@ -215,27 +228,56 @@ public class Migrations {
                             UserParametersContract.COLUMN_NAME_USER_WEIGHT + " REAL NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_LIFESTYLE + " INTEGER NOT NULL, " +
                             UserParametersContract.COLUMN_NAME_FORMULA + " INTEGER NOT NULL," +
+                            UserParametersContract.COLUMN_NAME_RATE_PROTEIN + " REAL NOT NULL," +
+                            UserParametersContract.COLUMN_NAME_RATE_FATS + " REAL NOT NULL," +
+                            UserParametersContract.COLUMN_NAME_RATE_CARBS + " REAL NOT NULL," +
+                            UserParametersContract.COLUMN_NAME_RATE_CALORIES + " REAL NOT NULL," +
                             UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP + " INTEGER NOT NULL)");
 
             LegacyUserNameProvider legacyUserNameProvider = new LegacyUserNameProvider(context);
             LegacyFullName name = legacyUserNameProvider.getUserName();
 
-            database.execSQL("INSERT INTO " + tmpTableName +
-                    " SELECT " +
-                    UserParametersContract.ID + ", " +
-                    "? AS " + UserParametersContract.COLUMN_NAME_NAME + ", " +
-                    UserParametersContract.COLUMN_NAME_TARGET_WEIGHT + ", " +
-                    UserParametersContract.COLUMN_NAME_GENDER + ", " +
-                    UserParametersContract.COLUMN_NAME_DAY_OF_BIRTH + ", " +
-                    UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH + ", " +
-                    UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH + ", " +
-                    UserParametersContract.COLUMN_NAME_HEIGHT + ", " +
-                    UserParametersContract.COLUMN_NAME_USER_WEIGHT + ", " +
-                    UserParametersContract.COLUMN_NAME_LIFESTYLE + ", " +
-                    UserParametersContract.COLUMN_NAME_FORMULA + ", " +
-                    UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP +
-                    " FROM " + USER_PARAMETERS_TABLE_NAME,
-                    new Object[]{ name.toString() });
+            LocalDate now = timeProvider.now().toLocalDate();
+
+            Cursor c = database.query("SELECT * FROM " + USER_PARAMETERS_TABLE_NAME);
+            while (c.moveToNext()) {
+                long id = c.getLong(c.getColumnIndex(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT));
+                float targetWeight = c.getFloat(c.getColumnIndex(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT));
+                int gender = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_GENDER));
+                int birthYear = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH));
+                int birthMonth = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH));
+                int dayOfBirth = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_DAY_OF_BIRTH));
+                int height = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_HEIGHT));
+                float weight = c.getFloat(c.getColumnIndex(UserParametersContract.COLUMN_NAME_USER_WEIGHT));
+                int lifestyle = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_LIFESTYLE));
+                int formula = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_FORMULA));
+                long measurementTime = c.getLong(c.getColumnIndex(UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP));
+
+                LocalDate birthday = new LocalDate(birthYear, birthMonth, dayOfBirth);
+                int age = new Period(birthday, now).getYears();
+                Nutrition rates = RateCalculator.calculate(
+                        targetWeight, Gender.fromId(gender), age, height,
+                        weight, Lifestyle.fromId(lifestyle), Formula.fromId(formula));
+
+                ContentValues values = new ContentValues();
+                values.put(UserParametersContract.ID, id);
+                values.put(UserParametersContract.COLUMN_NAME_NAME, name.toString());
+                values.put(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT, targetWeight);
+                values.put(UserParametersContract.COLUMN_NAME_GENDER, gender);
+                values.put(UserParametersContract.COLUMN_NAME_DAY_OF_BIRTH, dayOfBirth);
+                values.put(UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH, birthMonth);
+                values.put(UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH, birthYear);
+                values.put(UserParametersContract.COLUMN_NAME_HEIGHT, height);
+                values.put(UserParametersContract.COLUMN_NAME_USER_WEIGHT, weight);
+                values.put(UserParametersContract.COLUMN_NAME_LIFESTYLE, lifestyle);
+                values.put(UserParametersContract.COLUMN_NAME_FORMULA, formula);
+                values.put(UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP, measurementTime);
+                values.put(UserParametersContract.COLUMN_NAME_RATE_PROTEIN, rates.getProtein());
+                values.put(UserParametersContract.COLUMN_NAME_RATE_FATS, rates.getFats());
+                values.put(UserParametersContract.COLUMN_NAME_RATE_CARBS, rates.getCarbs());
+                values.put(UserParametersContract.COLUMN_NAME_RATE_CALORIES, rates.getCalories());
+                database.insert(tmpTableName, SQLiteDatabase.CONFLICT_NONE, values);
+            }
 
             database.execSQL("DROP TABLE " + USER_PARAMETERS_TABLE_NAME);
             database.execSQL("ALTER TABLE " + tmpTableName + " RENAME TO " + USER_PARAMETERS_TABLE_NAME);

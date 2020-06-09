@@ -8,7 +8,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.model.Nutrition;
-import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.ui.NutritionValuesWrapper;
 
 public class HistoryNutritionValuesWrapper extends NutritionValuesWrapper {
@@ -19,7 +19,7 @@ public class HistoryNutritionValuesWrapper extends NutritionValuesWrapper {
         this.layout = layout;
     }
 
-    public void setNutrition(Nutrition nutrition, Rates rates) {
+    public void setNutrition(Nutrition nutrition, Nutrition rates) {
         super.setNutrition(nutrition);
         Context context = layout.getContext();
 

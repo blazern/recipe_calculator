@@ -2,24 +2,24 @@ package korablique.recipecalculator.ui.numbersediting;
 
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.widget.EditText;
+import android.widget.TextView;
 
-public class SimpleTextWatcher <T extends EditText> implements TextWatcher {
+public class SimpleTextWatcher <T extends TextView> implements TextWatcher {
     private final OnTextChangedListener<T> onTextChangedListener;
-    private final T editText;
+    private final T textView;
 
-    public interface OnTextChangedListener  <T extends EditText> {
-        void onTextChanged(T editText);
+    public interface OnTextChangedListener  <T extends TextView> {
+        void onTextChanged(T textView);
     }
 
-    public SimpleTextWatcher(T editText, OnTextChangedListener<T> listener) {
+    public SimpleTextWatcher(T textView, OnTextChangedListener<T> listener) {
         this.onTextChangedListener = listener;
-        this.editText = editText;
+        this.textView = textView;
     }
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-        onTextChangedListener.onTextChanged(editText);
+        onTextChangedListener.onTextChanged(textView);
     }
 
     @Override

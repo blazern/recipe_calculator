@@ -21,6 +21,7 @@ import com.redmadrobot.inputmask.MaskedTextChangedListener;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormat;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.RateCalculator;
-import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry;
 import korablique.recipecalculator.ui.DatePickerFragment;
@@ -55,6 +56,7 @@ import korablique.recipecalculator.ui.inputfilters.GeneralDateFormatInputFilter;
 import korablique.recipecalculator.ui.inputfilters.NumericBoundsInputFilter;
 import korablique.recipecalculator.ui.mainactivity.MainScreenLoader;
 import korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar;
+import korablique.recipecalculator.util.FloatUtils;
 
 import static korablique.recipecalculator.util.SpinnerTuner.startTuningSpinner;
 
@@ -148,6 +150,22 @@ public class UserParametersActivity extends BaseActivity {
 
         nutritionValuesWrapper = new NutritionValuesWrapper(
                 findViewById(R.id.nutrition_parent_layout));
+        nutritionValuesWrapper.addNutritionChangeCallback(new Runnable() {
+            @Override
+            public void run() {
+                double nutritionSum = nutritionValuesWrapper.getProteinValue()
+                        + nutritionValuesWrapper.getFatsValue()
+                        + nutritionValuesWrapper.getCarbsValue();
+                if (FloatUtils.areFloatsEquals(nutritionSum, 0)) {
+                    nutritionProgressBar.setProgress(0, 0, 0);
+                } else {
+                    double proteinPercentage = nutritionValuesWrapper.getProteinValue() / nutritionSum * 100;
+                    double fatsPercentage = nutritionValuesWrapper.getFatsValue() / nutritionSum * 100;
+                    double carbsPercentage = nutritionValuesWrapper.getCarbsValue() / nutritionSum * 100;
+                    nutritionProgressBar.setProgress((float) proteinPercentage, (float) fatsPercentage, (float) carbsPercentage);
+                }
+            }
+        });
         nutritionProgressBar = findViewById(R.id.nutrition_progress_bar);
 
         saveUserParamsButton.setOnClickListener(new View.OnClickListener() {
@@ -259,7 +277,7 @@ public class UserParametersActivity extends BaseActivity {
                         "Debug Name",
                         65, Gender.MALE, LocalDate.parse("1993-07-15"),
                         165, 62, Lifestyle.PASSIVE_LIFESTYLE,
-                        Formula.HARRIS_BENEDICT, 0);
+                        Formula.HARRIS_BENEDICT, Nutrition.withValues(120, 100, 200, 2000), 0);
                 fillWithOldUserParameters(debugUserParams);
             });
         }
@@ -404,23 +422,32 @@ public class UserParametersActivity extends BaseActivity {
 
         long nowTimestamp = timeProvider.nowUtc().getMillis();
 
+        DateTime now = timeProvider.now();
+        int age = new Period(dateOfBirth, now.toLocalDate()).getYears();
+
+        Nutrition rates;
+        if (formula != Formula.MANUAL) {
+            rates = RateCalculator.calculate(
+                    targetWeight, gender, age, height, weight, lifestyle, formula);
+        } else {
+            double protein = nutritionValuesWrapper.getProteinValue();
+            double fats = nutritionValuesWrapper.getFatsValue();
+            double carbs = nutritionValuesWrapper.getCarbsValue();
+            double calories = nutritionValuesWrapper.getCaloriesValue();
+            rates = Nutrition.withValues(protein, fats, carbs, calories);
+        }
+
         return new UserParameters(name, targetWeight, gender, dateOfBirth,
-                height, weight, lifestyle, formula, nowTimestamp);
+                height, weight, lifestyle, formula, rates, nowTimestamp);
     }
 
     private void updateNutritionNorms() {
         UserParameters userParameters = extractUserParameters();
         if (userParameters != null) {
-            Rates rates = RateCalculator.calculate(userParameters);
-            nutritionValuesWrapper.setNutrition(Nutrition.from(rates));
-            float nutritionSum = rates.getProtein() + rates.getFats() + rates.getCarbs();
-            float proteinPercentage = rates.getProtein() / nutritionSum * 100;
-            float fatsPercentage = rates.getFats() / nutritionSum * 100;
-            float carbsPercentage = rates.getCarbs() / nutritionSum * 100;
-            nutritionProgressBar.setProgress(proteinPercentage, fatsPercentage, carbsPercentage);
+            Nutrition rates = userParameters.getRates();
+            nutritionValuesWrapper.setNutrition(rates);
         } else {
             nutritionValuesWrapper.setNutrition(Nutrition.zero());
-            nutritionProgressBar.setProgress(0f, 0f, 0f);
         }
     }
 

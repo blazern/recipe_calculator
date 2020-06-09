@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "7d1cba9df3f05bbb0b7cc15305d00953",
+    "identityHash": "4b528706eeee52609fecd0b9b74f4ae7",
     "entities": [
       {
         "tableName": "foodstuffs",
@@ -68,7 +68,7 @@
       },
       {
         "tableName": "user_parameters",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `target_weight` REAL NOT NULL, `gender` INTEGER NOT NULL, `day_of_birth` INTEGER NOT NULL, `month_of_birth` INTEGER NOT NULL, `year_of_birth` INTEGER NOT NULL, `height` INTEGER NOT NULL, `weight` REAL NOT NULL, `lifestyle` INTEGER NOT NULL, `formula` INTEGER NOT NULL, `measurements_timestamp` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `target_weight` REAL NOT NULL, `gender` INTEGER NOT NULL, `day_of_birth` INTEGER NOT NULL, `month_of_birth` INTEGER NOT NULL, `year_of_birth` INTEGER NOT NULL, `height` INTEGER NOT NULL, `weight` REAL NOT NULL, `lifestyle` INTEGER NOT NULL, `formula` INTEGER NOT NULL, `rate_protein` REAL NOT NULL, `rate_fats` REAL NOT NULL, `rate_carbs` REAL NOT NULL, `rate_calories` REAL NOT NULL, `measurements_timestamp` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -134,6 +134,30 @@
             "fieldPath": "formulaId",
             "columnName": "formula",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateProteinMg",
+            "columnName": "rate_protein",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateFatsMg",
+            "columnName": "rate_fats",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateCarbsMg",
+            "columnName": "rate_carbs",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateCaloriesMg",
+            "columnName": "rate_calories",
+            "affinity": "REAL",
             "notNull": true
           },
           {
@@ -364,7 +388,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7d1cba9df3f05bbb0b7cc15305d00953')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4b528706eeee52609fecd0b9b74f4ae7')"
     ]
   }
 }

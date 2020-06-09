@@ -17,6 +17,8 @@ import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher.OnTextCha
 
 open class NutritionValuesWrapper
         @JvmOverloads constructor(private val layout: ConstraintLayout, withCalories: Boolean = true) {
+    private val nutritionChangeCallbacks = mutableListOf<Runnable>()
+
     private val proteinLayout: ConstraintLayout
     private val fatsLayout: ConstraintLayout
     private val carbsLayout: ConstraintLayout
@@ -67,6 +69,15 @@ open class NutritionValuesWrapper
         tryJoinTextViews(fatsEditText, fatsTextView)
         tryJoinTextViews(carbsEditText, carbsTextView)
         tryJoinTextViews(caloriesEditText, caloriesTextView)
+
+        proteinTextView.addTextChangedListener(SimpleTextWatcher(proteinTextView,
+                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
+        fatsTextView.addTextChangedListener(SimpleTextWatcher(fatsTextView,
+                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
+        carbsTextView.addTextChangedListener(SimpleTextWatcher(carbsTextView,
+                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
+        caloriesTextView?.addTextChangedListener(SimpleTextWatcher(caloriesTextView,
+                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
 
         if (proteinEditText != null) {
             proteinEditText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
@@ -124,16 +135,16 @@ open class NutritionValuesWrapper
     }
 
     val proteinValue: Double
-        get() = proteinTextView.text.toString().toDouble()
+        get() = proteinTextView.text.toString().toDoubleOrNull() ?: 0.0
 
     val fatsValue: Double
-        get() = fatsTextView.text.toString().toDouble()
+        get() = fatsTextView.text.toString().toDoubleOrNull() ?: 0.0
 
     val carbsValue: Double
-        get() = carbsTextView.text.toString().toDouble()
+        get() = carbsTextView.text.toString().toDoubleOrNull() ?: 0.0
 
     val caloriesValue: Double
-        get() = caloriesTextView!!.text.toString().toDouble()
+        get() = caloriesTextView!!.text.toString().toDoubleOrNull() ?: 0.0
 
     fun setEditable(editable: Boolean) {
         TransitionManager.beginDelayedTransition(layout)
@@ -154,5 +165,13 @@ open class NutritionValuesWrapper
             newConstraintSet.setVisibility(R.id.nutrition_text_view, View.VISIBLE)
         }
         newConstraintSet.applyTo(layout)
+    }
+
+    fun addNutritionChangeCallback(callback: Runnable) {
+        nutritionChangeCallbacks += callback
+    }
+
+    fun removeNutritionChangeCallback(callback: Runnable) {
+        nutritionChangeCallbacks -= callback
     }
 }

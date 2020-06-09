@@ -31,7 +31,7 @@ import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.GoalCalculator;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.RateCalculator;
-import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.ui.NutritionValuesWrapper;
 import korablique.recipecalculator.ui.chart.ChartWrapper;
@@ -256,7 +256,7 @@ public class ProfileController implements FragmentCallbacks.Observer, UserParame
         lastMeasurementDate.setText(measurementsDateString);
     }
 
-    private void fillNutritionRates(View fragmentView, Rates rates) {
+    private void fillNutritionRates(View fragmentView, Nutrition rates) {
         NutritionValuesWrapper nutritionValues = new NutritionValuesWrapper(
                 fragmentView.findViewById(R.id.nutrition_parent_layout),
                 false);
@@ -293,7 +293,7 @@ public class ProfileController implements FragmentCallbacks.Observer, UserParame
     private void fillProfile(UserParameters firstParams, UserParameters lastParams, View fragmentView) {
         fillUserData(fragmentView, lastParams);
 
-        Rates rates = RateCalculator.calculate(lastParams);
+        Nutrition rates = lastParams.getRates();
         fillNutritionRates(fragmentView, rates);
 
         float currentWeight = lastParams.getWeight();

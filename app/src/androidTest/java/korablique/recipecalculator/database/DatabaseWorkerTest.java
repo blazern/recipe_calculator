@@ -25,6 +25,7 @@ import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.InstantDatabaseThreadExecutor;
 import korablique.recipecalculator.InstantMainThreadExecutor;
+import korablique.recipecalculator.util.TestingTimeProvider;
 
 import static korablique.recipecalculator.database.FoodstuffsContract.COLUMN_NAME_IS_LISTED;
 import static korablique.recipecalculator.database.FoodstuffsContract.FOODSTUFFS_TABLE_NAME;
@@ -40,7 +41,7 @@ public class DatabaseWorkerTest {
     public void setUp() {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DatabaseThreadExecutor databaseThreadExecutor = new InstantDatabaseThreadExecutor();
-        databaseHolder = new DatabaseHolder(context, databaseThreadExecutor);
+        databaseHolder = new DatabaseHolder(context, new TestingTimeProvider(), databaseThreadExecutor);
         databaseWorker = new DatabaseWorker(
                 databaseHolder, new InstantMainThreadExecutor(), databaseThreadExecutor);
         databaseHolder.getDatabase().clearAllTables();

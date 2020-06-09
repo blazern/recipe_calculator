@@ -4,18 +4,10 @@ public class RateCalculator {
 
     private RateCalculator() {}
 
-    public static Rates calculate(UserParameters userParameters) {
-        return calculate(
-                userParameters.getTargetWeight(),
-                userParameters.getGender(),
-                userParameters.getAge(),
-                userParameters.getHeight(),
-                userParameters.getWeight(),
-                userParameters.getLifestyle(),
-                userParameters.getFormula());
-    }
-
-    public static Rates calculate(
+    /**
+     * @param formula must not be Formula.MANUAL
+     */
+    public static Nutrition calculate(
             float targetWeight,
             Gender gender,
             int age,
@@ -23,6 +15,9 @@ public class RateCalculator {
             float currentWeight,
             Lifestyle lifestyle,
             Formula formula) {
+        if (formula == Formula.MANUAL) {
+            throw new IllegalArgumentException("Cannot calculate manual rates!");
+        }
         // 1) рассчитываем базальный метаболизм
         float basalMetabolism;
         // формула Харриса-Бенедикта
@@ -68,6 +63,6 @@ public class RateCalculator {
         float protein = currentWeight * 2;
         float fats = currentWeight;
         float carbs = (caloriesDependingOnGoal - (protein * 4 + fats * 9)) / 4;
-        return new Rates(caloriesDependingOnGoal, protein, fats, carbs);
+        return Nutrition.withValues(protein, fats, carbs, caloriesDependingOnGoal);
     }
 }

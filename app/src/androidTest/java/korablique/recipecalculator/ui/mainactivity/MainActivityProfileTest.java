@@ -22,7 +22,7 @@ import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.GoalCalculator;
 import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.RateCalculator;
-import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 
 import static androidx.test.espresso.Espresso.onView;
@@ -58,6 +58,7 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
                 userParameters.getWeight() + 10,
                 Lifestyle.ACTIVE_LIFESTYLE,
                 Formula.MIFFLIN_JEOR,
+                userParameters.getRates().plus(Nutrition.withValues(10, 20, 30, 40)),
                 timeProvider.nowUtc().getMillis());
         userParametersWorker.saveUserParameters(userParameters);
 
@@ -81,7 +82,7 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
         onView(withId(R.id.last_measurement_date_measurement_value)).check(matches(withText(measurementsDateString)));
 
         // проверяем, что отображаются правильные нормы
-        Rates rates = RateCalculator.calculate(userParameters);
+        Nutrition rates = userParameters.getRates();
         onView(withId(R.id.calorie_intake)).check(matches(withText(toDecimalString(rates.getCalories()))));
         onView(allOf(
                 withEffectiveVisibility(VISIBLE),
@@ -112,7 +113,8 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
         DateTime lastDate = new DateTime(2019, 8, 12, 12, 12, 0, DateTimeZone.UTC);
         UserParameters lastParams = new UserParameters(
                 "John Doe", 45, Gender.FEMALE, new LocalDate(1993, 9, 27),
-                158, 49.6f, Lifestyle.ACTIVE_LIFESTYLE, Formula.HARRIS_BENEDICT, lastDate.getMillis());
+                158, 49.6f, Lifestyle.ACTIVE_LIFESTYLE, Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(120, 100, 200, 1700), lastDate.getMillis());
         userParametersWorker.saveUserParameters(lastParams);
 
         mActivityRule.launchActivity(null);
@@ -156,7 +158,8 @@ public class MainActivityProfileTest extends MainActivityTestsBase {
             for (int measurementIndex = 0; measurementIndex < 5; ++measurementIndex) {
                 UserParameters userParameters = new UserParameters(
                         "John Doe", 65, Gender.MALE, new LocalDate(1993, 7, 20), 165, 65+monthIndex+measurementIndex,
-                        Lifestyle.PROFESSIONAL_SPORTS, Formula.MIFFLIN_JEOR, measurementTime.getMillis());
+                        Lifestyle.PROFESSIONAL_SPORTS, Formula.MIFFLIN_JEOR,
+                        Nutrition.withValues(120, 100, 200, 1700), measurementTime.getMillis());
                 userParametersWorker.saveUserParameters(userParameters);
             }
             measurementTime = measurementTime.minusMonths(1);

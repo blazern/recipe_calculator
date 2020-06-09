@@ -25,6 +25,7 @@ import korablique.recipecalculator.database.room.DatabaseHolder;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.InstantDatabaseThreadExecutor;
 import korablique.recipecalculator.InstantMainThreadExecutor;
@@ -50,7 +51,7 @@ public class UserParametersWorkerTest {
     public void setUp() throws IOException {
         context = InstrumentationRegistry.getTargetContext();
         spiedDatabaseThreadExecutor = spy(new InstantDatabaseThreadExecutor());
-        databaseHolder = new DatabaseHolder(context, spiedDatabaseThreadExecutor);
+        databaseHolder = new DatabaseHolder(context, new TestingTimeProvider(), spiedDatabaseThreadExecutor);
         timeProvider = new TestingTimeProvider();
 
         databaseHolder.getDatabase().clearAllTables();
@@ -72,6 +73,7 @@ public class UserParametersWorkerTest {
                 64,
                 Lifestyle.INSIGNIFICANT_ACTIVITY,
                 Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(10, 20, 30, 40),
                 timeProvider.nowUtc().getMillis());
 
         MutableBoolean saved = new MutableBoolean(false);
@@ -104,6 +106,7 @@ public class UserParametersWorkerTest {
                 64,
                 Lifestyle.INSIGNIFICANT_ACTIVITY,
                 Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(10, 20, 30, 40),
                 timeProvider.nowUtc().getMillis());
         userParametersWorker.saveUserParameters(userParameters);
 
@@ -131,15 +134,18 @@ public class UserParametersWorkerTest {
         DateTime date1 = new DateTime(2019, 1, 1, 12, 0, DateTimeZone.UTC);
         UserParameters userParameters1 = new UserParameters(
                 "John Doe", 50, Gender.FEMALE, dateOfBirth,
-                160, 60, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT, date1.getMillis());
+                160, 60, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(10, 20, 30, 40), date1.getMillis());
         DateTime date2 = new DateTime(2019, 2, 1, 12, 0, DateTimeZone.UTC);
         UserParameters userParameters2 = new UserParameters(
                 "John Doe", 50, Gender.FEMALE, dateOfBirth,
-                160, 59, Lifestyle.INSIGNIFICANT_ACTIVITY, Formula.HARRIS_BENEDICT, date2.getMillis());
+                160, 59, Lifestyle.INSIGNIFICANT_ACTIVITY, Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(10, 20, 30, 40), date2.getMillis());
         DateTime date3 = new DateTime(2019, 3, 1, 12, 0, DateTimeZone.UTC);
         UserParameters userParameters3 = new UserParameters(
                 "John Doe", 50, Gender.FEMALE, dateOfBirth,
-                160, 58, Lifestyle.INSIGNIFICANT_ACTIVITY, Formula.MIFFLIN_JEOR, date3.getMillis());
+                160, 58, Lifestyle.INSIGNIFICANT_ACTIVITY, Formula.MIFFLIN_JEOR,
+                Nutrition.withValues(10, 20, 30, 40), date3.getMillis());
         userParametersWorker.saveUserParameters(userParameters1);
         userParametersWorker.saveUserParameters(userParameters2);
         userParametersWorker.saveUserParameters(userParameters3);
@@ -163,6 +169,7 @@ public class UserParametersWorkerTest {
                 64,
                 Lifestyle.INSIGNIFICANT_ACTIVITY,
                 Formula.HARRIS_BENEDICT,
+                Nutrition.withValues(10, 20, 30, 40),
                 timeProvider.nowUtc().getMillis());
 
         UserParametersWorker.Observer observer = mock(UserParametersWorker.Observer.class);

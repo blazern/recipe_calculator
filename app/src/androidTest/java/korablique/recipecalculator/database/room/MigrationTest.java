@@ -3,6 +3,7 @@ package korablique.recipecalculator.database.room;
 import android.content.Context;
 import android.database.Cursor;
 
+import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,9 +18,11 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import korablique.recipecalculator.database.DatabaseUtils;
+import korablique.recipecalculator.database.UserParametersContract;
 import korablique.recipecalculator.database.room.legacy.LegacyUserNameProvider;
 import korablique.recipecalculator.database.room.legacy.LegacyFullName;
 import korablique.recipecalculator.util.FloatUtils;
+import korablique.recipecalculator.util.TestingTimeProvider;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static korablique.recipecalculator.database.IngredientContract.INGREDIENT_TABLE_NAME;
@@ -149,21 +152,52 @@ public class MigrationTest {
         legacyUserNameProvider.saveUserName(new LegacyFullName("John", "Doe"));
 
         SupportSQLiteDatabase db = helper.createDatabase(TEST_DB, 7);
-        int id = 1, targetWeight = 45, genderId = 1, birthDay = 25, birthMonth = 3, birthYear = 1993,
-                height = 158, weight = 48, lifestyleId = 0, formulaId = 0, measurementsTime = 123;
+        int id = 1, targetWeight = 65, genderId = 0, birthDay = 25, birthMonth = 8, birthYear = 1993,
+                height = 165, weight = 63, lifestyleId = 1, formulaId = 0, measurementsTime = 123;
         db.execSQL("INSERT INTO " + USER_PARAMETERS_TABLE_NAME + " VALUES ("
                 + id + ", " + targetWeight + ", " + genderId + ", " +
                 birthDay + ", " + birthMonth + ", " + birthYear + ", " + height + ", " +
                 weight + ", " + lifestyleId + ", " + formulaId + ", " + measurementsTime + ")");
 
-        db = helper.runMigrationsAndValidate(
-                TEST_DB, 8, true, MIGRATION_7_8.call(context));
+        TestingTimeProvider timeProvider = new TestingTimeProvider(new DateTime(2020, 6, 7, 22, 16));
 
-        Cursor cursor = db.query("SELECT * FROM " + USER_PARAMETERS_TABLE_NAME);
-        assertEquals(1, cursor.getCount());
-        while (cursor.moveToNext()) {
-            String name = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_NAME));
-            Assert.assertEquals(legacyUserNameProvider.getUserName().toString(), name);
+        db = helper.runMigrationsAndValidate(
+                TEST_DB, 8, true, MIGRATION_7_8.call(context, timeProvider));
+
+        Cursor c = db.query("SELECT * FROM " + USER_PARAMETERS_TABLE_NAME);
+        assertEquals(1, c.getCount());
+        while (c.moveToNext()) {
+            String nameActual = c.getString(c.getColumnIndex(COLUMN_NAME_NAME));
+            float targetWeightActual = c.getFloat(c.getColumnIndex(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT));
+            int genderActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_GENDER));
+            int dayOfBirthActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_DAY_OF_BIRTH));
+            int birthMonthActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_MONTH_OF_BIRTH));
+            int birthYearActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH));
+            int heightActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_HEIGHT));
+            float weightActual = c.getFloat(c.getColumnIndex(UserParametersContract.COLUMN_NAME_USER_WEIGHT));
+            int lifestyleActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_LIFESTYLE));
+            int formulaActual = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_FORMULA));
+            long measurementTimeActual = c.getLong(c.getColumnIndex(UserParametersContract.COLUMN_NAME_MEASUREMENTS_TIMESTAMP));
+            double proteinRatesActual = c.getDouble(c.getColumnIndex(UserParametersContract.COLUMN_NAME_RATE_PROTEIN));
+            double fatsRatesActual = c.getDouble(c.getColumnIndex(UserParametersContract.COLUMN_NAME_RATE_FATS));
+            double carbsRatesActual = c.getDouble(c.getColumnIndex(UserParametersContract.COLUMN_NAME_RATE_CARBS));
+            double caloriesRatesActual = c.getDouble(c.getColumnIndex(UserParametersContract.COLUMN_NAME_RATE_CALORIES));
+
+            assertEquals(legacyUserNameProvider.getUserName().toString(), nameActual);
+            assertEquals(targetWeight, targetWeightActual, 0.0001);
+            assertEquals(genderId, genderActual);
+            assertEquals(birthYear, birthYearActual);
+            assertEquals(birthMonth, birthMonthActual);
+            assertEquals(birthDay, dayOfBirthActual);
+            assertEquals(height, heightActual);
+            assertEquals(weight, weightActual, 0.0001);
+            assertEquals(lifestyleId, lifestyleActual);
+            assertEquals(formulaId, formulaActual);
+            assertEquals(measurementsTime, measurementTimeActual);
+            assertEquals(126.0, proteinRatesActual, 0.00001);
+            assertEquals(63.0, fatsRatesActual, 0.00001);
+            assertEquals(328.4041748, carbsRatesActual, 0.00001);
+            assertEquals(2384.6166992, caloriesRatesActual, 0.00001);
         }
     }
 }

@@ -38,7 +38,7 @@ import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.NewHistoryEntry;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.RateCalculator;
-import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.util.EspressoUtils;
@@ -206,7 +206,7 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         Nutrition totalNutrition = Nutrition.of(foodstuffs[0].withWeight(100))
                 .plus(Nutrition.of(foodstuffs[5].withWeight(100)))
                 .plus(Nutrition.of(foodstuffs[6].withWeight(100)));
-        Rates rates = RateCalculator.calculate(userParameters);
+        Nutrition rates = userParameters.getRates();
 
         onView(withId(R.id.menu_item_history)).perform(click());
 
@@ -235,14 +235,14 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
                 userParameters.getWeight() + 10,
                 Lifestyle.ACTIVE_LIFESTYLE,
                 Formula.MIFFLIN_JEOR,
+                userParameters.getRates().plus(Nutrition.withValues(10, 20, 30, 40)),
                 timeProvider.nowUtc().getMillis());
         userParametersWorker.saveUserParameters(userParameters);
 
-        Rates newRates = RateCalculator.calculate(userParameters);
-        checkNutritionNorms(totalNutrition, newRates);
+        checkNutritionNorms(totalNutrition, userParameters.getRates());
     }
 
-    private void checkNutritionNorms(Nutrition totalNutrition, Rates rates) {
+    private void checkNutritionNorms(Nutrition totalNutrition, Nutrition rates) {
         // проверяем значения норм БЖУК
         Matcher<View> proteinRateMatcher = allOf(
                 withParent(withId(R.id.protein_layout)),
@@ -274,28 +274,28 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
                 isDisplayed(),
                 withId(R.id.nutrition_progress));
         onView(proteinProgress).check(hasProgress(Math.round((float)totalNutrition.getProtein())));
-        onView(proteinProgress).check(hasMaxProgress(Math.round(rates.getProtein())));
+        onView(proteinProgress).check(hasMaxProgress(Math.round((float)rates.getProtein())));
 
         Matcher<View> fatsProgress = allOf(
                 isDescendantOfA(withId(R.id.fats_layout)),
                 isDisplayed(),
                 withId(R.id.nutrition_progress));
         onView(fatsProgress).check(hasProgress(Math.round((float)totalNutrition.getFats())));
-        onView(fatsProgress).check(hasMaxProgress(Math.round(rates.getFats())));
+        onView(fatsProgress).check(hasMaxProgress(Math.round((float)rates.getFats())));
 
         Matcher<View> carbsProgress = allOf(
                 isDescendantOfA(withId(R.id.carbs_layout)),
                 isDisplayed(),
                 withId(R.id.nutrition_progress));
         onView(carbsProgress).check(hasProgress(Math.round((float)totalNutrition.getCarbs())));
-        onView(carbsProgress).check(hasMaxProgress(Math.round(rates.getCarbs())));
+        onView(carbsProgress).check(hasMaxProgress(Math.round((float)rates.getCarbs())));
 
         Matcher<View> caloriesProgress = allOf(
                 isDescendantOfA(withId(R.id.calories_layout)),
                 isDisplayed(),
                 withId(R.id.nutrition_progress));
         onView(caloriesProgress).check(hasProgress(Math.round((float)totalNutrition.getCalories())));
-        onView(caloriesProgress).check(hasMaxProgress(Math.round(rates.getCalories())));
+        onView(caloriesProgress).check(hasMaxProgress(Math.round((float)rates.getCalories())));
     }
 
     @Test

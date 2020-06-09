@@ -8,7 +8,8 @@ import korablique.recipecalculator.R;
 
 public enum Formula {
     HARRIS_BENEDICT(R.string.harris_benedict, 0),
-    MIFFLIN_JEOR(R.string.mifflin_jeor, 1);
+    MIFFLIN_JEOR(R.string.mifflin_jeor, 1),
+    MANUAL(R.string.manually, 2);
 
     public static final Map<Integer, Formula> POSITIONS;
     public static final Map<Formula, Integer> POSITIONS_REVERSED;
@@ -45,6 +46,8 @@ public enum Formula {
             return HARRIS_BENEDICT;
         } else if (id == MIFFLIN_JEOR.id) {
             return MIFFLIN_JEOR;
+        } else if (id == MANUAL.id) {
+            return MANUAL;
         } else {
             throw new IllegalArgumentException("Has no element with this id: " + id);
         }

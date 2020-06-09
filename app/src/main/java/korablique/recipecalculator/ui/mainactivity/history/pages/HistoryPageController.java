@@ -36,7 +36,7 @@ import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.HistoryEntry;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.RateCalculator;
-import korablique.recipecalculator.model.Rates;
+import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.ui.card.Card;
@@ -118,7 +118,7 @@ public class HistoryPageController implements
             nutrition = nutrition.plus(Nutrition.of(entry.getFoodstuff()));
         }
 
-        Rates rates = RateCalculator.calculate(userParameters);
+        Nutrition rates = userParameters.getRates();
         nutritionProgressWrapper.setProgresses(nutrition, rates);
         nutritionValuesWrapper.setNutrition(nutrition, rates);
     }

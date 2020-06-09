@@ -1,6 +1,13 @@
 package korablique.recipecalculator.model;
 
-public class Nutrition {
+import android.annotation.SuppressLint;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+import korablique.recipecalculator.util.FloatUtils;
+
+public class Nutrition implements Serializable {
     private final double protein;
     private final double fats;
     private final double carbs;
@@ -22,7 +29,7 @@ public class Nutrition {
                 foodstuff.getCalories());
     }
 
-    public static Nutrition from(Rates rates) {
+    public static Nutrition from(Nutrition rates) {
         return new Nutrition(rates.getProtein(), rates.getFats(), rates.getCarbs(), rates.getCalories());
     }
 
@@ -79,5 +86,29 @@ public class Nutrition {
 
     public double getCalories() {
         return calories;
+    }
+
+    @SuppressLint("DefaultLocale")
+    @Override
+    public String toString() {
+        return String.format("{protein: %f, fats: %f, carbs: %f, calories: %f}",
+                protein, fats, carbs, calories);
+    }
+
+    @Override
+    public boolean equals(Object otherObject) {
+        if (!(otherObject instanceof Nutrition)) {
+            return false;
+        }
+        Nutrition other = (Nutrition) otherObject;
+        return FloatUtils.areFloatsEquals(protein, other.protein, 0.00001f)
+                && FloatUtils.areFloatsEquals(fats, other.fats, 0.00001f)
+                && FloatUtils.areFloatsEquals(carbs, other.carbs, 0.00001f)
+                && FloatUtils.areFloatsEquals(calories, other.calories, 0.00001f);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(protein, fats, carbs, calories);
     }
 }

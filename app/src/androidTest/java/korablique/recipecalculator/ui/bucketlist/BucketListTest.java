@@ -29,6 +29,7 @@ import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.InstantComputationsThreadsExecutor;
 import korablique.recipecalculator.InstantDatabaseThreadExecutor;
 import korablique.recipecalculator.util.SyncMainThreadExecutor;
+import korablique.recipecalculator.util.TestingTimeProvider;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -52,7 +53,7 @@ public class BucketListTest {
 
         mainThreadExecutor = new SyncMainThreadExecutor();
         DatabaseThreadExecutor databaseThreadExecutor = new InstantDatabaseThreadExecutor();
-        DatabaseHolder databaseHolder = new DatabaseHolder(context, databaseThreadExecutor);
+        DatabaseHolder databaseHolder = new DatabaseHolder(context, new TestingTimeProvider(), databaseThreadExecutor);
         DatabaseWorker databaseWorker = new DatabaseWorker(databaseHolder, mainThreadExecutor, databaseThreadExecutor);
         databaseHolder.getDatabase().clearAllTables();
 
