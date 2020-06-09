@@ -241,7 +241,6 @@ public class Migrations {
 
             Cursor c = database.query("SELECT * FROM " + USER_PARAMETERS_TABLE_NAME);
             while (c.moveToNext()) {
-                long id = c.getLong(c.getColumnIndex(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT));
                 float targetWeight = c.getFloat(c.getColumnIndex(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT));
                 int gender = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_GENDER));
                 int birthYear = c.getInt(c.getColumnIndex(UserParametersContract.COLUMN_NAME_YEAR_OF_BIRTH));
@@ -260,7 +259,6 @@ public class Migrations {
                         weight, Lifestyle.fromId(lifestyle), Formula.fromId(formula));
 
                 ContentValues values = new ContentValues();
-                values.put(UserParametersContract.ID, id);
                 values.put(UserParametersContract.COLUMN_NAME_NAME, name.toString());
                 values.put(UserParametersContract.COLUMN_NAME_TARGET_WEIGHT, targetWeight);
                 values.put(UserParametersContract.COLUMN_NAME_GENDER, gender);
