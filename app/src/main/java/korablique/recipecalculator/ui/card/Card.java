@@ -2,6 +2,7 @@ package korablique.recipecalculator.ui.card;
 
 import android.content.Context;
 import android.text.Editable;
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,6 +87,7 @@ public class Card {
         updateMainButtonsEnability();
 
         nameTextView = cardLayout.findViewById(R.id.foodstuff_name_text_view);
+        nameTextView.setMovementMethod(new ScrollingMovementMethod());
         ConstraintLayout nutritionLayout = cardLayout.findViewById(R.id.nutrition_progress_with_values);
         pluralProgressBar = nutritionLayout.findViewById(R.id.nutrition_progress_bar);
         nutritionValuesWrapper = new NutritionValuesWrapper(nutritionLayout);
