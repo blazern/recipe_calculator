@@ -168,7 +168,7 @@ class UserParametersActivityTest {
                 "John Doe", 65f, Gender.MALE, LocalDate.parse("1993-07-20"),
                 165, 62f, Lifestyle.ACTIVE_LIFESTYLE,
                 finalParams.formula,
-                Nutrition.withValues(124.0, 62.0, 502.284485, 3063.137939),
+                Nutrition.withValues(124.0, 62.0, 504.977600, 3073.910400),
                 finalParams.measurementsTimestamp)
         assertEquals(expectedParams, finalParams)
     }
@@ -218,11 +218,11 @@ class UserParametersActivityTest {
         onView(allOf(
                 isDescendantOfA(withId(R.id.carbs_layout)),
                 withId(R.id.nutrition_text_view)))
-                .check(matches(withText("149")))
+                .check(matches(withText("150.1")))
         onView(allOf(
                 isDescendantOfA(withId(R.id.calories_layout)),
                 withId(R.id.nutrition_text_view)))
-                .check(matches(withText("1411.9")))
+                .check(matches(withText("1416.6")))
     }
 
     @Test
