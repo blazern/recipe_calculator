@@ -48,6 +48,7 @@
         app:layout_constraintTop_toTopOf="@id/nutrition_name"
         android:layout_marginTop="13.8dp"
         android:maxLength="6"
+        android:inputType="numberDecimal"
         style="@style/RobotoMonoText"
         tools:text="35"
         android:visibility="gone"
