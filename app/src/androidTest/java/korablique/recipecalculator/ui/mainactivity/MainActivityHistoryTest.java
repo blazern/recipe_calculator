@@ -62,6 +62,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withParent;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static korablique.recipecalculator.ui.DecimalUtils.toDecimalString;
+import static korablique.recipecalculator.util.EspressoUtils.callActivityAndFragmentsOnPause;
+import static korablique.recipecalculator.util.EspressoUtils.callActivityAndFragmentsOnResume;
 import static korablique.recipecalculator.util.EspressoUtils.hasMaxProgress;
 import static korablique.recipecalculator.util.EspressoUtils.hasProgress;
 import static korablique.recipecalculator.util.EspressoUtils.isNotDisplayed;
@@ -673,6 +675,20 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
                 isDescendantOfA(withId(R.id.fragment_history)),
                 withText(containsString(foodstuffs[2].getName()))))
                 .check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void dateTitleChanges_whenResumedOnNewDate() {
+        mActivityRule.launchActivity(null);
+        onView(withId(R.id.menu_item_history)).perform(click());
+
+        onView(withId(R.id.title_text)).check(matches(withText(R.string.today)));
+        timeProvider.setTime(timeProvider.now().plusDays(1));
+        onView(withId(R.id.title_text)).check(matches(withText(R.string.today)));
+
+        callActivityAndFragmentsOnPause(mainThreadExecutor, mActivityRule.getActivity());
+        callActivityAndFragmentsOnResume(mainThreadExecutor, mActivityRule.getActivity());
+        onView(withId(R.id.title_text)).check(matches(withText(R.string.yesterday)));
     }
 
     // https://stackoverflow.com/a/44840330

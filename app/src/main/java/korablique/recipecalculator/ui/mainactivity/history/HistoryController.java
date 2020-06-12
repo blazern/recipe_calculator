@@ -134,6 +134,15 @@ public class HistoryController implements
     }
 
     @Override
+    public void onFragmentResume() {
+        LocalDate date = mainActivitySelectedDateStorage.getSelectedDate();
+        if (date == null) {
+            return;
+        }
+        setDateInToolbar(date, fragmentView);
+    }
+
+    @Override
     public void onFragmentDestroy() {
         mainActivitySelectedDateStorage.removeObserver(this);
         historyWorker.removeHistoryChangeObserver(this);

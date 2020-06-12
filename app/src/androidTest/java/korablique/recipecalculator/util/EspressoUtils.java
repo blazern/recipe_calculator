@@ -1,5 +1,7 @@
 package korablique.recipecalculator.util;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -11,11 +13,20 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+import androidx.annotation.MainThread;
+import androidx.fragment.app.Fragment;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.espresso.ViewAssertion;
 import androidx.test.espresso.util.HumanReadables;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.util.List;
 import java.util.Objects;
+
+import korablique.recipecalculator.base.BaseActivity;
+import korablique.recipecalculator.base.Callback;
+import korablique.recipecalculator.base.executors.MainThreadExecutor;
+import kotlin.jvm.functions.Function1;
 
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 
@@ -143,5 +154,40 @@ public class EspressoUtils {
                 }
             }
         };
+    }
+
+    public static void callActivityAndFragmentsOnResume(
+            MainThreadExecutor mainThreadExecutor,
+            BaseActivity activity) {
+        callActivityAndFragmentLifecycleFunctions(
+                mainThreadExecutor,
+                activity,
+                instrumentation -> instrumentation.callActivityOnResume(activity),
+                Fragment::onResume);
+    }
+
+    public static void callActivityAndFragmentsOnPause(
+            MainThreadExecutor mainThreadExecutor,
+            BaseActivity activity) {
+        callActivityAndFragmentLifecycleFunctions(
+                mainThreadExecutor,
+                activity,
+                instrumentation -> instrumentation.callActivityOnPause(activity),
+                Fragment::onPause);
+    }
+
+    private static void callActivityAndFragmentLifecycleFunctions(
+            MainThreadExecutor mainThreadExecutor,
+            BaseActivity activity,
+            Callback<Instrumentation> activityAction,
+            Callback<Fragment> fragmentAction) {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        mainThreadExecutor.execute(() -> {
+            activityAction.onResult(instrumentation);
+            List<Fragment> fragments = activity.getSupportFragmentManager().getFragments();
+            for (Fragment fragment : fragments) {
+                fragmentAction.onResult(fragment);
+            }
+        });
     }
 }
