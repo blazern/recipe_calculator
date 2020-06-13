@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
@@ -131,6 +133,7 @@ public class UserParametersActivity extends BaseActivity {
                 .tune();
 
         // формула
+        AtomicBoolean firstFormulaChangeHappened = new AtomicBoolean();
         startTuningSpinner(findViewById(R.id.formula_spinner))
                 .withItems(R.array.formula_array)
                 .onItemSelected((pos, id) -> {
@@ -141,7 +144,12 @@ public class UserParametersActivity extends BaseActivity {
                     } else {
                         nutritionValuesWrapper.setEditable(false);
                     }
+                    if (firstFormulaChangeHappened.get()) {
+                        ScrollView scrollView = findViewById(R.id.content_scroll_view);
+                        scrollView.fullScroll(View.FOCUS_DOWN);
+                    }
                     updateVisualState();
+                    firstFormulaChangeHappened.set(true);
                 })
                 .tune();
 
