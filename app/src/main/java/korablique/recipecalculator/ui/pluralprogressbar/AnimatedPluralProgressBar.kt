@@ -15,8 +15,14 @@ class AnimatedPluralProgressBar : PluralProgressBar {
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
 
+    /**
+     * Whether progress changes are animated. If false, the AnimatedPluralProgressBar
+     * instance effectively becomes PluralProgressBar.
+     */
+    var animationsEnabled = true
+
     override fun setProgress(progress: Array<Float>) {
-        if (TestEnvironmentDetector.isInTests()) {
+        if (!animationsEnabled || TestEnvironmentDetector.isInTests()) {
             super.setProgress(progress)
             return
         }

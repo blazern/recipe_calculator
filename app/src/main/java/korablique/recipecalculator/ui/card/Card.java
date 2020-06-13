@@ -23,7 +23,7 @@ import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.ui.NutritionValuesWrapper;
 import korablique.recipecalculator.ui.calckeyboard.CalcEditText;
 import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController;
-import korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar;
+import korablique.recipecalculator.ui.pluralprogressbar.AnimatedPluralProgressBar;
 import korablique.recipecalculator.util.FloatUtils;
 
 import static korablique.recipecalculator.ui.DecimalUtils.toDecimalString;
@@ -71,7 +71,7 @@ public class Card {
     private View closeButton;
     private View deleteButton;
 
-    private PluralProgressBar pluralProgressBar;
+    private AnimatedPluralProgressBar pluralProgressBar;
     private NutritionValuesWrapper nutritionValuesWrapper;
 
     public Card(BaseBottomDialog dialog, ViewGroup parent, CalcKeyboardController calcKeyboardController) {
@@ -90,6 +90,7 @@ public class Card {
         nameTextView.setMovementMethod(new ScrollingMovementMethod());
         ConstraintLayout nutritionLayout = cardLayout.findViewById(R.id.nutrition_progress_with_values);
         pluralProgressBar = nutritionLayout.findViewById(R.id.nutrition_progress_bar);
+        pluralProgressBar.setAnimationsEnabled(false);
         nutritionValuesWrapper = new NutritionValuesWrapper(nutritionLayout);
 
         editButton.setVisibility(View.GONE);
