@@ -27,6 +27,7 @@ import korablique.recipecalculator.ui.bucketlist.states.BucketListActivityDispla
 import korablique.recipecalculator.ui.bucketlist.states.BucketListActivityRecipeEditingState
 import korablique.recipecalculator.ui.bucketlist.states.BucketListActivityState
 import korablique.recipecalculator.ui.bucketlist.states.BucketListActivityState.FinishResult
+import korablique.recipecalculator.ui.calckeyboard.CalcEditText
 import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController
 import korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar
 import korablique.recipecalculator.util.FloatUtils
@@ -167,12 +168,17 @@ class BucketListActivityController @Inject constructor(
 
     override fun onRecipeUpdated(recipe: Recipe) {
         updateNutritionWrappers()
-        val weightEditText = findViewById<TextView>(R.id.total_weight_edit_text)
+        val weightEditText = findViewById<CalcEditText>(R.id.total_weight_edit_text)
+        val weightInEditText = weightEditText.getCurrentCalculatedValue()
         val nameEditText = findViewById<TextView>(R.id.recipe_name_edit_text)
 
-        val weightText = DecimalUtils.toDecimalString(recipe.weight)
-        if (weightText != weightEditText.text.toString()) {
-            weightEditText.text = weightText
+        if (weightEditText.text.toString().isBlank()
+                && FloatUtils.areFloatsEquals(recipe.weight, 0f)) {
+            // Don't erase weight when text is empty and weight is 0,
+            // because empty weight IS 0 weight.
+        } else if (weightInEditText == null
+                || !FloatUtils.areFloatsEquals(recipe.weight, weightInEditText)) {
+            weightEditText.setText(DecimalUtils.toDecimalString(recipe.weight))
         }
         if (recipe.name != nameEditText.text.toString()) {
             nameEditText.text = recipe.name

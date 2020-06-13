@@ -16,6 +16,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.PositionAssertions.isCompletelyAbove
 import androidx.test.espresso.assertion.PositionAssertions.isCompletelyBelow
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
@@ -193,6 +194,39 @@ class BucketListActivityTest {
                 emptyList()
             }
             .build()
+
+    @Test
+    fun totalWeightEditing() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val recipe = createSavedRecipe(
+                "cake", 123,
+                listOf(UIIngredient("dough", "111"), UIIngredient("oil", "222")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                recipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.button_edit)).perform(click())
+
+        onView(withId(R.id.total_weight_edit_text)).check(matches(withText("123")))
+        onView(withId(R.id.total_weight_edit_text)).perform(click())
+        onView(withId(R.id.button_delete)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).check(matches(withText("12")))
+        onView(withId(R.id.button_delete)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).check(matches(withText("1")))
+        onView(withId(R.id.button_delete)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).check(matches(withText("")))
+
+        onView(withId(R.id.button_bracket_left)).perform(click())
+        onView(withId(R.id.button_2)).perform(click())
+        onView(withId(R.id.button_plus)).perform(click())
+        onView(withId(R.id.button_2)).perform(click())
+        onView(withId(R.id.button_bracket_right)).perform(click())
+        onView(withId(R.id.button_multiply)).perform(click())
+        onView(withId(R.id.button_2)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).check(matches(withText("(2+2)×2")))
+    }
 
     @Test
     fun containsFoodstuffsFromBucketList() {
