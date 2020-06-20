@@ -1,5 +1,7 @@
 package korablique.recipecalculator.ui.userparameters
 
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -46,6 +48,8 @@ import korablique.recipecalculator.model.UserParameters
 import korablique.recipecalculator.outside.http.BroccalcHttpContext
 import korablique.recipecalculator.outside.userparams.InteractiveServerUserParamsObtainer
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry
+import korablique.recipecalculator.ui.DecimalUtils
+import korablique.recipecalculator.ui.DecimalUtils.toDecimalString
 import korablique.recipecalculator.ui.mainactivity.MainActivity
 import korablique.recipecalculator.ui.mainactivity.MainActivityController
 import korablique.recipecalculator.ui.mainactivity.MainScreenLoader
@@ -113,7 +117,7 @@ class UserParametersActivityTest {
 
                 listOf(userParametersWorker, timeProvider,
                         mainScreenLoader, serverUserParamsRegistry,
-                        currentActivityProvider)
+                        currentActivityProvider, mainThreadExecutor)
             }
             .withActivityScoped { target: Any ->
                 if (target is MainActivity) {
@@ -226,7 +230,7 @@ class UserParametersActivityTest {
     }
 
     @Test
-    fun setManualNutrition() {
+    fun setProteinRateManually() {
         // сохраняем userParameters в БД
         val initialUserParameters = UserParameters(
                 "John Doe", 45f, Gender.FEMALE, LocalDate(1993, 9, 27),
@@ -245,22 +249,43 @@ class UserParametersActivityTest {
                 withId(R.id.nutrition_edit_text)))
                 .perform(scrollTo())
 
+        val oldProtein = getRateValue(R.id.protein_layout)
+        val oldFats = getRateValue(R.id.fats_layout)
+        val oldCarbs = getRateValue(R.id.carbs_layout)
+        val oldCalories = getRateValue(R.id.calories_layout)
+
+        val newProtein = oldProtein - 30f
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
                 withId(R.id.nutrition_edit_text)))
-                .perform(replaceText("10"))
+                .perform(click())
+        onView(allOf(
+                isDescendantOfA(withId(R.id.protein_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .perform(replaceText(newProtein.toString()))
+
+        val proteinDiff = oldProtein - newProtein
+        val expectedCalories = (oldCalories - proteinDiff * 4)
+
+        onView(allOf(
+                isDescendantOfA(withId(R.id.protein_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .check(matches(withText(toDecimalString(newProtein))))
         onView(allOf(
                 isDescendantOfA(withId(R.id.fats_layout)),
                 withId(R.id.nutrition_edit_text)))
-                .perform(replaceText("20"))
+                .check(matches(withText(toDecimalString(oldFats))))
         onView(allOf(
                 isDescendantOfA(withId(R.id.carbs_layout)),
                 withId(R.id.nutrition_edit_text)))
-                .perform(replaceText("30"))
-        onView(allOf(
-                isDescendantOfA(withId(R.id.calories_layout)),
-                withId(R.id.nutrition_edit_text)))
-                .perform(replaceText("40"))
+                .check(matches(withText(toDecimalString(oldCarbs))))
+
+        val newCalories = getRateValue(R.id.calories_layout)
+        // Allowed delta is 1f, because we compare a value we obtained from UI
+        // with value which is calculated by RateCalculator - the value from UI has it's tail
+        // cut out, while RateCalculator doesn't cut out anything, so the 2 floats are going to be
+        // a bit different
+        assertEquals(expectedCalories, newCalories, 1f)
 
         onView(withId(R.id.button_save)).perform(scrollTo())
         onView(withId(R.id.button_save)).perform(click())
@@ -269,8 +294,97 @@ class UserParametersActivityTest {
         val expectedParams = UserParameters(
                 "John Doe", 45f, Gender.FEMALE, LocalDate(1993, 9, 27),
                 158, 48f, Lifestyle.PASSIVE_LIFESTYLE, Formula.MANUAL,
-                Nutrition.withValues(10.0, 20.0, 30.0, 40.0),
+                finalParams.rates,
                 finalParams.measurementsTimestamp)
         assertEquals(expectedParams, finalParams)
+
+        // We allow final and expected rates to have a difference of 1.0 because they're
+        // calculated a bit differently.
+        assertEquals(finalParams.rates.protein, newProtein.toDouble(), 1.0)
+        assertEquals(finalParams.rates.fats, oldFats.toDouble(), 1.0)
+        assertEquals(finalParams.rates.carbs, oldCarbs.toDouble(), 1.0)
+        assertEquals(finalParams.rates.calories, newCalories.toDouble(), 1.0)
+    }
+
+    @Test
+    fun setCaloriesRateManually() {
+        // сохраняем userParameters в БД
+        val initialUserParameters = UserParameters(
+                "John Doe", 45f, Gender.FEMALE, LocalDate(1993, 9, 27),
+                158, 48f, Lifestyle.PASSIVE_LIFESTYLE, Formula.HARRIS_BENEDICT,
+                Nutrition.zero(), // Nutrition will be recalculated
+                0)
+        userParametersWorker.saveUserParameters(initialUserParameters)
+        activityRule.launchActivity(null)
+
+        onView(withId(R.id.formula_spinner)).perform(scrollTo())
+        onView(withId(R.id.formula_spinner)).perform(click())
+        onView(withText(R.string.manually)).perform(click())
+
+        onView(allOf(
+                isDescendantOfA(withId(R.id.protein_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .perform(scrollTo())
+
+        val oldProtein = getRateValue(R.id.protein_layout)
+        val oldFats = getRateValue(R.id.fats_layout)
+        val oldCarbs = getRateValue(R.id.carbs_layout)
+        val oldCalories = getRateValue(R.id.calories_layout)
+
+        val newCalories = oldCalories / 10f
+        onView(allOf(
+                isDescendantOfA(withId(R.id.calories_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .perform(click())
+        onView(allOf(
+                isDescendantOfA(withId(R.id.calories_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .perform(replaceText(newCalories.toString()))
+
+        val expectedProtein = oldProtein / 10f
+        val expectedFats = oldFats / 10f
+        val expectedCarbs = oldCarbs / 10f
+
+        onView(allOf(
+                isDescendantOfA(withId(R.id.protein_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .check(matches(withText(toDecimalString(expectedProtein))))
+        onView(allOf(
+                isDescendantOfA(withId(R.id.fats_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .check(matches(withText(toDecimalString(expectedFats))))
+        onView(allOf(
+                isDescendantOfA(withId(R.id.carbs_layout)),
+                withId(R.id.nutrition_edit_text)))
+                .check(matches(withText(toDecimalString(expectedCarbs))))
+
+        onView(withId(R.id.button_save)).perform(scrollTo())
+        onView(withId(R.id.button_save)).perform(click())
+
+        val finalParams = runBlocking { userParametersWorker.getCurrentUserParametersKx() }!!
+        val expectedParams = UserParameters(
+                "John Doe", 45f, Gender.FEMALE, LocalDate(1993, 9, 27),
+                158, 48f, Lifestyle.PASSIVE_LIFESTYLE, Formula.MANUAL,
+                finalParams.rates,
+                finalParams.measurementsTimestamp)
+        assertEquals(expectedParams, finalParams)
+
+        // We allow final and expected rates to have a difference of 1.0 because they're
+        // calculated a bit differently.
+        assertEquals(finalParams.rates.protein, expectedProtein.toDouble(), 1.0)
+        assertEquals(finalParams.rates.fats, expectedFats.toDouble(), 1.0)
+        assertEquals(finalParams.rates.carbs, expectedCarbs.toDouble(), 1.0)
+        assertEquals(finalParams.rates.calories, newCalories.toDouble(), 1.0)
+    }
+
+    private fun getRateValue(rateLayoutId: Int): Float {
+        var rate: Float? = null
+        mainThreadExecutor.execute {
+            rate = activityRule.activity
+                    .findViewById<ViewGroup>(rateLayoutId)
+                    .findViewById<TextView>(R.id.nutrition_edit_text)
+                    .text.toString().toFloat()
+        }
+        return rate!!
     }
 }

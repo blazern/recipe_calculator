@@ -10,6 +10,8 @@ import androidx.annotation.StringRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import korablique.recipecalculator.R
+import korablique.recipecalculator.base.NTuple4
+import korablique.recipecalculator.model.Nutrient
 import korablique.recipecalculator.model.Nutrition
 import korablique.recipecalculator.ui.inputfilters.NumericBoundsInputFilter
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
@@ -17,7 +19,7 @@ import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher.OnTextCha
 
 open class NutritionValuesWrapper
         @JvmOverloads constructor(private val layout: ConstraintLayout, withCalories: Boolean = true) {
-    private val nutritionChangeCallbacks = mutableListOf<Runnable>()
+    private val nutritionChangeCallbacks = mutableListOf<NutritionChangeCallback>()
 
     private val proteinLayout: ConstraintLayout
     private val fatsLayout: ConstraintLayout
@@ -33,6 +35,17 @@ open class NutritionValuesWrapper
     private val fatsEditText: EditText?
     private val carbsEditText: EditText?
     private val caloriesEditText: EditText?
+
+    private val pendingChangedByUserNutrients = setOf<Nutrient>()
+
+    interface NutritionChangeCallback {
+        fun onNutritionChange(
+                oldNutrition: Nutrition,
+                newNutrition: Nutrition,
+                changedNutrient: Nutrient,
+                byUser: Boolean)
+    }
+    private var lastNutrition = Nutrition.zero()
 
     init {
         proteinLayout = layout.findViewById(R.id.protein_layout)
@@ -65,32 +78,11 @@ open class NutritionValuesWrapper
         if (caloriesLayout != null) {
             setNutritionTable(caloriesLayout, R.string.calories, R.drawable.invisible_drawable)
         }
-        tryJoinTextViews(proteinEditText, proteinTextView)
-        tryJoinTextViews(fatsEditText, fatsTextView)
-        tryJoinTextViews(carbsEditText, carbsTextView)
-        tryJoinTextViews(caloriesEditText, caloriesTextView)
 
-        proteinTextView.addTextChangedListener(SimpleTextWatcher(proteinTextView,
-                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
-        fatsTextView.addTextChangedListener(SimpleTextWatcher(fatsTextView,
-                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
-        carbsTextView.addTextChangedListener(SimpleTextWatcher(carbsTextView,
-                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
-        caloriesTextView?.addTextChangedListener(SimpleTextWatcher(caloriesTextView,
-                OnTextChangedListener { nutritionChangeCallbacks.forEach { it.run() } }))
-
-        if (proteinEditText != null) {
-            proteinEditText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
-        }
-        if (fatsEditText != null) {
-            fatsEditText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
-        }
-        if (carbsEditText != null) {
-            carbsEditText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
-        }
-        if (caloriesEditText != null) {
-            caloriesEditText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
-        }
+        initTextViews(proteinLayout, proteinEditText, proteinTextView, Nutrient.PROTEIN)
+        initTextViews(fatsLayout, fatsEditText, fatsTextView, Nutrient.FATS)
+        initTextViews(carbsLayout, carbsEditText, carbsTextView, Nutrient.CARBS)
+        initTextViews(caloriesLayout, caloriesEditText, caloriesTextView, Nutrient.CALORIES)
     }
 
     // только задает цвета кружкам и названия в шапке
@@ -106,12 +98,46 @@ open class NutritionValuesWrapper
         }
     }
 
-    private fun tryJoinTextViews(editText: EditText?, textView: TextView?) {
-        if (editText == null || textView == null) {
-            return
+    private fun initTextViews(
+            layout: ViewGroup?,
+            editText: EditText?,
+            textView: TextView?,
+            nutrient: Nutrient) {
+        if (editText != null && textView != null) {
+            editText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
+            editText.addTextChangedListener(SimpleTextWatcher(editText,
+                    OnTextChangedListener {
+                        textView.text = editText.text
+                        val oldNutrition = lastNutrition
+                        updateLastNutrition(textView, nutrient)
+                        if (!oldNutrition.equals(lastNutrition)) {
+                            val userInited = editText.hasFocus()
+                            nutritionChangeCallbacks.forEach {
+                                it.onNutritionChange(oldNutrition, lastNutrition, nutrient, userInited)
+                            }
+                        }
+                    }))
+        } else if (textView != null && layout != null) {
+            setNutritionTable(layout, nutrient.strID(), nutrient.iconID())
+            textView.addTextChangedListener(SimpleTextWatcher(editText,
+                    OnTextChangedListener {
+                        val oldNutrition = lastNutrition
+                        updateLastNutrition(textView, nutrient)
+                        if (!oldNutrition.equals(lastNutrition)) {
+                            nutritionChangeCallbacks.forEach {
+                                it.onNutritionChange(oldNutrition, lastNutrition, nutrient, byUser = false)
+                            }
+                        }
+                    }))
+        } else {
+            // Nothing to do
         }
-        editText.addTextChangedListener(SimpleTextWatcher(editText,
-                OnTextChangedListener { textView.text = editText.text }))
+    }
+
+    private fun updateLastNutrition(textView: TextView,
+                                    nutrient: Nutrient) {
+        val value = textView.text.toString().toDoubleOrNull() ?: 0.0
+        lastNutrition = lastNutrition.update(nutrient, value)
     }
 
     fun setNutrition(nutrition: Nutrition) {
@@ -125,13 +151,18 @@ open class NutritionValuesWrapper
     }
 
     private fun setNutritionValue(nutritionLayout: ViewGroup, nutritionValue: Double) {
+        val strValue = DecimalUtils.toDecimalString(nutritionValue)
         val editText = nutritionLayout.findViewById<EditText>(R.id.nutrition_edit_text)
         if (editText != null) {
-            editText.setText(DecimalUtils.toDecimalString(nutritionValue))
+            if (editText.text.toString() != strValue) {
+                editText.setText(strValue)
+            }
             return
         }
         val textView = nutritionLayout.findViewById<TextView>(R.id.nutrition_text_view)
-        textView.text = DecimalUtils.toDecimalString(nutritionValue)
+        if (textView.text.toString() != strValue) {
+            textView.text = strValue
+        }
     }
 
     val proteinValue: Double
@@ -145,6 +176,9 @@ open class NutritionValuesWrapper
 
     val caloriesValue: Double
         get() = caloriesTextView!!.text.toString().toDoubleOrNull() ?: 0.0
+
+    val nutrition: Nutrition
+        get() = Nutrition.withValues(proteinValue, fatsValue, carbsValue, caloriesValue)
 
     fun setEditable(editable: Boolean) {
         TransitionManager.beginDelayedTransition(layout)
@@ -167,11 +201,46 @@ open class NutritionValuesWrapper
         newConstraintSet.applyTo(layout)
     }
 
-    fun addNutritionChangeCallback(callback: Runnable) {
+    fun addNutritionChangeCallback(callback: NutritionChangeCallback) {
         nutritionChangeCallbacks += callback
     }
 
-    fun removeNutritionChangeCallback(callback: Runnable) {
+    fun removeNutritionChangeCallback(callback: NutritionChangeCallback) {
         nutritionChangeCallbacks -= callback
     }
+
+}
+
+private fun Nutrition.update(
+        nutrient: Nutrient,
+        value: Double): Nutrition {
+    val (protein, fats, carbs, calories) = when (nutrient) {
+        Nutrient.PROTEIN -> {
+            NTuple4(value, fats, carbs, calories)
+        }
+        Nutrient.FATS -> {
+            NTuple4(protein, value, carbs, calories)
+        }
+        Nutrient.CARBS -> {
+            NTuple4(protein, fats, value, calories)
+        }
+        Nutrient.CALORIES -> {
+            NTuple4(protein, fats, carbs, value)
+        }
+    }
+    return Nutrition.withValues(protein, fats, carbs, calories)
+}
+
+private fun Nutrient.strID() = when (this) {
+    Nutrient.PROTEIN -> R.string.protein
+    Nutrient.FATS -> R.string.fats
+    Nutrient.CARBS -> R.string.carbs
+    Nutrient.CALORIES -> R.string.calories
+}
+
+private fun Nutrient.iconID() = when (this) {
+    Nutrient.PROTEIN -> R.drawable.new_card_protein_icon
+    Nutrient.FATS -> R.drawable.new_card_fats_icon
+    Nutrient.CARBS -> R.drawable.new_card_carbs_icon
+    Nutrient.CALORIES -> R.drawable.invisible_drawable
 }

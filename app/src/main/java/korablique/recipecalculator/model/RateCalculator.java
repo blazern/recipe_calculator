@@ -65,4 +65,25 @@ public class RateCalculator {
         float carbs = (caloriesDependingOnGoal - (protein * 4 + fats * 9)) / 4;
         return Nutrition.withValues(protein, fats, carbs, caloriesDependingOnGoal);
     }
+
+    public static Nutrition recalculate(
+            Nutrition oldRates, Nutrition newRates, Nutrient changedNutrient) {
+        // https://trello.com/c/5s81c6ir
+        if (changedNutrient == Nutrient.CALORIES) {
+            double proteinFactor = oldRates.getProtein() / oldRates.getCalories();
+            double fatsFactor = oldRates.getFats() / oldRates.getCalories();
+            double carbsFactor = oldRates.getCarbs() / oldRates.getCalories();
+            double newProtein = newRates.getCalories() * proteinFactor;
+            double newFats = newRates.getCalories() * fatsFactor;
+            double newCarbs = newRates.getCalories() * carbsFactor;
+            return Nutrition.withValues(
+                    newProtein, newFats, newCarbs, newRates.getCalories());
+        } else {
+            return Nutrition.withValues(
+                    newRates.getProtein(),
+                    newRates.getFats(),
+                    newRates.getCarbs(),
+                    newRates.getProtein() * 4 + newRates.getFats() * 9 + newRates.getCarbs() * 4);
+        }
+    }
 }

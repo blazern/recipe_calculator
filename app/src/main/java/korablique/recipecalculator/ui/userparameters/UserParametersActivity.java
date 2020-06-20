@@ -40,11 +40,14 @@ import korablique.recipecalculator.base.BaseActivity;
 import korablique.recipecalculator.base.Optional;
 import korablique.recipecalculator.base.RxActivitySubscriptions;
 import korablique.recipecalculator.base.TimeProvider;
+import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
+import korablique.recipecalculator.model.Nutrient;
 import korablique.recipecalculator.model.Nutrition;
+import korablique.recipecalculator.model.RateCalculator;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry;
 import korablique.recipecalculator.ui.DatePickerFragment;
@@ -67,6 +70,8 @@ public class UserParametersActivity extends BaseActivity {
     private static final int MIN_HEIGHT = 130;
     private static final int MAX_HEIGHT = 300;
 
+    @Inject
+    MainThreadExecutor mainThreadExecutor;
     @Inject
     UserParametersWorker userParametersWorker;
     @Inject
@@ -155,22 +160,7 @@ public class UserParametersActivity extends BaseActivity {
 
         nutritionValuesWrapper = new NutritionValuesWrapper(
                 findViewById(R.id.nutrition_parent_layout));
-        nutritionValuesWrapper.addNutritionChangeCallback(new Runnable() {
-            @Override
-            public void run() {
-                double nutritionSum = nutritionValuesWrapper.getProteinValue()
-                        + nutritionValuesWrapper.getFatsValue()
-                        + nutritionValuesWrapper.getCarbsValue();
-                if (FloatUtils.areFloatsEquals(nutritionSum, 0)) {
-                    nutritionProgressBar.setProgress(0, 0, 0);
-                } else {
-                    double proteinPercentage = nutritionValuesWrapper.getProteinValue() / nutritionSum * 100;
-                    double fatsPercentage = nutritionValuesWrapper.getFatsValue() / nutritionSum * 100;
-                    double carbsPercentage = nutritionValuesWrapper.getCarbsValue() / nutritionSum * 100;
-                    nutritionProgressBar.setProgress((float) proteinPercentage, (float) fatsPercentage, (float) carbsPercentage);
-                }
-            }
-        });
+        nutritionValuesWrapper.addNutritionChangeCallback(this::onUserRatesChange);
         nutritionProgressBar = findViewById(R.id.nutrition_progress_bar);
 
         saveUserParamsButton.setOnClickListener(new View.OnClickListener() {
@@ -292,6 +282,42 @@ public class UserParametersActivity extends BaseActivity {
         ArrayList<InputFilter> filters = new ArrayList<>(Arrays.asList(editText.getFilters()));
         filters.add(filter);
         editText.setFilters(filters.toArray(new InputFilter[0]));
+    }
+
+    private void onUserRatesChange(
+            Nutrition oldRates,
+            Nutrition newRates,
+            Nutrient changedNutrient,
+            boolean byUser) {
+        if (byUser) {
+            Nutrition newRatesReally = RateCalculator.recalculate(oldRates, newRates, changedNutrient);
+            if (!newRatesReally.equals(newRates)) {
+                nutritionValuesWrapper.setNutrition(newRatesReally);
+                // We expect the wrapper to immediately notify us about new changes
+                // that we just provided, thus we exit here.
+                return;
+            }
+        }
+
+        // We might receive multiple updates immediatelly one after another,
+        // so we'll update the progress bar on the next frame, when user rates will be stable.
+        mainThreadExecutor.execute(() -> {
+            Nutrition rates = nutritionValuesWrapper.getNutrition();
+            double nutritionSum = rates.getProtein()
+                    + rates.getFats()
+                    + rates.getCarbs();
+            if (FloatUtils.areFloatsEquals(nutritionSum, 0)) {
+                nutritionProgressBar.setProgress(0, 0, 0);
+            } else {
+                double proteinPercentage = rates.getProtein() / nutritionSum * 100;
+                double fatsPercentage = rates.getFats() / nutritionSum * 100;
+                double carbsPercentage = rates.getCarbs() / nutritionSum * 100;
+                nutritionProgressBar.setProgress(
+                        (float) proteinPercentage,
+                        (float) fatsPercentage,
+                        (float) carbsPercentage);
+            }
+        });
     }
 
     @Override
