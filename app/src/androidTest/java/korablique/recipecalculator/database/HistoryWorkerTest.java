@@ -3,8 +3,7 @@ package korablique.recipecalculator.database;
 import android.content.Context;
 import android.database.Cursor;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,9 +14,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import io.reactivex.Observable;
 import korablique.recipecalculator.base.TimeProvider;
@@ -52,7 +51,7 @@ public class HistoryWorkerTest {
     
     @Before
     public void setUp() throws IOException {
-        context = InstrumentationRegistry.getTargetContext();
+        context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         DatabaseThreadExecutor databaseThreadExecutor = new InstantDatabaseThreadExecutor();
         databaseHolder = Mockito.spy(new DatabaseHolder(
@@ -72,7 +71,7 @@ public class HistoryWorkerTest {
 
         Cursor cursorBeforeSaving = database.query("SELECT * FROM " + HISTORY_TABLE_NAME, null);
         int entriesCountBeforeSaving = cursorBeforeSaving.getCount();
-        Assert.assertTrue(cursorBeforeSaving.getCount() == 0);
+        Assert.assertEquals(0, cursorBeforeSaving.getCount());
         cursorBeforeSaving.close();
 
         Foodstuff foodstuff = getAnyFoodstuffFromDb();
@@ -166,7 +165,7 @@ public class HistoryWorkerTest {
         while (cursor2.moveToNext()) {
             updatedWeight = cursor2.getDouble(cursor2.getColumnIndex(COLUMN_NAME_WEIGHT));
         }
-        Assert.assertEquals(newWeight, updatedWeight);
+        Assert.assertEquals(newWeight, updatedWeight, 0.00001f);
     }
 
     @Test
@@ -337,6 +336,90 @@ public class HistoryWorkerTest {
         Assert.assertEquals(foodstuffs[0], pastAndToday.toList().blockingGet().get(3).getFoodstuff().withoutWeight());
         // Verify that cache was NOT used
         verify(databaseHolder, atLeastOnce()).getDatabase();
+    }
+
+    @Test
+    public void saveFoodstuffToHistoryAfterAllOther() throws InterruptedException {
+        clearAllData();
+
+        Foodstuff[] foodstuffs = new Foodstuff[] {
+                Foodstuff.withName("f1").withNutrition(1, 2, 3, 4),
+                Foodstuff.withName("f2").withNutrition(1, 2, 3, 4),
+                Foodstuff.withName("f3").withNutrition(1, 2, 3, 4),
+                Foodstuff.withName("f4").withNutrition(1, 2, 3, 4),
+                Foodstuff.withName("f5").withNutrition(1, 2, 3, 4)
+        };
+        databaseWorker.saveGroupOfFoodstuffs(foodstuffs, ids -> {
+            for (int index = 0; index < foodstuffs.length; ++index) {
+                foodstuffs[index] = foodstuffs[index].recreateWithId(ids.get(index));
+            }
+        });
+
+        long todayMidnight = timeProvider.now().withTimeAtStartOfDay().getMillis();
+        historyWorker.saveFoodstuffToHistory(new Date(todayMidnight+1000), foodstuffs[0].getId(), 123);
+        historyWorker.saveFoodstuffToHistory(new Date(todayMidnight+100), foodstuffs[1].getId(), 123);
+        historyWorker.saveFoodstuffToHistory(new Date(todayMidnight+10), foodstuffs[2].getId(), 123);
+        historyWorker.saveFoodstuffToHistory(new Date(todayMidnight+1), foodstuffs[3].getId(), 123);
+        historyWorker.saveFoodstuffToHistory(new Date(todayMidnight), foodstuffs[4].getId(), 123);
+
+        Foodstuff[] lateFoodstuff = new Foodstuff[] { Foodstuff.withName("late").withNutrition(1, 2, 3, 4) };
+        databaseWorker.saveFoodstuff(lateFoodstuff[0], id -> lateFoodstuff[0] = lateFoodstuff[0].recreateWithId(id));
+
+        historyWorker.saveFoodstuffToHistoryAfterAllOther(
+                new Date(todayMidnight),
+                lateFoodstuff[0].getId(),
+                123);
+
+        long tomorrowMidnight = timeProvider.now().plusDays(1).withTimeAtStartOfDay().getMillis();
+        List<HistoryEntry> history = historyWorker
+                .requestHistoryForPeriod(todayMidnight, tomorrowMidnight).toList().blockingGet();
+
+        Assert.assertEquals(6, history.size());
+        Assert.assertEquals(lateFoodstuff[0], history.get(0).getFoodstuff().withoutWeight());
+        // The late foodstuff is expected to be after all earlier foodstuffs
+        Assert.assertEquals(todayMidnight+1001, history.get(0).getTime().getTime());
+    }
+
+    @Test
+    public void saveFoodstuffToHistoryAfterAllOther_whenLatestFoodstuffIsAtDayEnd() {
+        clearAllData();
+
+        Foodstuff[] foodstuffs = new Foodstuff[] {
+                Foodstuff.withName("f1").withNutrition(1, 2, 3, 4),
+                Foodstuff.withName("f2").withNutrition(1, 2, 3, 4),
+        };
+        databaseWorker.saveGroupOfFoodstuffs(foodstuffs, ids -> {
+            for (int index = 0; index < foodstuffs.length; ++index) {
+                foodstuffs[index] = foodstuffs[index].recreateWithId(ids.get(index));
+            }
+        });
+
+        long todayMidnight = timeProvider.now().withTimeAtStartOfDay().getMillis();
+        long tomorrowMidnight = timeProvider.now().plusDays(1).withTimeAtStartOfDay().getMillis();
+
+        historyWorker.saveFoodstuffToHistory(new Date(todayMidnight+1000), foodstuffs[0].getId(), 123);
+        historyWorker.saveFoodstuffToHistory(new Date(tomorrowMidnight-1), foodstuffs[1].getId(), 123);
+
+        Foodstuff[] lateFoodstuff = new Foodstuff[] { Foodstuff.withName("late").withNutrition(1, 2, 3, 4) };
+        databaseWorker.saveFoodstuff(lateFoodstuff[0], id -> lateFoodstuff[0] = lateFoodstuff[0].recreateWithId(id));
+
+        historyWorker.saveFoodstuffToHistoryAfterAllOther(
+                new Date(todayMidnight),
+                lateFoodstuff[0].getId(),
+                123);
+
+        List<HistoryEntry> history = historyWorker
+                .requestHistoryForPeriod(todayMidnight, tomorrowMidnight).toList().blockingGet();
+
+        Assert.assertEquals(3, history.size());
+        boolean lateFoodstuffIsFirstOrSecond =
+            lateFoodstuff[0].equals(history.get(0).getFoodstuff().withoutWeight())
+                || lateFoodstuff[0].equals(history.get(1).getFoodstuff().withoutWeight());
+        Assert.assertTrue(lateFoodstuffIsFirstOrSecond);
+        // The late foodstuff is expected to be just before the next day because one of the
+        // existing foodstuffs for the day also has such a time.
+        Assert.assertEquals(tomorrowMidnight-1, history.get(0).getTime().getTime());
+        Assert.assertEquals(tomorrowMidnight-1, history.get(1).getTime().getTime());
     }
 
     private void clearAllData() {

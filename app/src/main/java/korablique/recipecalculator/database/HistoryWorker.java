@@ -5,6 +5,8 @@ import android.database.Cursor;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 
+import org.joda.time.DateTime;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,6 +15,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
 import korablique.recipecalculator.base.Callback;
 import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
@@ -168,6 +171,34 @@ public class HistoryWorker {
             historyBatchesCallback.onResult(historyBatch);
         }
         cursor.close();
+    }
+
+    /**
+     * Сохраняет продукт в переданный день, но время добавления
+     * выбирает такое, чтобы оно было чуть-чуть позже уже добавленных
+     * продуктов (либо равное последнему, если тот добавлен в последнюю миллисекунду).
+     */
+    public void saveFoodstuffToHistoryAfterAllOther(
+            Date day,
+            long foodstuffId,
+            double foodstuffWeight) {
+        DateTime jodaDay = new DateTime(day);
+        DateTime dayStart = jodaDay.withTimeAtStartOfDay();
+        DateTime dayEnd = jodaDay.withTime(23, 59, 59, 999);
+        Disposable d = requestHistoryForPeriod(dayStart.getMillis(), dayEnd.getMillis())
+                .toList()
+                .subscribe((entries) -> {
+            long latestTime = dayStart.getMillis();
+            for (HistoryEntry entry : entries) {
+                if (entry.getTime().getTime() > latestTime) {
+                    latestTime = entry.getTime().getTime();
+                }
+            }
+            if (latestTime < dayEnd.getMillis()) {
+                latestTime += 1;
+            }
+            saveFoodstuffToHistory(new Date(latestTime), foodstuffId, foodstuffWeight);
+        });
     }
 
     public void saveFoodstuffToHistory(

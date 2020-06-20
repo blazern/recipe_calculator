@@ -202,7 +202,7 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
                 dialog.setOnButtonsClickListener(buttonName -> {
                     if (buttonName == TwoOptionsDialog.ButtonName.POSITIVE) {
                         hideCardAfterUserAction();
-                        historyWorker.saveFoodstuffToHistory(
+                        historyWorker.saveFoodstuffToHistoryAfterAllOther(
                                 selectedDate.toDate(), foodstuff.getId(), foodstuff.getWeight());
                     } else if (buttonName == TwoOptionsDialog.ButtonName.NEGATIVE) {
                         hideCardAfterUserAction();

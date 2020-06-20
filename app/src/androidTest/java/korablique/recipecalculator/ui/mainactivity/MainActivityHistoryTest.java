@@ -6,17 +6,12 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.view.View;
 import android.widget.DatePicker;
-import android.widget.ProgressBar;
 
-import androidx.test.espresso.NoMatchingViewException;
-import androidx.test.espresso.ViewAssertion;
 import androidx.test.espresso.contrib.PickerActions;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
-
-import junit.framework.Assert;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -30,14 +25,11 @@ import java.util.Date;
 import java.util.List;
 
 import korablique.recipecalculator.R;
-import korablique.recipecalculator.database.FoodstuffsList;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
 import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.NewHistoryEntry;
-import korablique.recipecalculator.model.Nutrition;
-import korablique.recipecalculator.model.RateCalculator;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.model.WeightedFoodstuff;
@@ -52,12 +44,10 @@ import static androidx.test.espresso.assertion.PositionAssertions.isCompletelyAb
 import static androidx.test.espresso.assertion.PositionAssertions.isCompletelyBelow;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.Visibility.VISIBLE;
 import static androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
-import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withParent;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -67,6 +57,7 @@ import static korablique.recipecalculator.util.EspressoUtils.callActivityAndFrag
 import static korablique.recipecalculator.util.EspressoUtils.hasMaxProgress;
 import static korablique.recipecalculator.util.EspressoUtils.hasProgress;
 import static korablique.recipecalculator.util.EspressoUtils.isNotDisplayed;
+import static korablique.recipecalculator.util.EspressoUtils.matches;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -85,19 +76,19 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
 
         Matcher<View> foodstuffBelowMatcher1 = allOf(
                 withText(containsString(foodstuffs[6].getName())),
-                EspressoUtils.matches(isCompletelyBelow(withId(R.id.title_layout))),
+                matches(isCompletelyBelow(withId(R.id.title_layout))),
                 isCompletelyDisplayed());
         onView(foodstuffBelowMatcher1).check(matches(isDisplayed()));
 
         Matcher<View> foodstuffBelowMatcher2 = allOf(
                 withText(containsString(foodstuffs[5].getName())),
-                EspressoUtils.matches(isCompletelyBelow(foodstuffBelowMatcher1)),
+                matches(isCompletelyBelow(foodstuffBelowMatcher1)),
                 isCompletelyDisplayed());
         onView(foodstuffBelowMatcher2).check(matches(isDisplayed()));
 
         Matcher<View> foodstuffBelowMatcher3 = allOf(
                 withText(containsString(foodstuffs[0].getName())),
-                EspressoUtils.matches(isCompletelyBelow(foodstuffBelowMatcher2)),
+                matches(isCompletelyBelow(foodstuffBelowMatcher2)),
                 isCompletelyDisplayed());
         onView(foodstuffBelowMatcher3).check(matches(isDisplayed()));
     }
@@ -472,15 +463,22 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         mActivityRule.launchActivity(null);
         onView(withId(R.id.menu_item_history)).perform(click());
 
+        // День в прошлом, но не полночь
+        DateTime pastDay = timeProvider.now().minusDays(50).plusHours(3);
+
+        // Сохраним продукт на старую дату
+        Foodstuff oldFoodstuff = Foodstuff.withName("oldfoodstuff").withNutrition(1, 2, 3, 4);
+        oldFoodstuff = foodstuffsList.saveFoodstuff(oldFoodstuff).blockingGet();
+        historyWorker.saveFoodstuffToHistory(pastDay.toDate(), oldFoodstuff.getId(), 123);
+
         // выбрать дату
         onView(withId(R.id.calendar_button)).perform(click());
-        DateTime anyDay = timeProvider.now().minusDays(50);
         onView(withClassName(equalTo(DatePicker.class.getName())))
                 .perform(PickerActions.setDate(
-                        anyDay.getYear(), anyDay.getMonthOfYear(), anyDay.getDayOfMonth()));
+                        pastDay.getYear(), pastDay.getMonthOfYear(), pastDay.getDayOfMonth()));
         onView(withId(android.R.id.button1)).perform(click());
         // проверим, что дата выбрана
-        onView(withText(anyDay.toString("dd.MM.yy"))).check(matches(isDisplayed()));
+        onView(withText(pastDay.toString("dd.MM.yy"))).check(matches(isDisplayed()));
 
         // добавить продукт
         ArrayList<WeightedFoodstuff> addedFoodstuffs = new ArrayList<>(1);
@@ -492,7 +490,7 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         onView(withId(R.id.history_fab)).perform(click());
         onView(allOf(
                 withText(addedFoodstuffs.get(0).getName()),
-                EspressoUtils.matches(isCompletelyAbove(withText(R.string.all_foodstuffs_header)))))
+                matches(isCompletelyAbove(withText(R.string.all_foodstuffs_header)))))
                 .perform(click());
         onView(withId(R.id.weight_edit_text)).perform(replaceText("123"));
         onView(withId(R.id.button1)).perform(click());
@@ -503,11 +501,15 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         // переключаем обратно на Историю
         onView(withId(R.id.menu_item_history)).perform(click());
         // проверим, что дата всё ещё выбрана
-        onView(withText(anyDay.toString("dd.MM.yy"))).check(matches(isDisplayed()));
-        // проверим, что продукт есть на экране
+        onView(withText(pastDay.toString("dd.MM.yy"))).check(matches(isDisplayed()));
+        // проверим, что продукт есть на экране и что он _над_ старым продуктом
+        Matcher<View> oldFoodstuffMatcher = allOf(
+                isDescendantOfA(withId(R.id.fragment_history)),
+                withText(containsString(oldFoodstuff.getName())));
         onView(allOf(
                 isDescendantOfA(withId(R.id.fragment_history)),
-                withText(containsString(addedFoodstuffs.get(0).getName()))))
+                withText(containsString(addedFoodstuffs.get(0).getName())),
+                matches(isCompletelyAbove(oldFoodstuffMatcher))))
                 .check(matches(isDisplayed()));
     }
 
@@ -536,7 +538,7 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         onView(withId(R.id.history_fab)).perform(click());
         onView(allOf(
                 withText(addedFoodstuffs.get(0).getName()),
-                EspressoUtils.matches(isCompletelyAbove(withText(R.string.all_foodstuffs_header)))))
+                matches(isCompletelyAbove(withText(R.string.all_foodstuffs_header)))))
                 .perform(click());
         onView(withId(R.id.weight_edit_text)).perform(replaceText("123"));
         onView(withId(R.id.button1)).perform(click());
@@ -582,7 +584,7 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         // Клик на продукт и ввод массы
         onView(allOf(
                 withText(foodstuffs[0].getName()),
-                EspressoUtils.matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))).perform(click());
+                matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))).perform(click());
         onView(withId(R.id.weight_edit_text)).perform(replaceText("123"));
 
         // Жмём на кнопку добавления в Историю
