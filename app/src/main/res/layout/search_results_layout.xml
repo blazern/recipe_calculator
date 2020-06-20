@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#EFF1F6">
+    android:background="#EFF1F6"
+    android:clickable="true">
 
     <TextView
         android:id="@+id/search_results_text_view"
