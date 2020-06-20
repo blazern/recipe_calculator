@@ -206,12 +206,6 @@ public class MainScreenSearchController
                 performSearch(currentQuery);
             }
         });
-
-        // когда пользователь нажал кнопку лупы в searchView
-        searchView.setOnMenuItemClickListener(item -> {
-            SearchResultsFragment.show(searchView.getQuery(), mainFragment);
-            performSearch(searchView.getQuery());
-        });
     }
 
     private void performSearch(String query) {
