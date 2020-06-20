@@ -152,7 +152,7 @@ public class MainScreenController
 
         snackbar.setOnBasketClickRunnable(() -> {
             BucketListActivity.start(
-                    context,
+                    fragment,
                     RequestCodes.MAIN_SCREEN_BUCKET_LIST_CREATE_FOODSTUFF);
         });
         snackbar.setOnDismissListener(() -> {

@@ -58,9 +58,9 @@ class BucketListActivityController @Inject constructor(
         }
 
         fun start(
-                context: Activity,
+                fragment: Fragment,
                 requestCode: Int) {
-            context.startActivityForResult(createIntent(context), requestCode)
+            fragment.startActivityForResult(createIntent(fragment.requireContext()), requestCode)
         }
 
         fun createIntent(context: Context): Intent {

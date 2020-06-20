@@ -42,8 +42,8 @@ class BucketListActivity() : BaseActivity(), HasSupportFragmentInjector {
         fun createRecipeResultIntent(recipe: Recipe?): Intent =
                 BucketListActivityController.createRecipeResultIntent(recipe)
         @JvmStatic
-        fun start(context: Activity, requestCode: Int) =
-                BucketListActivityController.start(context, requestCode)
+        fun start(fragment: Fragment, requestCode: Int) =
+                BucketListActivityController.start(fragment, requestCode)
         @JvmStatic
         fun createIntent(context: Context): Intent =
                 BucketListActivityController.createIntent(context)
