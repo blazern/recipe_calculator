@@ -48,6 +48,7 @@ class BucketListActivityRecipeEditingState private constructor(
     private var displayedInCardFoodstuffPosition = 0
 
     private lateinit var buttonClose: View
+    private lateinit var buttonDelete: View
     private lateinit var totalWeightEditText: CalcEditText
     private lateinit var recipeNameEditText: EditText
     private lateinit var saveAsRecipeButton: Button
@@ -115,9 +116,16 @@ class BucketListActivityRecipeEditingState private constructor(
         }
 
         buttonClose = findViewById(R.id.button_close)
+        buttonDelete = findViewById(R.id.button_delete_recipe)
         saveAsRecipeButton = findViewById(R.id.save_as_recipe_button)
         recipeNameEditText = findViewById(R.id.recipe_name_edit_text)
         totalWeightEditText = findViewById(R.id.total_weight_edit_text)
+
+        if (initialDisplayedRecipe.isFromDB) {
+            buttonDelete.visibility = View.VISIBLE
+        } else {
+            buttonDelete.visibility = View.GONE
+        }
 
         recipeNameEditText.isEnabled = true
         totalWeightEditText.isEnabled = true
@@ -135,6 +143,27 @@ class BucketListActivityRecipeEditingState private constructor(
         buttonClose.setOnClickListener {
             GlobalScope.launch(mainThreadExecutor) {
                 onUserExitAttempt()
+            }
+        }
+        buttonDelete.setOnClickListener {
+            val dialog = TwoOptionsDialog.showDialog(
+                    activity,
+                    TAG_CANCELLATION_DIALOG,
+                    R.string.recipe_deletion_dialog_title,
+                    R.string.recipe_deletion_dialog_confirmation,
+                    R.string.recipe_deletion_dialog_cancellation)
+            dialog.setOnButtonsClickListener {
+                dialog.dismiss()
+                when (it) {
+                    TwoOptionsDialog.ButtonName.POSITIVE -> {
+                        recipesRepository.deleteRecipe(initialDisplayedRecipe)
+                        bucketList.clear()
+                        finish(FinishResult.Ok(null))
+                    }
+                    TwoOptionsDialog.ButtonName.NEGATIVE -> {
+                        // Nothing to do
+                    }
+                }
             }
         }
 
@@ -228,6 +257,7 @@ class BucketListActivityRecipeEditingState private constructor(
 
     override fun destroyImpl() {
         buttonClose.setOnClickListener(null)
+        buttonDelete.setOnClickListener(null)
         saveAsRecipeButton.setOnClickListener(null)
         recipeNameEditText.removeTextChangedListener(recipeNameTextWatcher)
         totalWeightEditText.removeTextChangedListener(totalWeightTextWatcher)

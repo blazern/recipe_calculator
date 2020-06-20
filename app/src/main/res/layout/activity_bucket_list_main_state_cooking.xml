@@ -31,11 +31,28 @@
             android:background="@drawable/rectangular_button_click_selector"/>
     </FrameLayout>
     <FrameLayout
-        android:id="@+id/button_edit_rippled_wrapper"
+        android:id="@+id/button_delete_rippled_wrapper"
         android:layout_width="49dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="@id/title_view"
         app:layout_constraintEnd_toStartOf="@+id/button_close_rippled_wrapper"
+        app:layout_constraintTop_toTopOf="@id/title_view"
+        android:background="@android:color/transparent"
+        android:visibility="gone">
+        <ImageView
+            android:id="@+id/button_delete_recipe"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center"
+            android:background="@drawable/rectangular_button_click_selector"
+            android:src="@drawable/ic_delete_white"/>
+    </FrameLayout>
+    <FrameLayout
+        android:id="@+id/button_edit_rippled_wrapper"
+        android:layout_width="49dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/title_view"
+        app:layout_constraintEnd_toStartOf="@+id/button_delete_rippled_wrapper"
         app:layout_constraintTop_toTopOf="@id/title_view"
         android:background="@android:color/transparent"
         android:visibility="gone">

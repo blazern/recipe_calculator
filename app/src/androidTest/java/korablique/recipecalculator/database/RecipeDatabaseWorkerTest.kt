@@ -216,6 +216,27 @@ class RecipeDatabaseWorkerTest {
         assertEquals(ingredients[0].copy(id = 0), selectedRecipe.ingredients[1].copy(id = 0))
     }
 
+    @Test
+    fun deleteRecipe() = runBlocking {
+        val foodstuff = saveFoodstuffWith("recipe", 10f, 20f, 30f, 40f)
+
+        // Create
+        val ingredients = listOf(
+                Ingredient.create(saveFoodstuffWith("apple", 10f, 20f, 30f, 40f), 10f, ""),
+                Ingredient.create(saveFoodstuffWith("banana", 10f, 20f, 30f, 40f), 10f, ""))
+        val recipe = Recipe.create(foodstuff, ingredients, 123f, "")
+
+        // Insert
+        val insertedRecipe = recipeDatabaseWorker.createRecipe(
+                recipe.foodstuff, recipe.ingredients, recipe.comment, recipe.weight)
+
+        // Delete
+        recipeDatabaseWorker.deleteRecipe(insertedRecipe.id)
+
+        val extractedRecipe = recipeDatabaseWorker.getRecipeOfFoodstuff(foodstuff)
+        assertNull(extractedRecipe)
+    }
+
     private fun saveFoodstuffWith(
             name: String,
             protein: Float,

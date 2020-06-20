@@ -24,7 +24,7 @@ abstract class BucketListActivityState {
         fun finish(finishResult: FinishResult)
     }
     sealed class FinishResult {
-        data class Ok(val recipe: Recipe) : FinishResult()
+        data class Ok(val recipe: Recipe?) : FinishResult()
         object Canceled : FinishResult()
     }
 

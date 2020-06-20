@@ -140,4 +140,14 @@ class RecipeDatabaseWorkerImpl constructor(
         }
         result!!
     }
+
+    override fun deleteRecipe(recipeId: Long) {
+        ioExecutor.execute {
+            val db = databaseHolder.database
+            db.runInTransaction {
+                db.ingredientDao().deleteIngredientsByRecipe(recipeId)
+                db.recipeDao().deleteRecipe(recipeId)
+            }
+        }
+    }
 }

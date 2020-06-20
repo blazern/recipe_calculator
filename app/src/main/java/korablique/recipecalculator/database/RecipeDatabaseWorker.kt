@@ -20,4 +20,6 @@ interface RecipeDatabaseWorker {
      * @return exactly same recipe as the given one on success, null on error
      */
     suspend fun updateRecipe(updatedRecipe: Recipe): Recipe?
+
+    fun deleteRecipe(recipeId: Long)
 }

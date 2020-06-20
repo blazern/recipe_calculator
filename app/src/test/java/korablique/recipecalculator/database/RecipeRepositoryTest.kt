@@ -44,6 +44,10 @@ class RecipeRepositoryTest {
             callback.onResult(foodstuffsSavedToDB.last())
             Unit
         }
+        on { deleteFoodstuff(any()) } doAnswer  {
+            foodstuffsSavedToDB.remove(it.arguments[0] as Foodstuff)
+            Unit
+        }
     }
     val recipesRepository = RecipesRepository(fakeDatabaseWorker, foodstuffsList, instantExecutor)
 
@@ -365,6 +369,51 @@ class RecipeRepositoryTest {
         }
     }
 
+    @Test
+    fun `delete recipe deletes it from foodstuffs list`() {
+        fakeDatabaseWorker.setInitialRecipes(emptyList())
+
+        GlobalScope.async(instantExecutor) {
+            recipesRepository.createRecipe(
+                    Foodstuff.withName("name").withNutrition(1f, 2f, 3f, 4f),
+                    emptyList(),
+                    "comment",
+                    123f)
+        }
+
+        assertFalse(foodstuffsSavedToDB.isEmpty())
+        GlobalScope.async(instantExecutor) {
+            recipesRepository.deleteRecipe(recipesRepository.getAllRecipes().iterator().next())
+        }
+        assertTrue(foodstuffsSavedToDB.isEmpty())
+    }
+
+    @Test
+    fun `delete recipe when cache is ready`() {
+        val initialRecipes = createRecipes("1", "2", "3")
+        fakeDatabaseWorker.setInitialRecipes(initialRecipes)
+
+        recipesRepository.deleteRecipe(initialRecipes[0])
+
+        GlobalScope.launch(instantExecutor) {
+            assertFalse(initialRecipes[0] in recipesRepository.getAllRecipes())
+            assertNull(recipesRepository.getRecipeOfFoodstuff(initialRecipes[0].foodstuff))
+        }
+    }
+
+    @Test
+    fun `delete recipe when cache is not ready`() {
+        val initialRecipes = createRecipes("1", "2", "3")
+        recipesRepository.deleteRecipe(initialRecipes[0])
+
+        fakeDatabaseWorker.setInitialRecipes(initialRecipes)
+
+        GlobalScope.launch(instantExecutor) {
+            assertFalse(initialRecipes[0] in recipesRepository.getAllRecipes())
+            assertNull(recipesRepository.getRecipeOfFoodstuff(initialRecipes[0].foodstuff))
+        }
+    }
+
     private fun createRecipes(vararg names: String): List<Recipe> {
         val foodstuffs = names.map { Foodstuff.withId(randID()).withName(it).withNutrition(1f, 2f, 3f, 4f) }
         return createRecipes(foodstuffs)
@@ -461,6 +510,12 @@ class RecipeRepositoryTest {
                 return updatedRecipe
             } else {
                 return null
+            }
+        }
+
+        override fun deleteRecipe(recipeId: Long) {
+            runWhenRecipesAcquired {
+                recipes!!.removeIf { it.id == recipeId }
             }
         }
 

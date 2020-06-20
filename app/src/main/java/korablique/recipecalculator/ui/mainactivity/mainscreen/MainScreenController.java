@@ -284,7 +284,11 @@ public class MainScreenController
         } else if (requestCode == RequestCodes.MAIN_SCREEN_BUCKET_LIST_CREATE_FOODSTUFF
                     || requestCode == RequestCodes.MAIN_SCREEN_BUCKET_LIST_OPEN_RECIPE) {
             Recipe recipe = data.getParcelableExtra(EXTRA_PRODUCED_RECIPE);
-            cardController.showCard(recipe.getFoodstuff());
+            if (recipe != null) {
+                cardController.showCard(recipe.getFoodstuff());
+            } else {
+                cardController.hideCardAfterUserAction();
+            }
         }
     }
 

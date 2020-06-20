@@ -16,12 +16,10 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.action.ViewActions.replaceText
-import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.PositionAssertions.isCompletelyAbove
 import androidx.test.espresso.assertion.PositionAssertions.isCompletelyBelow
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -64,8 +62,6 @@ import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Ingredient.Companion.create
 import korablique.recipecalculator.model.Recipe
-import korablique.recipecalculator.model.Recipe.Companion.create
-import korablique.recipecalculator.ui.DecimalUtils
 import korablique.recipecalculator.ui.DecimalUtils.toDecimalString
 import korablique.recipecalculator.ui.bucketlist.BucketListActivity.Companion.createIntent
 import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController
@@ -76,20 +72,24 @@ import korablique.recipecalculator.ui.mainactivity.MainActivitySelectedDateStora
 import korablique.recipecalculator.ui.mainactivity.history.HistoryController
 import korablique.recipecalculator.ui.mainactivity.history.HistoryFragment
 import korablique.recipecalculator.util.DBTestingUtils.Companion.clearAllData
-import korablique.recipecalculator.util.EspressoUtils
 import korablique.recipecalculator.util.EspressoUtils.isNotDisplayed
 import korablique.recipecalculator.util.EspressoUtils.matches
 import korablique.recipecalculator.util.FloatUtils
 import korablique.recipecalculator.util.InjectableActivityTestRule
 import korablique.recipecalculator.util.SyncMainThreadExecutor
 import korablique.recipecalculator.util.TestingTimeProvider
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.allOf
-import org.hamcrest.Matchers
 import org.hamcrest.Matchers.any
-import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -1495,6 +1495,42 @@ class BucketListActivityTest {
         verifyRecipeDisplayingState(initialRecipe)
     }
 
+    @Test
+    fun deleteRecipe() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 333,
+                listOf(UIIngredient("dough", "111"), UIIngredient("oil", "222")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.button_edit)).perform(click())
+        verifyRecipeEditingState(initialRecipe)
+
+        // Press delete button and verify "r u sure?" dialog existance
+        onView(withId(R.id.button_delete_recipe)).perform(click())
+        onView(withText(R.string.recipe_deletion_dialog_title)).check(matches(isDisplayed()))
+
+        // Verify the recipe still exist and it's BucketList is still filled
+        mainThreadExecutor.execute { assertFalse(bucketList.getRecipe().ingredients.isEmpty()) }
+        runBlocking { assertNotNull(recipesRepository.getRecipeOfFoodstuff(initialRecipe.foodstuff)) }
+        assertNotNull(foodstuffsList.allFoodstuffs.toList().blockingGet().find { it.name == "cake" })
+
+        onView(withId(R.id.positive_button)).perform(click())
+
+        // Verify the recipe is deleted, its foodstuff is deleted, BucketList is empty
+        mainThreadExecutor.execute { assertTrue(bucketList.getRecipe().ingredients.isEmpty()) }
+        runBlocking { assertNull(recipesRepository.getRecipeOfFoodstuff(initialRecipe.foodstuff)) }
+        assertNull(foodstuffsList.allFoodstuffs.toList().blockingGet().find { it.name == "cake" })
+
+        // Verify result intent
+        val resultIntent = activityRule.activityResult.resultData
+        assertNull(resultIntent.getParcelableExtra<Recipe>(EXTRA_PRODUCED_RECIPE))
+    }
+
     private fun createSavedRecipe(
             name: String,
             weight: Int,
@@ -1523,6 +1559,7 @@ class BucketListActivityTest {
     private fun verifyRecipeDisplayingState(recipe: Recipe) {
         onView(withId(R.id.button_edit)).check(matches(isDisplayed()))
         onView(withId(R.id.button_cooking)).check(matches(isDisplayed()))
+        onView(withId(R.id.button_delete_recipe)).check(isNotDisplayed())
         onView(withId(R.id.title_text)).check(matches(withText(R.string.bucket_list_title_recipe)))
         onView(withId(R.id.save_as_recipe_button)).check(isNotDisplayed())
         onView(withId(R.id.recipe_name_edit_text)).check(matches(withText(recipe.name)))
@@ -1655,6 +1692,7 @@ class BucketListActivityTest {
     private fun verifyRecipeEditingState(recipe: Recipe) {
         onView(withId(R.id.button_edit)).check(isNotDisplayed())
         onView(withId(R.id.button_cooking)).check(isNotDisplayed())
+        onView(withId(R.id.button_delete_recipe)).check(matches(isDisplayed()))
         onView(withId(R.id.title_text)).check(matches(withText(R.string.bucket_list_title_recipe_editing)))
         onView(withId(R.id.save_as_recipe_button)).check(matches(isDisplayed()))
         onView(withId(R.id.recipe_name_edit_text)).check(matches(withText(recipe.name)))
@@ -1679,6 +1717,7 @@ class BucketListActivityTest {
     private fun verifyRecipeCreatingState(recipe: Recipe) {
         onView(withId(R.id.button_edit)).check(isNotDisplayed())
         onView(withId(R.id.button_cooking)).check(isNotDisplayed())
+        onView(withId(R.id.button_delete_recipe)).check(isNotDisplayed())
         onView(withId(R.id.title_text)).check(matches(withText(R.string.bucket_list_title_recipe_creation)))
         onView(withId(R.id.save_as_recipe_button)).check(matches(isDisplayed()))
         onView(withId(R.id.recipe_name_edit_text)).check(matches(withText(recipe.name)))
@@ -1703,6 +1742,7 @@ class BucketListActivityTest {
     private fun verifyCookingState(recipe: Recipe) {
         onView(withId(R.id.button_edit)).check(isNotDisplayed())
         onView(withId(R.id.button_cooking)).check(isNotDisplayed())
+        onView(withId(R.id.button_delete_recipe)).check(isNotDisplayed())
         onView(withId(R.id.title_text)).check(matches(withText(R.string.bucket_list_title_cooking)))
         onView(withId(R.id.save_as_recipe_button)).check(isNotDisplayed())
         onView(withId(R.id.recipe_name_edit_text)).check(matches(withText(recipe.name)))

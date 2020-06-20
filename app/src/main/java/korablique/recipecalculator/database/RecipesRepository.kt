@@ -190,4 +190,20 @@ class RecipesRepository @Inject constructor(
         recipesIdsCache[updatedRecipe.id] = updatedRecipe
         return UpdateRecipeResult.Ok(updatedRecipe)
     }
+
+    fun deleteRecipe(recipe: Recipe) {
+        val action = {
+            foodstuffsList.deleteFoodstuff(recipe.foodstuff)
+            recipeDatabaseWorker.deleteRecipe(recipe.id)
+            recipesCache.remove(recipe)
+            recipesFoodstuffsCache.remove(recipe.foodstuff.id)
+            recipesIdsCache.remove(recipe.id)
+            Unit
+        }
+        if (cacheReady) {
+            action.invoke()
+        } else {
+            cacheReadyCallbacks.add(action)
+        }
+    }
 }
