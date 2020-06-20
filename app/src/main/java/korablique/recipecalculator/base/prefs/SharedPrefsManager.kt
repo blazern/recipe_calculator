@@ -1,6 +1,8 @@
 package korablique.recipecalculator.base.prefs
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.preference.PreferenceManager
 import android.util.Base64
 import korablique.recipecalculator.ui.DecimalUtils
 import javax.inject.Inject
@@ -34,14 +36,14 @@ class SharedPrefsManager @Inject constructor(val context: Context) {
     }
 
     fun putFloat(owner: PrefsOwner, key: String, value: Float) {
-        context.getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        sharedPreferences(owner)
                 .edit()
                 .putFloat(key, value)
                 .apply()
     }
 
     fun getFloat(owner: PrefsOwner, key: String, default: Float): Float {
-        return context.getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        return sharedPreferences(owner)
                 .getFloat(key, default)
     }
 
@@ -74,44 +76,49 @@ class SharedPrefsManager @Inject constructor(val context: Context) {
 
     fun putString(owner: PrefsOwner, key: String, value: String?) {
         val base64 = value?.let { String(Base64.encode(it.toByteArray(), 0)) }
-        context.getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        sharedPreferences(owner)
                 .edit()
                 .putString(key, base64)
                 .apply()
     }
 
     fun getString(owner: PrefsOwner, key: String, default: String? = null): String? {
-        val result = context
-                .getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        val result = sharedPreferences(owner)
                 .getString(key, default)
         return result?.let { String(Base64.decode(it, 0)) }
     }
 
     fun putBool(owner: PrefsOwner, key: String, value: Boolean) {
-        context.getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        sharedPreferences(owner)
                 .edit()
                 .putBoolean(key, value)
                 .apply()
     }
 
     fun getBool(owner: PrefsOwner, key: String, default: Boolean = false): Boolean {
-        return context
-                .getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        return sharedPreferences(owner)
                 .getBoolean(key, default)
     }
 
     fun putBytes(owner: PrefsOwner, key: String, value: ByteArray?) {
         val base64 = value?.let { String(Base64.encode(it, 0)) }
-        context.getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        sharedPreferences(owner)
                 .edit()
                 .putString(key, base64)
                 .apply()
     }
 
     fun getBytes(owner: PrefsOwner, key: String): ByteArray? {
-        val result = context
-                .getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        val result = sharedPreferences(owner)
                 .getString(key, null)
         return result?.let { Base64.decode(it, 0) }
+    }
+
+    private fun sharedPreferences(owner: PrefsOwner): SharedPreferences {
+        return if (owner != PrefsOwner.NO_OWNER) {
+            context.getSharedPreferences(owner.fileName, Context.MODE_PRIVATE)
+        } else {
+            PreferenceManager.getDefaultSharedPreferences(context)
+        }
     }
 }

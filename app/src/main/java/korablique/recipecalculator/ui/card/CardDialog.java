@@ -14,6 +14,7 @@ import androidx.fragment.app.FragmentActivity;
 import javax.inject.Inject;
 
 import korablique.recipecalculator.base.BaseBottomDialog;
+import korablique.recipecalculator.base.prefs.SharedPrefsManager;
 import korablique.recipecalculator.dagger.InjectorHolder;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.WeightedFoodstuff;
@@ -26,6 +27,8 @@ public class CardDialog extends BaseBottomDialog {
 
     @Inject
     CalcKeyboardController calcKeyboardController;
+    @Inject
+    SharedPrefsManager prefsManager;
 
     private Card card;
     @Nullable
@@ -56,7 +59,7 @@ public class CardDialog extends BaseBottomDialog {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
-        card = new Card(this, container, calcKeyboardController);
+        card = new Card(this, container, calcKeyboardController, prefsManager);
         if (button1ClickListener != null) {
             card.setUpButton1(button1ClickListener, button1TextRes);
         }

@@ -17,6 +17,8 @@ import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter;
 
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.base.BaseBottomDialog;
+import korablique.recipecalculator.base.prefs.PrefsOwner;
+import korablique.recipecalculator.base.prefs.SharedPrefsManager;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.WeightedFoodstuff;
@@ -59,6 +61,7 @@ public class Card {
 
     public static final String EDITED_FOODSTUFF = "EDITED_FOODSTUFF";
     private final CalcKeyboardController calcKeyboardController;
+    private final SharedPrefsManager prefsManager;
     private ViewGroup cardLayout;
     private Foodstuff receivedFoodstuff;
     @Nullable
@@ -74,8 +77,11 @@ public class Card {
     private AnimatedPluralProgressBar pluralProgressBar;
     private NutritionValuesWrapper nutritionValuesWrapper;
 
-    public Card(BaseBottomDialog dialog, ViewGroup parent, CalcKeyboardController calcKeyboardController) {
+    public Card(
+            BaseBottomDialog dialog, ViewGroup parent,
+            CalcKeyboardController calcKeyboardController, SharedPrefsManager prefsManager) {
         this.calcKeyboardController = calcKeyboardController;
+        this.prefsManager = prefsManager;
         Context context = dialog.getContext();
         cardLayout = (ViewGroup) LayoutInflater.from(context).inflate(R.layout.card_layout, parent);
         button1 = cardLayout.findViewById(R.id.button1);
@@ -126,11 +132,8 @@ public class Card {
         receivedFoodstuff = foodstuff;
         receivedWeight = weight;
         nameTextView.setText(foodstuff.getName());
-        Nutrition foodstuffNutrition = Nutrition.of100gramsOf(foodstuff);
-        pluralProgressBar.setProgress(
-                (float) foodstuffNutrition.getProtein(),
-                (float) foodstuffNutrition.getFats(),
-                (float) foodstuffNutrition.getCarbs());
+
+        setNutritionProgress(Nutrition.of100gramsOf(foodstuff));
 
         if (weight != null) {
             weightEditText.setText(toDecimalString(weight));
@@ -152,6 +155,38 @@ public class Card {
                 nutritionValuesWrapper.setNutrition(newNutrition);
             }
         });
+    }
+
+    private void setNutritionProgress(Nutrition nutrition) {
+        if (prefsManager.getBool(
+                PrefsOwner.NO_OWNER,
+                cardLayout.getResources().getString(R.string.preference_key_card_nutrition_extended),
+                false)) {
+            double sum = nutrition.getProtein()
+                    + nutrition.getFats()
+                    + nutrition.getCarbs();
+            double proteinPercent;
+            double fatsPercent;
+            double carbsPercent;
+            if (FloatUtils.areFloatsEquals(sum, 0)) {
+                proteinPercent = 0;
+                fatsPercent = 0;
+                carbsPercent = 0;
+            } else {
+                proteinPercent = nutrition.getProtein() / sum;
+                fatsPercent = nutrition.getFats() / sum;
+                carbsPercent = nutrition.getCarbs() / sum;
+            }
+            pluralProgressBar.setProgress(
+                    (float) proteinPercent * 100,
+                    (float) fatsPercent * 100,
+                    (float) carbsPercent * 100);
+        } else {
+            pluralProgressBar.setProgress(
+                    (float) nutrition.getProtein(),
+                    (float) nutrition.getFats(),
+                    (float) nutrition.getCarbs());
+        }
     }
 
     ViewGroup getCardLayout() {

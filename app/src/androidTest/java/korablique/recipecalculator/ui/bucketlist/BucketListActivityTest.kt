@@ -160,7 +160,8 @@ class BucketListActivityTest {
                 listOf(mainThreadExecutor, databaseThreadExecutor, databaseWorker,
                         historyWorker, userParametersWorker, foodstuffsList,
                         timeProvider, currentActivityProvider, bucketList,
-                        CalcKeyboardController(), recipesRepository, calcKeyboardController)
+                        CalcKeyboardController(), recipesRepository, calcKeyboardController,
+                        prefsManager)
             }
             .withActivityScoped { target: Any ->
                 if (target is BucketListActivity) {

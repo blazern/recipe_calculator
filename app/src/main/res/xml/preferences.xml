@@ -5,4 +5,9 @@
         app:key="@string/preference_key_send_logs"
         app:title="@string/send_logs"
         app:summary="@string/send_logs_description"/>
+
+    <CheckBoxPreference
+        app:key="@string/preference_key_card_nutrition_extended"
+        app:title="@string/preference_card_nutrition_extended_title"
+        app:summary="@string/preference_card_nutrition_extended_descr"/>
 </PreferenceScreen>

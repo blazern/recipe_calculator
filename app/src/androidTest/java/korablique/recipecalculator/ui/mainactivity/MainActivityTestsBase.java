@@ -210,7 +210,7 @@ public class MainActivityTestsBase {
                                 timeProvider, currentActivityProvider, sessionController,
                                 calcKeyboardController, bucketList, foodstuffsSearchEngine,
                                 serverUserParamsRegistry, httpContext, recipesRepository,
-                                mainThreadExecutor);
+                                mainThreadExecutor, prefsManager);
                     })
                     .withActivityScoped((injectionTarget) -> {
                         if (!(injectionTarget instanceof MainActivity)) {
