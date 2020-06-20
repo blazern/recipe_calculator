@@ -10,14 +10,16 @@
 
     <TextView
         android:id="@+id/foodstuff_name_and_weight"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginStart="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
         style="@style/RobotoMonoText"
         android:text="@string/foodstuff_name_and_weight"
-        tools:text="Lentil, 25 g" />
+        tools:text="Lentil, 25" />
 
     <View
         android:id="@+id/protein_color_view"
