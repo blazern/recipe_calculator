@@ -15,4 +15,7 @@
     <color name="colorBackground">#EFF1F6</color>
     <color name="colorFocusedUnderline">#A0A0A0</color>
     <color name="calc_edit_text_calculated_value_color">#B8B8B8</color>
+    <color name="colorTextHint">#9B9DA7</color>
+    <color name="colorText">#373B4F</color>
+    <color name="colorTextRed">#FF8E77</color>
 </resources>

@@ -7,7 +7,7 @@ import android.widget.TextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import korablique.recipecalculator.R;
-import korablique.recipecalculator.model.Nutrition;
+import korablique.recipecalculator.model.Nutrient;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.ui.NutritionValuesWrapper;
 
@@ -32,5 +32,18 @@ public class HistoryNutritionValuesWrapper extends NutritionValuesWrapper {
         fatsRateView.setText(context.getString(R.string.of_n_grams, Math.round(rates.getFats())));
         carbsRateView.setText(context.getString(R.string.of_n_grams, Math.round(rates.getCarbs())));
         caloriesRateView.setText(context.getString(R.string.of_n_calories, Math.round(rates.getCalories())));
+
+        setTextColor(getProteinTextView(), Nutrient.PROTEIN, nutrition, rates);
+        setTextColor(getFatsTextView(), Nutrient.FATS, nutrition, rates);
+        setTextColor(getCarbsTextView(), Nutrient.CARBS, nutrition, rates);
+        setTextColor(getCaloriesTextView(), Nutrient.CALORIES, nutrition, rates);
+    }
+
+    private void setTextColor(TextView text, Nutrient nutrient, Nutrition nutrition, Nutrition rates) {
+        if (nutrition.getNutrient(nutrient) <= rates.getNutrient(nutrient)) {
+            text.setTextColor(layout.getResources().getColor(R.color.colorText));
+        } else {
+            text.setTextColor(layout.getResources().getColor(R.color.colorTextRed));
+        }
     }
 }

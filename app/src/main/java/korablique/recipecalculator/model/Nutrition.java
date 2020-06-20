@@ -88,6 +88,21 @@ public class Nutrition implements Serializable {
         return calories;
     }
 
+    public double getNutrient(Nutrient nutrient) {
+        switch (nutrient) {
+            case PROTEIN:
+                return getProtein();
+            case FATS:
+                return getFats();
+            case CARBS:
+                return getCarbs();
+            case CALORIES:
+                return getCalories();
+            default:
+                throw new IllegalStateException("Nutrient not handled: " + nutrient);
+        }
+    }
+
     @SuppressLint("DefaultLocale")
     @Override
     public String toString() {

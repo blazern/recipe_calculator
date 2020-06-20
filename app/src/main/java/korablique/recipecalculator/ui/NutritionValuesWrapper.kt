@@ -26,10 +26,10 @@ open class NutritionValuesWrapper
     private val carbsLayout: ConstraintLayout
     private val caloriesLayout: ConstraintLayout?
 
-    private val proteinTextView: TextView
-    private val fatsTextView: TextView
-    private val carbsTextView: TextView
-    private val caloriesTextView: TextView?
+    protected val proteinTextView: TextView
+    protected val fatsTextView: TextView
+    protected val carbsTextView: TextView
+    protected val caloriesTextView: TextView?
 
     private val proteinEditText: EditText?
     private val fatsEditText: EditText?
@@ -208,7 +208,6 @@ open class NutritionValuesWrapper
     fun removeNutritionChangeCallback(callback: NutritionChangeCallback) {
         nutritionChangeCallbacks -= callback
     }
-
 }
 
 private fun Nutrition.update(
