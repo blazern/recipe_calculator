@@ -1,40 +1,30 @@
 package korablique.recipecalculator.ui.mainactivity.mainscreen;
 
-
-import android.animation.Animator;
-import android.animation.ValueAnimator;
+import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.transition.TransitionManager;
 
 import com.google.android.material.behavior.SwipeDismissBehavior;
 
-import java.util.List;
-
 import korablique.recipecalculator.R;
-import korablique.recipecalculator.base.FragmentCallbacks;
-import korablique.recipecalculator.model.Ingredient;
-import korablique.recipecalculator.ui.bucketlist.BucketList;
 
 public class SelectedFoodstuffsSnackbar {
-    private static final long DURATION = 250L;
-    private boolean isShown;
     private final ViewGroup snackbarLayout;
     private final TextView selectedFoodstuffsCounter;
-    private final BucketList bucketList;
 
     @Nullable
     private Runnable onDismissListener;
 
-    public SelectedFoodstuffsSnackbar(View fragmentView,
-                                      FragmentCallbacks fragmentCallbacks,
-                                      BucketList bucketList) {
+    public SelectedFoodstuffsSnackbar(View fragmentView) {
         snackbarLayout = fragmentView.findViewById(R.id.snackbar);
         selectedFoodstuffsCounter = fragmentView.findViewById(R.id.selected_foodstuffs_counter);
-        this.bucketList = bucketList;
 
         // Настраиваем "высвайпываемость" снекбара
         SwipeDismissBehavior<View> swipeDismissBehavior = new SwipeDismissBehavior<>();
@@ -49,105 +39,59 @@ public class SelectedFoodstuffsSnackbar {
         swipeDismissBehavior.setListener(new SwipeDismissBehaviourListener() {
             @Override
             public void onDismiss(View view) {
-                // Сбрасываем состояние "высвайпности" (https://stackoverflow.com/a/40193547)
-                CoordinatorLayout.LayoutParams swipedParams =
-                        (CoordinatorLayout.LayoutParams) view.getLayoutParams();
-                swipedParams.setMargins(0, 0, 0, 0);
-                view.requestLayout();
-                view.setAlpha(1.0f);
-                // Прячем основной леяут снекбара так же, как это делается в методе hide
-                // (чтобы снекбар потом нормально показался через вызов метода show)
-                snackbarLayout.setVisibility(View.INVISIBLE);
-                snackbarLayout.setTranslationY(getParentHeight());
-                isShown = false;
+                hide();
 
                 // Уведомляем о "высвайпывании"
                 if (onDismissListener != null) {
                     onDismissListener.run();
                 }
+
+                // Сбрасываем состояние "высвайпности" (https://stackoverflow.com/a/40193547)
+                new Handler().postDelayed(() -> {
+                    CoordinatorLayout.LayoutParams swipedParams =
+                            (CoordinatorLayout.LayoutParams) view.getLayoutParams();
+                    swipedParams.setMargins(0, 0, 0, 0);
+                    view.requestLayout();
+                    view.setAlpha(1.0f);
+                }, 250);
             }
         });
 
-        BucketList.Observer bucketListObserver = new BucketList.Observer() {
-            @Override
-            public void onIngredientAdded(Ingredient ingredient) {
-                update(bucketList.getList());
-            }
-            @Override
-            public void onIngredientRemoved(Ingredient ingredient) {
-                update(bucketList.getList());
-            }
-        };
-        bucketList.addObserver(bucketListObserver);
-        fragmentCallbacks.addObserver(new FragmentCallbacks.Observer() {
-            @Override
-            public void onFragmentDestroy() {
-                bucketList.removeObserver(bucketListObserver);
-            }
-        });
-        update(bucketList.getList());
+        // В начале спрятан
+        hide();
     }
 
-    public void show() {
-        snackbarLayout.setVisibility(View.VISIBLE);
-        float startValue = snackbarLayout.getHeight();
-        float endValue = 0;
-        if (!isShown) {
-            animateSnackbar(startValue, endValue);
-        }
+    public void show(String title) {
+        ConstraintLayout parent = (ConstraintLayout) snackbarLayout.getParent();
+        TransitionManager.beginDelayedTransition(parent);
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(parent);
+        constraintSet.clear(
+                snackbarLayout.getId(), ConstraintSet.TOP);
+        constraintSet.connect(
+                snackbarLayout.getId(), ConstraintSet.BOTTOM,
+                ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        constraintSet.applyTo(parent);
 
-        TextView title = snackbarLayout.findViewById(R.id.selected_foodstuffs_snackbar_title);
-        if (bucketList.getRecipe().isFromDB()) {
-            title.setText(R.string.selected_foodstuffs_snackbar_title_recipe_editing);
-        } else {
-            title.setText(R.string.selected_foodstuffs_snackbar_title_recipe_creation);
-        }
-
-        isShown = true;
+        TextView titleView = snackbarLayout.findViewById(R.id.selected_foodstuffs_snackbar_title);
+        titleView.setText(title);
     }
 
-    private void hide() {
-        float startValue = snackbarLayout.getTranslationY();
-        float endValue = getParentHeight();
-        animateSnackbar(startValue, endValue, () -> snackbarLayout.setVisibility(View.INVISIBLE));
-        isShown = false;
+    public void hide() {
+        ConstraintLayout parent = (ConstraintLayout) snackbarLayout.getParent();
+        TransitionManager.beginDelayedTransition(parent);
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(parent);
+        constraintSet.connect(
+                snackbarLayout.getId(), ConstraintSet.TOP,
+                ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        constraintSet.clear(
+                snackbarLayout.getId(), ConstraintSet.BOTTOM);
+        constraintSet.applyTo(parent);
     }
 
-    private void animateSnackbar(float startValue, float endValue) {
-        animateSnackbar(startValue, endValue, () -> {});
-    }
-
-    private void animateSnackbar(float startValue, float endValue, Runnable finishCallback) {
-        ValueAnimator animator = ValueAnimator.ofFloat(startValue, endValue);
-        animator.setDuration(DURATION);
-        animator.addUpdateListener(animation -> {
-            float animatedValue = (float) animation.getAnimatedValue();
-            snackbarLayout.setTranslationY(animatedValue);
-        });
-        animator.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                finishCallback.run();
-            }
-            @Override public void onAnimationStart(Animator animation) {}
-            @Override public void onAnimationCancel(Animator animation) {}
-            @Override public void onAnimationRepeat(Animator animation) {}
-        });
-        animator.start();
-    }
-
-    private void update(List<Ingredient> newSelectedIngredients) {
-        if (newSelectedIngredients.isEmpty()) {
-            hide();
-        } else {
-            updateSelectedFoodstuffsCounter();
-            show();
-        }
-    }
-
-    private void updateSelectedFoodstuffsCounter() {
-        selectedFoodstuffsCounter.setText(String.valueOf(
-                bucketList.getRecipe().getIngredients().size()));
+    public void updateSelectedFoodstuffsCounter(int count) {
+        selectedFoodstuffsCounter.setText(String.valueOf(count));
     }
 
     private int getParentHeight() {
@@ -160,7 +104,11 @@ public class SelectedFoodstuffsSnackbar {
         // и слушателя кликов - если 2 разные вьюшки в иерархии будут ждать 2 разных жестов,
         // они будут конфликтовать за них.
         snackbarLayout.findViewById(R.id.swipeable_snackbar_part)
-                .setOnClickListener(v -> runnable.run());
+                .setOnClickListener(v -> {
+                    if (runnable != null) {
+                        runnable.run();
+                    }
+                });
     }
 
     public void setOnDismissListener(Runnable dismissListener) {

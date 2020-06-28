@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.lifecycle.Lifecycle;
 
@@ -15,6 +16,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.inject.Inject;
 
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.RequestCodes;
 import korablique.recipecalculator.base.BaseActivity;
@@ -28,59 +31,37 @@ import korablique.recipecalculator.database.FoodstuffsList;
 import korablique.recipecalculator.database.HistoryWorker;
 import korablique.recipecalculator.database.RecipesRepository;
 import korablique.recipecalculator.model.Foodstuff;
-import korablique.recipecalculator.model.Ingredient;
 import korablique.recipecalculator.model.Recipe;
 import korablique.recipecalculator.ui.KeyboardHandler;
 import korablique.recipecalculator.ui.TwoOptionsDialog;
 import korablique.recipecalculator.ui.bucketlist.BucketList;
 import korablique.recipecalculator.ui.bucketlist.BucketListActivity;
-import korablique.recipecalculator.ui.bucketlist.BucketListAdapter;
 import korablique.recipecalculator.ui.card.Card;
 import korablique.recipecalculator.ui.card.CardDialog;
 import korablique.recipecalculator.ui.editfoodstuff.EditFoodstuffActivity;
 import korablique.recipecalculator.ui.mainactivity.MainActivitySelectedDateStorage;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenMode;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesController;
 
 import static android.app.Activity.RESULT_OK;
 
 @FragmentScope
 public class MainScreenCardController implements FragmentCallbacks.Observer {
-    private enum CardMode {
-        NONE, // Пустой режим для непроинициализированной карточки
-        DEFAULT, // Режим по-умолчанию, в карточке обе кнопки
-        RECIPE_CREATION // Режим создания рецепта, в карточке только кнопка добавления рецепта
-    }
     private static final String ADD_FOODSTUFF_TO_ANOTHER_DATE_DIALOG_TAG =
             "ADD_FOODSTUFF_TO_ANOTHER_DATE_DIALOG_TAG";
-    @StringRes
-    private static final int ADD_FOODSTUFF_TO_RECIPE_CARD_TEXT = R.string.add_foodstuff_to_recipe;
     @StringRes
     private static final int ADD_FOODSTUFF_TO_HISTORY_CARD_TEXT = R.string.add_foodstuff_to_history;
     private final BaseActivity context;
     private final BaseFragment fragment;
     private final Lifecycle lifecycle;
-    private final BucketList bucketList;
     private final HistoryWorker historyWorker;
     private final TimeProvider timeProvider;
     private final MainActivitySelectedDateStorage selectedDateStorage;
     private final RecipesRepository recipesRepository;
     private final FoodstuffsList foodstuffsList;
     private final RxFragmentSubscriptions rxSubscriptions;
-    private final BucketList.Observer bucketListObserver = new BucketList.Observer() {
-        @Override
-        public void onIngredientAdded(Ingredient ingredient) {
-            // Первый продукт добавлен в бакетлист
-            if (currentCardMode != CardMode.RECIPE_CREATION) {
-                switchCardMode(CardMode.RECIPE_CREATION);
-            }
-        }
-        @Override
-        public void onIngredientRemoved(Ingredient ingredient) {
-            // Последний продукт удален из бакетлиста
-            if (currentCardMode == CardMode.RECIPE_CREATION) {
-                switchCardMode(CardMode.DEFAULT);
-            }
-        }
-    };
+    private final MainScreenModesController mainScreenModesController;
+    private final BucketList bucketList;
     private final FoodstuffsList.Observer foodstuffsListObserver = new FoodstuffsList.Observer() {
         @Override
         public void onFoodstuffEdited(Foodstuff edited) {
@@ -90,10 +71,8 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
             }
         }
     };
-    private Card.OnMainButtonSimpleClickListener onAddFoodstuffToRecipeListener;
     private Card.OnMainButtonSimpleClickListener onAddFoodstuffToHistoryListener;
     private Card.OnEditButtonClickListener onEditButtonClickListener;
-    private CardMode currentCardMode = CardMode.NONE;
 
     private final List<Observer> observers = new CopyOnWriteArrayList<>();
     private boolean lastCardClosingReportedToObservers;
@@ -132,23 +111,25 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
             BaseFragment fragment,
             FragmentCallbacks fragmentCallbacks,
             Lifecycle lifecycle,
-            BucketList bucketList,
             HistoryWorker historyWorker,
             TimeProvider timeProvider,
             MainActivitySelectedDateStorage selectedDateStorage,
             RecipesRepository recipesRepository,
             FoodstuffsList foodstuffsList,
-            RxFragmentSubscriptions rxSubscriptions) {
+            RxFragmentSubscriptions rxSubscriptions,
+            MainScreenModesController mainScreenModesController,
+            BucketList bucketList) {
         this.context = context;
         this.fragment = fragment;
         this.lifecycle = lifecycle;
-        this.bucketList = bucketList;
         this.historyWorker = historyWorker;
         this.timeProvider = timeProvider;
         this.selectedDateStorage = selectedDateStorage;
         this.recipesRepository = recipesRepository;
         this.foodstuffsList = foodstuffsList;
         this.rxSubscriptions = rxSubscriptions;
+        this.mainScreenModesController = mainScreenModesController;
+        this.bucketList = bucketList;
         fragmentCallbacks.addObserver(this);
     }
 
@@ -170,17 +151,6 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
             existingAnotherDateDialog.dismiss();
         }
 
-        onAddFoodstuffToRecipeListener = foodstuff -> {
-            hideCardAfterUserAction();
-            new KeyboardHandler(context).hideKeyBoard();
-            bucketList.add(Ingredient.create(foodstuff, ""));
-
-            float totalWeight = 0f;
-            for (Ingredient ingredient : bucketList.getList()) {
-                totalWeight += ingredient.getWeight();
-            }
-            bucketList.setTotalWeight(totalWeight);
-        };
         onAddFoodstuffToHistoryListener = foodstuff -> {
             new KeyboardHandler(context).hideKeyBoard();
 
@@ -225,25 +195,18 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
                             BucketListActivity.startForRecipe(
                                     fragment,
                                     RequestCodes.MAIN_SCREEN_BUCKET_LIST_CREATE_FOODSTUFF,
-                                    recipe.get());
+                                    recipe.get(),
+                                    true);
                         } else {
                             EditFoodstuffActivity.startForEditing(fragment, foodstuff, RequestCodes.MAIN_SCREEN_CARD_EDIT_FOODSTUFF);
                         }
                     });
         };
-        bucketList.addObserver(bucketListObserver);
         foodstuffsList.addObserver(foodstuffsListObserver);
-
-        if (bucketList.getList().isEmpty()) {
-            switchCardMode(CardMode.DEFAULT);
-        } else {
-            switchCardMode(CardMode.RECIPE_CREATION);
-        }
     }
 
     @Override
     public void onFragmentDestroy() {
-        bucketList.removeObserver(bucketListObserver);
         foodstuffsList.addObserver(foodstuffsListObserver);
     }
 
@@ -308,17 +271,6 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
         }
     }
 
-    private void switchCardMode(CardMode newMode) {
-        if (newMode == currentCardMode) {
-            return;
-        }
-        currentCardMode = newMode;
-        CardDialog cardDialog = CardDialog.findCard(context);
-        if (cardDialog != null) {
-            setUpCard(cardDialog);
-        }
-    }
-
     private void setUpCard(CardDialog card) {
         lastCardClosingReportedToObservers = false;
         card.setOnEditButtonClickListener(onEditButtonClickListener);
@@ -330,21 +282,54 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
                 }
             }
         });
-        switch (currentCardMode) {
-            case NONE:
-                card.deinitButton1();
-                card.deinitButton2();
-                break;
-            case DEFAULT:
-                card.setUpButton1(onAddFoodstuffToHistoryListener, ADD_FOODSTUFF_TO_HISTORY_CARD_TEXT);
-                card.setUpButton2(onAddFoodstuffToRecipeListener, ADD_FOODSTUFF_TO_RECIPE_CARD_TEXT);
-                break;
-            case RECIPE_CREATION:
-                card.deinitButton1();
-                card.setUpButton2(onAddFoodstuffToRecipeListener, ADD_FOODSTUFF_TO_RECIPE_CARD_TEXT);
-                break;
-            default:
-                throw new IllegalStateException("Unhandled card mode: " + currentCardMode);
-        }
+
+        MainScreenMode.CardButtonSettings button1DefaultSettings =
+                new MainScreenMode.CardButtonSettings(
+                        onAddFoodstuffToHistoryListener,
+                        ADD_FOODSTUFF_TO_HISTORY_CARD_TEXT,
+                        true,
+                        true);
+        setUpCardButton(card, 1,
+                mainScreenModesController.setupCardButton1(card.extractFoodstuff()),
+                button1DefaultSettings);
+
+        setUpCardButton(card, 2,
+                mainScreenModesController.setupCardButton2(card.extractFoodstuff()),
+                null);
+    }
+
+    private void setUpCardButton(
+            CardDialog card,
+            int buttonNumber,
+            Single<Optional<MainScreenMode.CardButtonSettings>> futureSettings,
+            @Nullable MainScreenMode.CardButtonSettings defaultSettings) {
+        Disposable d = futureSettings.subscribe((params) -> {
+            if (params.isPresent()) {
+                // On button click, first notify our observers and close keyboard,
+                // only then call the received clicks listener.
+                card.setUpButtonN(
+                        buttonNumber,
+                        foodstuff -> {
+                            // TODO: test
+                            if (params.get().getCloseCardOnButtonClick()) {
+                                hideCardAfterUserAction();
+                            }
+                            new KeyboardHandler(context).hideKeyBoard();
+                            params.get().getClickListener().onClick(foodstuff);
+                        },
+                        params.get().getBtnTitleStrId());
+                card.setDisableButtonNWhenWeight0(
+                        buttonNumber, params.get().getDisableButtonWhenWeight0());
+            } else if (defaultSettings != null) {
+                card.setUpButtonN(
+                        buttonNumber,
+                        defaultSettings.getClickListener(),
+                        defaultSettings.getBtnTitleStrId());
+                card.setDisableButtonNWhenWeight0(
+                        buttonNumber,
+                        defaultSettings.getDisableButtonWhenWeight0());
+            }
+        });
+        rxSubscriptions.storeDisposable(d);
     }
 }

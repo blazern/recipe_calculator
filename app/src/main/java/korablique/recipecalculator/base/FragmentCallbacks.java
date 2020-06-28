@@ -13,7 +13,7 @@ public class FragmentCallbacks {
     private final List<Observer> observers = new CopyOnWriteArrayList<>();
 
     public interface Observer {
-        default void onFragmentCreate(Bundle savedInstanceState) {}
+        default void onFragmentCreate(@Nullable Bundle savedInstanceState) {}
         default void onFragmentViewCreated(View fragmentView, @Nullable Bundle savedInstanceState) {}
         default void onFragmentStart() {}
         default void onFragmentResume() {}

@@ -6,6 +6,7 @@ import korablique.recipecalculator.DishNutritionCalculator
 import korablique.recipecalculator.database.room.RecipeEntity
 import korablique.recipecalculator.model.proto.RecipeProtos
 
+// Please edit BucketList.isEmpty if any field is added
 data class Recipe(
         val id: Long,
         val foodstuff: Foodstuff,
