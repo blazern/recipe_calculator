@@ -5,16 +5,18 @@ import android.widget.DatePicker;
 
 import androidx.test.espresso.Espresso;
 import androidx.test.espresso.contrib.PickerActions;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +38,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 
+@RunWith(AndroidJUnit4.class)
+@LargeTest
 public class MainActivitySessionsTest extends MainActivityTestsBase {
     @After
     public void tearDown() {

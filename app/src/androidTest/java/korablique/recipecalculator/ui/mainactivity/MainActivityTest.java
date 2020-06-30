@@ -38,13 +38,15 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
+import static androidx.test.espresso.intent.matcher.IntentMatchers.hasExtras;
 import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withParent;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertContains;
+import static korablique.recipecalculator.util.EspressoUtils.hasValueRecursive;
+import static korablique.recipecalculator.util.EspressoUtils.isNotDisplayed;
 import static korablique.recipecalculator.util.EspressoUtils.matches;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.not;
@@ -261,7 +263,7 @@ public class MainActivityTest extends MainActivityTestsBase {
     }
 
     @Test
-    public void cardOpenedForRecipe_opensBucketListOnEditClick() {
+    public void cardOpenedForRecipeEditing_opensBucketListOnEditClick() {
         // Create recipe
         DBTestingUtils.clearAllData(foodstuffsList, historyWorker, databaseHolder);
         Foodstuff foodstuff = Foodstuff.withName("cake").withNutrition(1, 2, 3, 4);
@@ -276,10 +278,11 @@ public class MainActivityTest extends MainActivityTestsBase {
         onView(withText(foodstuff.getName())).perform(click());
         onView(withId(R.id.button_edit)).perform(click());
 
-        Intent expectedIntent = BucketListActivity.createIntent(context, recipe);
+        Intent expectedIntent = BucketListActivity.createIntent(context, recipe, true);
         intended(allOf(
                 hasAction(expectedIntent.getAction()),
-                hasComponent(expectedIntent.getComponent())));
+                hasComponent(expectedIntent.getComponent()),
+                hasExtras(hasValueRecursive(expectedIntent.getExtras()))));
     }
 
     @Test
@@ -303,6 +306,18 @@ public class MainActivityTest extends MainActivityTestsBase {
 
         onView(withId(R.id.foodstuff_name_text_view))
                 .check(matches(withText(foodstuffs[0].getName() + "new")));
+    }
+
+    @Test
+    public void modesMenuClosesByBackPress() {
+        mActivityRule.launchActivity(null);
+
+        onView(withId(R.id.main_screen_modes_menu_layout)).check(isNotDisplayed());
+        onView(withId(R.id.mode_fab)).perform(click());
+        onView(withId(R.id.main_screen_modes_menu_layout)).check(matches(isDisplayed()));
+
+        Espresso.pressBack();
+        onView(withId(R.id.main_screen_modes_menu_layout)).check(isNotDisplayed());
     }
 
     private List<Foodstuff> extractFoodstuffsTopFromDB() {

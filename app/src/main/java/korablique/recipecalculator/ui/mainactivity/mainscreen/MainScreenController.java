@@ -9,8 +9,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,13 +26,12 @@ import korablique.recipecalculator.dagger.FragmentScope;
 import korablique.recipecalculator.database.FoodstuffsList;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.FoodstuffsTopList;
-import korablique.recipecalculator.model.Ingredient;
 import korablique.recipecalculator.model.Recipe;
 import korablique.recipecalculator.ui.bucketlist.BucketList;
-import korablique.recipecalculator.ui.bucketlist.BucketListActivity;
 import korablique.recipecalculator.ui.editfoodstuff.EditFoodstuffActivity;
 import korablique.recipecalculator.ui.mainactivity.MainActivityFragmentsController;
 import korablique.recipecalculator.ui.mainactivity.MainActivitySelectedDateStorage;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesController;
 import korablique.recipecalculator.ui.nestingadapters.FoodstuffsAdapterChild;
 import korablique.recipecalculator.ui.nestingadapters.SectionedAdapterParent;
 import korablique.recipecalculator.ui.nestingadapters.SectionedFoodstuffsAdapterChild;
@@ -63,11 +60,11 @@ public class MainScreenController
     private final RxFragmentSubscriptions subscriptions;
     private final TempLongClickedFoodstuffsHandler tempLongClickedFoodstuffsHandler;
     private final MainActivityFragmentsController mainActivityFragmentsController;
+    private final MainScreenModesController mainScreenModesController;
     private SectionedAdapterParent adapterParent;
     private SingleItemAdapterChild topTitleAdapterChild;
     private FoodstuffsAdapterChild topAdapterChild;
     private SectionedFoodstuffsAdapterChild foodstuffAdapterChild;
-    private SelectedFoodstuffsSnackbar snackbar;
 
     private boolean isTopFilledFromArguments;
     private boolean isAllFoodstuffsListFilledFromArguments;
@@ -86,7 +83,8 @@ public class MainScreenController
             MainScreenReadinessDispatcher readinessDispatcher,
             RxFragmentSubscriptions subscriptions,
             TempLongClickedFoodstuffsHandler tempLongClickedFoodstuffsHandler,
-            MainActivityFragmentsController mainActivityFragmentsController) {
+            MainActivityFragmentsController mainActivityFragmentsController,
+            MainScreenModesController mainScreenModesController) {
         this.context = context;
         this.fragment = fragment;
         this.fragmentCallbacks = fragmentCallbacks;
@@ -100,6 +98,7 @@ public class MainScreenController
         this.subscriptions = subscriptions;
         this.tempLongClickedFoodstuffsHandler = tempLongClickedFoodstuffsHandler;
         this.mainActivityFragmentsController = mainActivityFragmentsController;
+        this.mainScreenModesController = mainScreenModesController;
         fragmentCallbacks.addObserver(this);
         activityCallbacks.addObserver(this);
     }
@@ -120,8 +119,6 @@ public class MainScreenController
         adapterParent = null;
         topAdapterChild = null;
         foodstuffAdapterChild = null;
-
-        snackbar = new SelectedFoodstuffsSnackbar(fragmentView, fragmentCallbacks, bucketList);
 
         RecyclerView recyclerView = fragmentView.findViewById(R.id.main_screen_recycler_view);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
@@ -148,22 +145,6 @@ public class MainScreenController
                 }
                 foodstuffAdapterChild.removeItem(deleted);
             }
-        });
-
-        snackbar.setOnBasketClickRunnable(() -> {
-            BucketListActivity.start(
-                    fragment,
-                    RequestCodes.MAIN_SCREEN_BUCKET_LIST_CREATE_FOODSTUFF);
-        });
-        snackbar.setOnDismissListener(() -> {
-            List<Ingredient> dismissedFoodstuffs = new ArrayList<>(bucketList.getList());
-            bucketList.clear();
-
-            Snackbar snackbar = Snackbar.make(fragmentView, R.string.work_with_recipe_canceled, Snackbar.LENGTH_LONG);
-            snackbar.setAction(R.string.undo, v -> {
-                bucketList.add(dismissedFoodstuffs);
-            });
-            snackbar.show();
         });
 
         adapterParent = new SectionedAdapterParent();

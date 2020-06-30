@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 
 import androidx.fragment.app.Fragment;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,10 +44,13 @@ import static org.hamcrest.Matchers.not;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class MainActivityBucketListTest extends MainActivityTestsBase {
+public class MainActivityModeRecipeTest extends MainActivityTestsBase {
     @Test
     public void startsBucketListActivityWithSelectedFoodstuffs() {
         mActivityRule.launchActivity(null);
+
+        onView(withId(R.id.mode_fab)).perform(click());
+        onView(withId(R.id.create_recipe_menu_button)).perform(click());
 
         List<Foodstuff> topFoodstuffs = extractFoodstuffsTopFromDB();
 
@@ -106,6 +107,9 @@ public class MainActivityBucketListTest extends MainActivityTestsBase {
     public void showsCardWhenBucketListActivityCreatesFoodstuff() {
         mActivityRule.launchActivity(null);
 
+        onView(withId(R.id.mode_fab)).perform(click());
+        onView(withId(R.id.create_recipe_menu_button)).perform(click());
+
         // Проверяем, что сперва карточка не показана
         onView(withId(R.id.foodstuff_card_layout)).check(doesNotExist());
 
@@ -129,8 +133,30 @@ public class MainActivityBucketListTest extends MainActivityTestsBase {
     }
 
     @Test
-    public void mainScreenFoodstuffCard_hidesDirectAdditionToHistory_whenBucketListNotEmpty() {
+    public void mainScreenFoodstuffCard_displayedButtons_whenDefaultAndRecipeModesSwitch() {
         mActivityRule.launchActivity(null);
+
+        // Клик на продукт
+        onView(allOf(
+                withText(foodstuffs[0].getName()),
+                matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))).perform(click());
+
+        // Только "В журнал" должна быть видна
+        onView(allOf(
+                isDescendantOfA(withId(R.id.foodstuff_card_layout)),
+                withId(R.id.button1))).check(matches(isDisplayed()));
+        onView(allOf(
+                isDescendantOfA(withId(R.id.foodstuff_card_layout)),
+                withId(R.id.button2))).check(matches(not(isDisplayed())));
+
+        // Закрываем карточку
+        onView(allOf(
+                isDescendantOfA(withId(R.id.foodstuff_card_layout)),
+                withId(R.id.button_close))).perform(click());
+
+        // Включаем режим рецептов
+        onView(withId(R.id.mode_fab)).perform(click());
+        onView(withId(R.id.create_recipe_menu_button)).perform(click());
 
         // Клик на продукт
         onView(allOf(
@@ -154,13 +180,13 @@ public class MainActivityBucketListTest extends MainActivityTestsBase {
                 withText(foodstuffs[0].getName()),
                 matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))).perform(click());
 
-        // Только кнопка добавления блюда должна быть видна
+        // Обе кнопки должны быть видны
         onView(allOf(
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
                 withId(R.id.button2))).check(matches(isDisplayed()));
         onView(allOf(
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
-                withId(R.id.button1))).check(matches(not(isDisplayed())));
+                withId(R.id.button1))).check(matches(isDisplayed()));
 
         // Закрываем карточку
         onView(allOf(
@@ -177,18 +203,21 @@ public class MainActivityBucketListTest extends MainActivityTestsBase {
                 withText(foodstuffs[0].getName()),
                 matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))).perform(click());
 
-        // Обе кнопки в карточке снова должны быть видны
+        // Только "В журнал" должна быть видна
         onView(allOf(
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
                 withId(R.id.button1))).check(matches(isDisplayed()));
         onView(allOf(
                 isDescendantOfA(withId(R.id.foodstuff_card_layout)),
-                withId(R.id.button2))).check(matches(isDisplayed()));
+                withId(R.id.button2))).check(matches(not(isDisplayed())));
     }
 
     @Test
     public void changesTotalIngredientsWeight_whenIngredientAddedToBucketList() {
         mActivityRule.launchActivity(null);
+
+        onView(withId(R.id.mode_fab)).perform(click());
+        onView(withId(R.id.create_recipe_menu_button)).perform(click());
 
         mainThreadExecutor.execute(() -> {
             assertEquals(0.f, bucketList.getTotalWeight(), 0.0001f);

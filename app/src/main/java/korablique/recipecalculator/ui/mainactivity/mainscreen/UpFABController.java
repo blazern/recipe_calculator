@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import javax.inject.Inject;
@@ -21,7 +22,7 @@ import korablique.recipecalculator.dagger.FragmentScope;
 @FragmentScope
 public class UpFABController implements FragmentCallbacks.Observer {
     private final MainScreenReadinessDispatcher readinessDispatcher;
-    private FloatingActionButton fab;
+    private ExtendedFloatingActionButton fab;
     private RecyclerView recyclerView;
 
     @Inject
@@ -57,9 +58,9 @@ public class UpFABController implements FragmentCallbacks.Observer {
         int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
         boolean isFirstOrLastVisible = firstVisibleItem == 0
                 || lastVisibleItem == recyclerView.getAdapter().getItemCount() - 1;
-        if (isFirstOrLastVisible && fab.isOrWillBeShown()) {
+        if (isFirstOrLastVisible && fab.isShown()) {
             fab.hide();
-        } else if (!isFirstOrLastVisible && fab.isOrWillBeHidden()) {
+        } else if (!isFirstOrLastVisible && !fab.isShown()) {
             fab.show();
         }
     }

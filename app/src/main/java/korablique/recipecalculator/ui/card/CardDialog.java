@@ -49,6 +49,9 @@ public class CardDialog extends BaseBottomDialog {
 
     private boolean requestedEditingFocus;
 
+    private boolean disableButton1WhenWeight0 = true;
+    private boolean disableButton2WhenWeight0 = true;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +81,9 @@ public class CardDialog extends BaseBottomDialog {
             Foodstuff foodstuff = args.getParcelable(CLICKED_FOODSTUFF);
             card.setFoodstuff(foodstuff);
         }
+
+        card.setDisableButton1WhenWeight0(disableButton1WhenWeight0);
+        card.setDisableButton2WhenWeight0(disableButton2WhenWeight0);
 
         return card.getCardLayout();
     }
@@ -134,6 +140,26 @@ public class CardDialog extends BaseBottomDialog {
         }
     }
 
+    public void setUpButtonN(
+            int buttonNumber,
+            Card.OnMainButtonSimpleClickListener listener,
+            @StringRes int buttonTextRes) {
+        setUpButtonN(buttonNumber, listener.convert(), buttonTextRes);
+    }
+
+    public void setUpButtonN(
+            int buttonNumber,
+            Card.OnMainButtonClickListener listener,
+            @StringRes int buttonTextRes) {
+        if (buttonNumber == 1) {
+            setUpButton1(listener, buttonTextRes);
+        } else if (buttonNumber == 2) {
+            setUpButton2(listener, buttonTextRes);
+        } else {
+            throw new IllegalArgumentException("Invalid button number: " + buttonNumber);
+        }
+    }
+
     public void deinitButton1() {
         button1ClickListener = null;
         if (card != null) {
@@ -166,6 +192,30 @@ public class CardDialog extends BaseBottomDialog {
         onDeleteButtonClickListener = listener;
         if (card != null) {
             card.setOnDeleteButtonClickListener(listener);
+        }
+    }
+
+    public void setDisableButtonNWhenWeight0(int buttonNumber, boolean value) {
+        if (buttonNumber == 1) {
+            setDisableButton1WhenWeight0(value);
+        } else if (buttonNumber == 2) {
+            setDisableButton2WhenWeight0(value);
+        } else {
+            throw new IllegalArgumentException("Invalid button number: " + buttonNumber);
+        }
+    }
+
+    public void setDisableButton1WhenWeight0(boolean value) {
+        disableButton1WhenWeight0 = value;
+        if (card != null) {
+            card.setDisableButton1WhenWeight0(disableButton1WhenWeight0);
+        }
+    }
+
+    public void setDisableButton2WhenWeight0(boolean value) {
+        disableButton2WhenWeight0 = value;
+        if (card != null) {
+            card.setDisableButton2WhenWeight0(disableButton2WhenWeight0);
         }
     }
 

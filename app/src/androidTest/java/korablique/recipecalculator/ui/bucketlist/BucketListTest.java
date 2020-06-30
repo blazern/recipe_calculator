@@ -32,7 +32,9 @@ import korablique.recipecalculator.util.SyncMainThreadExecutor;
 import korablique.recipecalculator.util.TestingTimeProvider;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -153,7 +155,9 @@ public class BucketListTest {
         bucketList.setTotalWeight(1f);
 
         // Удаляем всё!
+        assertFalse(bucketList.isEmpty());
         bucketList.clear();
+        assertTrue(bucketList.isEmpty());
 
         // Новый бакетлист со старым prefs manager'ом
         BucketList bucketList2 = new BucketList(prefsManager);

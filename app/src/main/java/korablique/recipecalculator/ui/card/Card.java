@@ -77,6 +77,9 @@ public class Card {
     private AnimatedPluralProgressBar pluralProgressBar;
     private NutritionValuesWrapper nutritionValuesWrapper;
 
+    private boolean disableButton1WhenWeight0 = true;
+    private boolean disableButton2WhenWeight0 = true;
+
     public Card(
             BaseBottomDialog dialog, ViewGroup parent,
             CalcKeyboardController calcKeyboardController, SharedPrefsManager prefsManager) {
@@ -110,8 +113,16 @@ public class Card {
         Float currentVal = weightEditText.getCurrentCalculatedValue();
         if (currentVal == null
                 || FloatUtils.areFloatsEquals(0, currentVal)) {
-            button1.setEnabled(false);
-            button2.setEnabled(false);
+            if (disableButton1WhenWeight0) {
+                button1.setEnabled(false);
+            } else {
+                button1.setEnabled(true);
+            }
+            if (disableButton2WhenWeight0) {
+                button2.setEnabled(false);
+            } else {
+                button2.setEnabled(true);
+            }
         } else {
             button1.setEnabled(true);
             button2.setEnabled(true);
@@ -298,5 +309,15 @@ public class Card {
 
     void focusOnEditing() {
         weightEditText.requestFocus();
+    }
+
+    void setDisableButton1WhenWeight0(boolean value) {
+        disableButton1WhenWeight0 = value;
+        updateMainButtonsEnability();
+    }
+
+    void setDisableButton2WhenWeight0(boolean value) {
+        disableButton2WhenWeight0 = value;
+        updateMainButtonsEnability();
     }
 }

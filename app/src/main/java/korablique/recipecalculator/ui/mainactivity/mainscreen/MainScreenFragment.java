@@ -18,6 +18,8 @@ import dagger.android.support.HasSupportFragmentInjector;
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.base.BaseFragment;
 import korablique.recipecalculator.model.Foodstuff;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesController;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesMenuController;
 
 public class MainScreenFragment extends BaseFragment implements HasSupportFragmentInjector {
     // The objects below are @Injected, because they need to be instantiated
@@ -30,6 +32,10 @@ public class MainScreenFragment extends BaseFragment implements HasSupportFragme
     MainScreenSearchController mainScreenSearchController;
     @Inject
     MainScreenCardController mainScreenCardController;
+    @Inject
+    MainScreenModesController mainScreenModesController;
+    @Inject
+    MainScreenModesMenuController mainScreenModesMenuController;
     @Inject
     DispatchingAndroidInjector<Fragment> fragmentInjector;
 

@@ -142,7 +142,7 @@ public class MainActivityMainScreenSnackbarTest extends MainActivityTestsBase {
     }
 
     @Test
-    public void snackbarRecipeEditingText() {
+    public void snackbarRecipeEditingText() throws InterruptedException {
         mActivityRule.launchActivity(null);
 
         onView(withText(R.string.selected_foodstuffs_snackbar_title_recipe_editing))
@@ -157,6 +157,8 @@ public class MainActivityMainScreenSnackbarTest extends MainActivityTestsBase {
         CreateRecipeResult recipeResult = recipesRepository.saveRecipeRx(notSavedRecipe).blockingGet();
         Recipe recipe = ((CreateRecipeResult.Ok) recipeResult).getRecipe();
         mainThreadExecutor.execute(() -> bucketList.setRecipe(recipe));
+
+        Thread.sleep(250);
 
         onView(withText(R.string.selected_foodstuffs_snackbar_title_recipe_editing))
                 .check(matches(isDisplayed()));

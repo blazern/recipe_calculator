@@ -13,6 +13,7 @@
     <string name="save">Сохранить</string>
     <string name="enter_recipe_name">Введите название рецепта</string>
     <string name="recipe_name">Название рецепта</string>
+    <string name="create_recipe">Создать рецепт</string>
     <string name="start">Для добавления продукта нажмите на +</string>
     <string name="search">Поиск…</string>
     <string name="calculator">Калькулятор</string>
@@ -46,6 +47,7 @@
     <string name="weight_in_card">Масса, граммов</string>
     <string name="add_foodstuff">Добавить продукт</string>
     <string name="add_foodstuff_to_recipe">В рецепт</string>
+    <string name="open_foodstuff_recipe">Рецепт</string>
     <string name="add_foodstuff_to_history">В журнал</string>
     <string name="selected_foodstuffs_snackbar_title_recipe_creation">Создание рецепта</string>
     <string name="selected_foodstuffs_snackbar_title_recipe_editing">Редактирование рецепта</string>
@@ -199,6 +201,7 @@
     <string name="manually">Вручную</string>
     <string name="preference_card_nutrition_extended_title">Растянутый БЖУ в карточке</string>
     <string name="preference_card_nutrition_extended_descr">Визуально полностью заполнять прогресс БЖУ в карточке продукта</string>
+    <string name="up">Вверх</string>
 
     <string-array name="physical_activity_array">
         <item name="passive_lifestyle">Сидячий образ жизни</item>

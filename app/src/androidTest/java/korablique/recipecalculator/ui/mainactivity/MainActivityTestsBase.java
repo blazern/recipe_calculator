@@ -75,6 +75,8 @@ import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenSearchCo
 import korablique.recipecalculator.ui.mainactivity.mainscreen.SearchResultsFragment;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.TempLongClickedFoodstuffsHandler;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.UpFABController;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesController;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesMenuController;
 import korablique.recipecalculator.ui.mainactivity.partners.PartnersListFragment;
 import korablique.recipecalculator.ui.mainactivity.partners.PartnersListFragmentController;
 import korablique.recipecalculator.ui.mainactivity.partners.pairing.PairingFragment;
@@ -117,6 +119,8 @@ public class MainActivityTestsBase {
     protected CurrentActivityProvider currentActivityProvider;
     protected SessionController sessionController;
     protected MainScreenCardController mainScreenCardController;
+    protected MainScreenModesController mainScreenModesController;
+    protected MainScreenModesMenuController mainScreenModesMenuController;
     protected SharedPrefsManager prefsManager;
     protected SoftKeyboardStateWatcher softKeyboardStateWatcher;
     protected FoodstuffsSearchEngine foodstuffsSearchEngine;
@@ -264,11 +268,17 @@ public class MainActivityTestsBase {
                             MainScreenReadinessDispatcher readinessDispatcher =
                                     new MainScreenReadinessDispatcher();
 
+                            mainScreenModesController = new MainScreenModesController(
+                                    fragment, fragmentCallbacks, bucketList, recipesRepository);
+                            mainScreenModesMenuController = new MainScreenModesMenuController(
+                                    fragment, fragmentCallbacks, activity.getActivityCallbacks(),
+                                    mainScreenModesController, bucketList, recipesRepository);
+
                             mainScreenCardController = new MainScreenCardController(
                                     activity, fragment, fragmentCallbacks, lifecycle,
-                                    bucketList, historyWorker, timeProvider,
+                                    historyWorker, timeProvider,
                                     mainActivitySelectedDateStorage, recipesRepository,
-                                    foodstuffsList, subscriptions);
+                                    foodstuffsList, subscriptions, mainScreenModesController, bucketList);
 
                             MainScreenSearchController searchController = new MainScreenSearchController(
                                     mainThreadExecutor, bucketList, foodstuffsList, foodstuffsSearchEngine,
@@ -285,9 +295,10 @@ public class MainActivityTestsBase {
                                     foodstuffsList, mainActivitySelectedDateStorage,
                                     mainScreenCardController, readinessDispatcher,
                                     subscriptions, longClickedFoodstuffsHandler,
-                                    fragmentsController);
+                                    fragmentsController, mainScreenModesController);
                             return Arrays.asList(subscriptions, mainScreenController,
-                                    upFABController, mainScreenCardController, searchController);
+                                    upFABController, mainScreenCardController, searchController,
+                                    mainScreenModesController, mainScreenModesMenuController);
 
                         } else if (fragment instanceof ProfileFragment) {
                             ProfileController profileController = new ProfileController(

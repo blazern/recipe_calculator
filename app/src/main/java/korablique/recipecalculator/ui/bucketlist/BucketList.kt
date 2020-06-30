@@ -15,8 +15,10 @@ import korablique.recipecalculator.model.Ingredient.Companion.create
 import korablique.recipecalculator.model.Nutrition
 import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.model.proto.RecipeProtos
+import korablique.recipecalculator.util.FloatUtils
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,7 +33,7 @@ class BucketList @Inject constructor(
     }
 
     private var editedRecipe: Recipe
-    private val observers: MutableList<Observer> = ArrayList()
+    private val observers: MutableList<Observer> = CopyOnWriteArrayList()
 
     init {
         editedRecipe = Recipe.create(
@@ -137,6 +139,16 @@ class BucketList @Inject constructor(
                 observer.onIngredientRemoved(ingredient)
             }
         }
+    }
+
+    fun isEmpty(): Boolean {
+        checkCurrentThread()
+        return editedRecipe.id < 0
+                && editedRecipe.ingredients.isEmpty()
+                && FloatUtils.areFloatsEquals(0f, editedRecipe.weight)
+                && editedRecipe.name.isEmpty()
+                && editedRecipe.comment.isEmpty()
+                && Nutrition.zero() == Nutrition.of100gramsOf(editedRecipe.foodstuff)
     }
 
     private fun updatePersistentState() {

@@ -1,6 +1,5 @@
 package korablique.recipecalculator.ui.bucketlist
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.VisibleForTesting
@@ -16,10 +15,11 @@ import javax.inject.Inject
 @VisibleForTesting
 const val EXTRA_PRODUCED_RECIPE = "EXTRA_CREATED_RECIPE"
 @VisibleForTesting
-const val ACTION_EDIT_RECIPE = "ACTION_EDIT_RECIPE"
+const val ACTION_DISPLAY_RECIPE = "ACTION_DISPLAY_RECIPE"
 @VisibleForTesting
 const val EXTRA_RECIPE = "EXTRA_RECIPE"
-
+@VisibleForTesting
+const val EXTRA_EDIT_RECIPE = "EXTRA_EDIT_RECIPE"
 
 class BucketListActivity() : BaseActivity(), HasSupportFragmentInjector {
     @JvmField
@@ -48,10 +48,13 @@ class BucketListActivity() : BaseActivity(), HasSupportFragmentInjector {
         fun createIntent(context: Context): Intent =
                 BucketListActivityController.createIntent(context)
         @JvmStatic
-        fun startForRecipe(fragment: Fragment, requestCode: Int, recipe: Recipe) =
-                BucketListActivityController.startForRecipe(fragment, requestCode, recipe)
+        fun startForRecipe(fragment: Fragment, requestCode: Int,
+                           recipe: Recipe, editRecipe: Boolean = false) =
+                BucketListActivityController.startForRecipe(
+                        fragment, requestCode, recipe, editRecipe)
         @JvmStatic
-        fun createIntent(context: Context, recipe: Recipe): Intent =
-                BucketListActivityController.createIntent(context, recipe)
+        @JvmOverloads
+        fun createIntent(context: Context, recipe: Recipe, editRecipe: Boolean = false): Intent =
+                BucketListActivityController.createIntent(context, recipe, editRecipe)
     }
 }

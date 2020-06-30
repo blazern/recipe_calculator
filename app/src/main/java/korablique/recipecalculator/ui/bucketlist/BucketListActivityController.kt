@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.IdRes
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -70,15 +69,17 @@ class BucketListActivityController @Inject constructor(
         fun startForRecipe(
                 fragment: Fragment,
                 requestCode: Int,
-                recipe: Recipe) {
+                recipe: Recipe,
+                editing: Boolean) {
             fragment.startActivityForResult(
-                    createIntent(fragment.requireContext(), recipe), requestCode)
+                    createIntent(fragment.requireContext(), recipe, editing), requestCode)
         }
 
-        fun createIntent(context: Context, recipe: Recipe): Intent {
+        fun createIntent(context: Context, recipe: Recipe, editing: Boolean): Intent {
             val intent = Intent(context, BucketListActivity::class.java)
-            intent.action = ACTION_EDIT_RECIPE
+            intent.action = ACTION_DISPLAY_RECIPE
             intent.putExtra(EXTRA_RECIPE, recipe)
+            intent.putExtra(EXTRA_EDIT_RECIPE, editing)
             return intent
         }
     }
@@ -137,11 +138,17 @@ class BucketListActivityController @Inject constructor(
             }
         }
 
-        return if (ACTION_EDIT_RECIPE == activity.intent.action) {
+        return if (ACTION_DISPLAY_RECIPE == activity.intent.action) {
             val recipe: Recipe = activity.intent.getParcelableExtra(EXTRA_RECIPE)
-            BucketListActivityDisplayRecipeState(
-                    recipe, commentLayoutController, activity, bucketList,
-                    recipesRepository, mainThreadExecutor)
+            if (activity.intent.getBooleanExtra(EXTRA_EDIT_RECIPE, false)) {
+                BucketListActivityRecipeEditingState(
+                        recipe, commentLayoutController, activity, bucketList,
+                        recipesRepository, mainThreadExecutor)
+            } else {
+                BucketListActivityDisplayRecipeState(
+                        recipe, commentLayoutController, activity, bucketList,
+                        recipesRepository, mainThreadExecutor)
+            }
         } else {
             BucketListActivityRecipeEditingState(
                     bucketList.getRecipe(), commentLayoutController, activity, bucketList,

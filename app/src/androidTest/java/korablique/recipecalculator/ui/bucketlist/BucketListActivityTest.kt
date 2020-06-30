@@ -1531,6 +1531,23 @@ class BucketListActivityTest {
         assertNull(resultIntent.getParcelableExtra<Recipe>(EXTRA_PRODUCED_RECIPE))
     }
 
+    @Test
+    fun openForRecipeEdit() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 333,
+                listOf(UIIngredient("dough", "111"), UIIngredient("oil", "222")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe,
+                editRecipe = true)
+        activityRule.launchActivity(startIntent)
+
+        // Verify initial state is editing state
+        verifyRecipeEditingState(initialRecipe)
+    }
+
     private fun createSavedRecipe(
             name: String,
             weight: Int,
