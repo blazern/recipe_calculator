@@ -8,6 +8,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.ConstraintSet.BOTTOM
+import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
 import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
@@ -86,8 +89,6 @@ class BucketListActivityRecipeEditingState private constructor(
             true -> R.string.bucket_list_title_recipe_editing
             else -> R.string.bucket_list_title_recipe_creation
         }
-    override fun getMainConstraintSetDescriptionLayout(): Int = R.layout.activity_bucket_list_main_state_editing
-    override fun getConstraintSetDescriptionLayout(): Int = R.layout.activity_bucket_list_state_editing
 
     override fun saveInstanceState(): Bundle {
         val result = Bundle()
@@ -97,7 +98,13 @@ class BucketListActivityRecipeEditingState private constructor(
         return result
     }
 
-    override fun initImpl() {
+    override fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
+        innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.VISIBLE)
+        innerConstraints.setVisibility(R.id.button_cooking_rippled_wrapper, View.GONE)
+        innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.GONE)
+        outerConstraints.clear(R.id.actions_layout)
+        outerConstraints.connect(R.id.actions_layout, BOTTOM, PARENT_ID, BOTTOM)
+
         // Close the card if it's open
         CardDialog.findCard(activity)?.dismiss()
 
@@ -255,7 +262,7 @@ class BucketListActivityRecipeEditingState private constructor(
         }
     }
 
-    override fun destroyImpl() {
+    override fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         buttonClose.setOnClickListener(null)
         buttonDelete.setOnClickListener(null)
         saveAsRecipeButton.setOnClickListener(null)

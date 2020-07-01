@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
 import android.widget.EditText
+import androidx.constraintlayout.widget.ConstraintSet
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.database.RecipesRepository
-import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.ui.bucketlist.BucketList
@@ -75,11 +75,9 @@ class BucketListActivityCookingState private constructor(
 
     override fun getStateID(): ID = ID.CookingState
     override fun getTitleStringID(): Int = R.string.bucket_list_title_cooking
-    override fun getMainConstraintSetDescriptionLayout(): Int = R.layout.activity_bucket_list_main_state_cooking
-    override fun getConstraintSetDescriptionLayout(): Int = R.layout.activity_bucket_list_state_displaying
     override fun getRecipe(): Recipe = displayedRecipe
 
-    override fun initImpl() {
+    override fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = false
         commentLayoutController.setEditable(false)
 
@@ -105,11 +103,13 @@ class BucketListActivityCookingState private constructor(
             }
         }
         totalWeightEditText.addTextChangedListener(totalWeightTextWatcher)
+
+        innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.GONE)
+        innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.GONE)
+        innerConstraints.setVisibility(R.id.button_cooking_rippled_wrapper, View.GONE)
     }
 
-    override fun destroyImpl() {
-        findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = true
-        findViewById<View>(R.id.button_close).setOnClickListener(null)
+    override fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         totalWeightEditText.removeTextChangedListener(totalWeightTextWatcher)
     }
 

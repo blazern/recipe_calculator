@@ -2,8 +2,17 @@ package korablique.recipecalculator.ui.bucketlist.states
 
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import androidx.annotation.IdRes
-import korablique.recipecalculator.model.Ingredient
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.ConstraintSet.BOTTOM
+import androidx.constraintlayout.widget.ConstraintSet.MATCH_CONSTRAINT
+import androidx.constraintlayout.widget.ConstraintSet.MATCH_CONSTRAINT_SPREAD
+import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
+import androidx.constraintlayout.widget.ConstraintSet.RIGHT
+import androidx.constraintlayout.widget.ConstraintSet.TOP
+import korablique.recipecalculator.R
 import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 
@@ -19,6 +28,8 @@ abstract class BucketListActivityState {
 
     interface Delegate {
         fun onRecipeUpdated(recipe: Recipe)
+        fun innerLayout(): ConstraintLayout
+        fun outerLayout(): ConstraintLayout
         fun <T : View?> findViewById(@IdRes id: Int): T
         fun switchState(newState: BucketListActivityState)
         fun finish(finishResult: FinishResult)
@@ -31,11 +42,50 @@ abstract class BucketListActivityState {
     fun init(delegate: Delegate, adapter: BucketListAdapter) {
         this.delegate = delegate
         this.adapter = adapter
-        initImpl()
+
+        val innerConstraints = ConstraintSet()
+        val outerConstraints = ConstraintSet()
+        innerConstraints.clone(delegate.innerLayout())
+        outerConstraints.clone(delegate.outerLayout())
+
+        initDefaults(innerConstraints, outerConstraints)
+        initImpl(innerConstraints, outerConstraints)
+
+        innerConstraints.applyTo(delegate.innerLayout())
+        outerConstraints.applyTo(delegate.outerLayout())
+    }
+
+    /**
+     * Most spread defaults
+     */
+    private fun initDefaults(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
+        findViewById<View>(R.id.button_close).setOnClickListener(null)
+        findViewById<View>(R.id.button_edit).setOnClickListener(null)
+        findViewById<View>(R.id.button_delete_recipe).setOnClickListener(null)
+        findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = true
+        findViewById<EditText>(R.id.total_weight_edit_text).isEnabled = true
+
+        innerConstraints.setVisibility(R.id.button_cooking_rippled_wrapper, View.VISIBLE)
+        innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.VISIBLE)
+        innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.GONE)
+        innerConstraints.constrainDefaultWidth(R.id.total_weight_edit_text, MATCH_CONSTRAINT_SPREAD)
+        innerConstraints.constrainWidth(R.id.total_weight_edit_text, MATCH_CONSTRAINT)
+        innerConstraints.connect(R.id.total_weight_edit_text, RIGHT, PARENT_ID, RIGHT)
+
+        outerConstraints.clear(R.id.actions_layout)
+        outerConstraints.connect(R.id.actions_layout, TOP, PARENT_ID, BOTTOM)
     }
 
     fun destroy() {
-        destroyImpl()
+        val innerConstraints = ConstraintSet()
+        val outerConstraints = ConstraintSet()
+        innerConstraints.clone(delegate.innerLayout())
+        outerConstraints.clone(delegate.outerLayout())
+
+        destroyImpl(innerConstraints, outerConstraints)
+
+        innerConstraints.applyTo(delegate.innerLayout())
+        outerConstraints.applyTo(delegate.outerLayout())
     }
 
     protected fun onRecipeUpdated(recipe: Recipe) {
@@ -57,11 +107,9 @@ abstract class BucketListActivityState {
     abstract fun saveInstanceState(): Bundle
     abstract fun getStateID(): ID
     abstract fun getTitleStringID(): Int
-    abstract fun getMainConstraintSetDescriptionLayout(): Int
-    abstract fun getConstraintSetDescriptionLayout(): Int
 
-    protected abstract fun initImpl()
-    protected abstract fun destroyImpl()
+    protected abstract fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet)
+    protected abstract fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet)
     abstract fun getRecipe(): Recipe
     open fun onActivityBackPressed(): Boolean = false
     open fun createIngredientsDragAndDropObserver(): BucketListAdapter.ItemDragAndDropObserver? = null

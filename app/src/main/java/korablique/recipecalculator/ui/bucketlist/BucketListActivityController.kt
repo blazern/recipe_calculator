@@ -160,6 +160,14 @@ class BucketListActivityController @Inject constructor(
         return activity.findViewById<T>(id)
     }
 
+    override fun innerLayout(): ConstraintLayout {
+        return findViewById(R.id.bucket_list_activity_main_content_layout)
+    }
+
+    override fun outerLayout(): ConstraintLayout {
+        return findViewById(R.id.bucket_list_activity_layout)
+    }
+
     private fun updateNutritionWrappers() {
         val recipe = currentState.getRecipe()
         var nutrition = Nutrition.zero()
@@ -218,7 +226,6 @@ class BucketListActivityController @Inject constructor(
         findViewById<TextView>(R.id.title_text).setText(currentState.getTitleStringID())
 
         adapter.initDragAndDrop(currentState.createIngredientsDragAndDropObserver())
-        switchConstraints(R.id.bucket_list_activity_main_content_layout, currentState.getMainConstraintSetDescriptionLayout())
         switchConstraints(R.id.bucket_list_activity_layout, currentState.getConstraintSetDescriptionLayout())
     }
 

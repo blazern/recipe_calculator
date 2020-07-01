@@ -50,6 +50,9 @@ class CalcKeyboardController @Inject constructor() {
         editText.showSoftInputOnFocus = false
 
         editText.setOnFocusChangeListener { _, hasFocus ->
+            if (!editText.isEnabled) {
+                return@setOnFocusChangeListener
+            }
             if (hasFocus) {
                 showKeyboardFor(editText)
                 backPressHandlingInitializer.invoke()

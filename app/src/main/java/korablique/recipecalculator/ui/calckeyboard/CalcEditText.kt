@@ -8,7 +8,7 @@ import android.text.InputFilter
 import android.text.SpannableString
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.widget.EditText
+import androidx.appcompat.widget.AppCompatEditText
 import com.udojava.evalex.Expression
 import korablique.recipecalculator.R
 import korablique.recipecalculator.ui.inputfilters.DecimalNumberInputFilter
@@ -17,7 +17,7 @@ import korablique.recipecalculator.ui.inputfilters.FunctionalInputFilter
 import java.math.BigDecimal
 import java.util.regex.Pattern
 
-open class CalcEditText : EditText {
+open class CalcEditText : AppCompatEditText {
     // NOTE: В начале regex'а ".*", в конце ".+" - это не случайно, ".+"
     // там стоит, чтобы не рисовать серенький результат вычисления для
     // строк вида "2+", но рисовать для строк вида "2+2", т.к. "2+ =2" выглядит глупо.
