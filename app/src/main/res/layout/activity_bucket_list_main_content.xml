@@ -91,31 +91,15 @@
             android:background="@drawable/rectangular_button_click_selector"
             android:src="@drawable/ic_edit_white"/>
     </FrameLayout>
-    <FrameLayout
-        android:id="@+id/button_cooking_rippled_wrapper"
-        android:layout_width="49dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="@id/title_view"
-        app:layout_constraintEnd_toStartOf="@+id/button_edit_rippled_wrapper"
-        app:layout_constraintTop_toTopOf="@id/title_view"
-        android:background="@android:color/transparent">
-        <ImageView
-            android:id="@+id/button_cooking"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_gravity="center"
-            android:background="@drawable/rectangular_button_click_selector"
-            android:src="@drawable/ic_cooking_white"/>
-    </FrameLayout>
 
     <EditText
         android:id="@+id/recipe_name_edit_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textCapSentences"
-        android:layout_marginStart="10dp"
+        android:inputType="textCapSentences|textNoSuggestions|textMultiLine"
+        android:layout_marginStart="12dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         app:layout_constraintTop_toBottomOf="@+id/title_view"
         style="@style/MontserratHeaderText"
         android:hint="@string/recipe_name"/>
@@ -132,38 +116,40 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            style="@style/RobotoMonoHintText"
-            android:text="@string/future_recipe_nutrition"/>
+            android:layout_marginTop="6dp"
+            style="@style/RobotoMonoBoldText"
+            android:text="@string/recipe_nutrition"/>
         <include
             layout="@layout/nutrition_progress_with_values"
             android:id="@+id/nutrition_progress_with_values"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp" />
+            android:layout_marginTop="20dp" />
 
     </LinearLayout>
 
+    <include
+        layout="@layout/activity_bucket_list_comment_layout" />
+
     <TextView
         android:id="@+id/weight_text_view"
-        style="@style/RobotoMonoHintText"
+        style="@style/RobotoMonoBoldText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:lineSpacingMultiplier="1.30"
         android:layout_marginStart="22dp"
-        android:paddingTop="15dp"
-        android:paddingBottom="9dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="16dp"
         android:text="@string/result_weight"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/summary_layout"/>
+        app:layout_constraintTop_toBottomOf="@id/comment_layout"/>
 
     <korablique.recipecalculator.ui.calckeyboard.CalcEditText
         android:id="@+id/total_weight_edit_text"
-        style="@style/RobotoMonoText"
-        android:layout_width="0dp"
+        style="@style/RobotoMonoBoldText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="17dp"
-        android:layout_marginBottom="8dp"
         android:paddingTop="15dp"
         android:paddingBottom="9dp"
         android:maxLines="1"
@@ -173,17 +159,22 @@
         custom:digits_after_decimal_dot="1"
         tools:text="100"
         app:layout_constraintLeft_toRightOf="@id/weight_text_view"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/weight_text_view"
-        app:layout_constraintBottom_toBottomOf="@+id/weight_text_view"/>
+        app:layout_constraintBaseline_toBaselineOf="@+id/weight_text_view"/>
 
-    <include layout="@layout/activity_bucket_list_comment_layout" />
+    <TextView
+        android:id="@+id/weight_measurement_unit_text_view"
+        style="@style/RobotoMonoBoldText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/result_weight_measurement_unit"
+        app:layout_constraintLeft_toRightOf="@+id/total_weight_edit_text"
+        app:layout_constraintBaseline_toBaselineOf="@+id/weight_text_view"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/ingredients_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/comment_layout"
+        app:layout_constraintTop_toBottomOf="@+id/weight_text_view"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:nestedScrollingEnabled="false"/>
 

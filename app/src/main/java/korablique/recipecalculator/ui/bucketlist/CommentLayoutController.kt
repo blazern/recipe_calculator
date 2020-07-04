@@ -4,14 +4,19 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.ConstraintSet.BOTTOM
+import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
+import androidx.constraintlayout.widget.ConstraintSet.TOP
 import korablique.recipecalculator.R
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher.OnTextChangedListener
+import korablique.recipecalculator.ui.setFullyVisuallyEnabled
 
 class CommentLayoutController(private val layout: ConstraintLayout) {
     private var state = State.EMPTY_NOT_EDITABLE
     private val commentView = layout.findViewById<EditText>(R.id.comment)
-    private val addCommentButton = layout.findViewById<View>(R.id.add_comment_button)
+    private val addCommentButton = layout.findViewById<View>(R.id.add_general_comment_button)
     private val commentTitle = layout.findViewById<TextView>(R.id.comment_title)
     private val commentEditsObservers = mutableListOf<CommentEditsObserver>()
 
@@ -76,30 +81,37 @@ class CommentLayoutController(private val layout: ConstraintLayout) {
     }
 
     private fun updateVisualState() {
-        commentView.isEnabled = state.isEditable()
+        commentView.setFullyVisuallyEnabled(state.isEditable())
 
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(layout)
         when (state) {
             State.EMPTY_NOT_EDITABLE -> {
-                commentView.visibility = View.GONE
-                addCommentButton.visibility = View.GONE
-                commentTitle.visibility = View.GONE
+                constraintSet.setVisibility(commentView.id, View.GONE)
+                constraintSet.setVisibility(addCommentButton.id, View.GONE)
+                constraintSet.setVisibility(commentTitle.id, View.GONE)
+                constraintSet.connect(commentView.id, TOP, commentTitle.id, BOTTOM)
             }
             State.EMPTY_EDITABLE -> {
-                commentView.visibility = View.GONE
-                addCommentButton.visibility = View.VISIBLE
-                commentTitle.visibility = View.VISIBLE
+                constraintSet.setVisibility(commentView.id, View.GONE)
+                constraintSet.setVisibility(addCommentButton.id, View.VISIBLE)
+                constraintSet.setVisibility(commentTitle.id, View.VISIBLE)
+                constraintSet.connect(commentView.id, TOP, commentTitle.id, BOTTOM)
             }
             State.NOT_EMPTY_NOT_EDITABLE -> {
-                commentView.visibility = View.VISIBLE
-                addCommentButton.visibility = View.INVISIBLE
-                commentTitle.visibility = View.VISIBLE
+                constraintSet.setVisibility(commentView.id, View.VISIBLE)
+                constraintSet.setVisibility(addCommentButton.id, View.GONE)
+                constraintSet.setVisibility(commentTitle.id, View.GONE)
+                constraintSet.connect(commentView.id, TOP, PARENT_ID, TOP)
             }
             State.NOT_EMPTY_EDITABLE -> {
-                commentView.visibility = View.VISIBLE
-                addCommentButton.visibility = View.VISIBLE
-                commentTitle.visibility = View.VISIBLE
+                constraintSet.setVisibility(commentView.id, View.VISIBLE)
+                constraintSet.setVisibility(addCommentButton.id, View.VISIBLE)
+                constraintSet.setVisibility(commentTitle.id, View.VISIBLE)
+                constraintSet.connect(commentView.id, TOP, commentTitle.id, BOTTOM)
             }
         }
+        constraintSet.applyTo(layout)
     }
 }
 

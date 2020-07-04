@@ -2,15 +2,19 @@ package korablique.recipecalculator.ui.bucketlist.states
 
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
+import android.widget.Button
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.ConstraintSet.BOTTOM
 import androidx.constraintlayout.widget.ConstraintSet.MATCH_CONSTRAINT_WRAP
+import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
 import androidx.constraintlayout.widget.ConstraintSet.RIGHT
+import androidx.constraintlayout.widget.ConstraintSet.TOP
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.ui.EditTextsVisualDisabler
 import korablique.recipecalculator.ui.bucketlist.BucketList
 import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
 
@@ -46,8 +50,7 @@ class BucketListActivityDisplayRecipeState(
 
     override fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         findViewById<View>(R.id.button_close).setOnClickListener { finish(FinishResult.Canceled) }
-        findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = false
-        findViewById<EditText>(R.id.total_weight_edit_text).isEnabled = false
+        EditTextsVisualDisabler.disable(findViewById(R.id.total_weight_edit_text))
 
         findViewById<View>(R.id.button_edit).setOnClickListener {
             switchState(BucketListActivityRecipeEditingState(
@@ -55,7 +58,9 @@ class BucketListActivityDisplayRecipeState(
                     recipesRepository, mainThreadExecutor))
         }
 
-        findViewById<View>(R.id.button_cooking).setOnClickListener {
+        val actionButton = findViewById<Button>(R.id.recipe_action_button)
+        actionButton.setText(R.string.bucket_list_action_button_cooking)
+        actionButton.setOnClickListener {
             switchState(BucketListActivityCookingState(
                     recipe, commentLayoutController, activity, bucketList,
                     recipesRepository, mainThreadExecutor))
@@ -67,6 +72,8 @@ class BucketListActivityDisplayRecipeState(
         innerConstraints.constrainDefaultWidth(R.id.total_weight_edit_text, MATCH_CONSTRAINT_WRAP)
         innerConstraints.constrainWidth(R.id.total_weight_edit_text, ConstraintSet.WRAP_CONTENT)
         innerConstraints.clear(R.id.total_weight_edit_text, RIGHT)
+        outerConstraints.clear(R.id.actions_layout, TOP)
+        outerConstraints.connect(R.id.actions_layout, BOTTOM, PARENT_ID, BOTTOM)
     }
 
     override fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) = Unit

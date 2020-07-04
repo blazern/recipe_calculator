@@ -54,17 +54,19 @@
     <string name="bucket_list_title_recipe_creation">Новый рецепт</string>
     <string name="bucket_list_title_recipe_editing">Редактирование</string>
     <string name="bucket_list_title_recipe">Рецепт</string>
-    <string name="bucket_list_title_cooking">Рассчёт соотношений</string>
+    <string name="bucket_list_title_cooking">Режим готовки</string>
+    <string name="bucket_list_action_button_cooking">Режим готовки</string>
     <string name="meal">Приём пищи</string>
     <string name="meal_notification">Не забудьте внести в приложение, что вы кушали</string>
     <string name="channel_name">Напоминание о приеме пищи</string>
     <string name="save_recipe">Сохранить рецепт</string>
     <string name="add_to_history">Добавить в журнал</string>
-    <string name="future_recipe_nutrition">Пищевая ценность рецепта (на 100 г)</string>
+    <string name="recipe_nutrition">Пищевая ценность (на 100 г)</string>
     <string name="name">Название</string>
     <string name="saved">Сохранено</string>
     <string name="foodstuff_already_exists">Такой продукт уже существует</string>
-    <string name="result_weight">Масса готового продукта, граммов:</string>
+    <string name="result_weight">Масса готового продукта:</string>
+    <string name="result_weight_measurement_unit">граммов</string>
     <string name="new_foodstuff">Новый продукт</string>
     <string name="nutrition_per_100_g">Белки, жиры и углеводы указаны на 100 г</string>
     <string name="undo">Отмена</string>
@@ -126,6 +128,7 @@
     <string name="of_n_grams">из %d г</string>
     <string name="of_n_calories">из %d ккал</string>
     <string name="period">Период</string>
+    <string name="grams_abbrv">г</string>
 
     <string name="user_measurements_period_array_all_time">За всё время</string>
     <string name="user_measurements_period_array_year">За год</string>
@@ -161,7 +164,6 @@
     <string name="send_to_partner">Отправить партнёру</string>
     <string name="delete_partner">Удалить партнёра</string>
     <string name="delete_ingredient">Удалить ингредиент</string>
-    <string name="edit_ingredient_comment">Изменить комментарий</string>
     <string name="add_ingredient">Добавить ингредиент</string>
     <string name="sign_in_with_google">Войти с Google</string>
     <string name="something_went_wrong">Упс, что-то пошло не так</string>

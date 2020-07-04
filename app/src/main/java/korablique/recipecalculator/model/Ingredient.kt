@@ -5,12 +5,28 @@ import android.os.Parcelable
 import korablique.recipecalculator.database.room.IngredientEntity
 import korablique.recipecalculator.model.proto.FoodstuffProtos
 import korablique.recipecalculator.model.proto.IngredientProtos
+import korablique.recipecalculator.util.FloatUtils
+import java.util.*
 
 data class Ingredient(
         val id: Long,
         val foodstuff: Foodstuff,
         val weight: Float,
         val comment: String) : Parcelable {
+    override fun equals(other: Any?): Boolean {
+        if (other !is Ingredient) {
+            return false
+        }
+        return id == other.id
+                && foodstuff == other.foodstuff
+                && FloatUtils.areFloatsEquals(weight, other.weight)
+                && comment == other.comment
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hashCode(id)
+    }
+
     companion object {
         fun from(entity: IngredientEntity, foodstuff: Foodstuff): Ingredient {
             return Ingredient(entity.id, foodstuff, entity.ingredientWeight, entity.comment)

@@ -2,9 +2,11 @@ package korablique.recipecalculator.model
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.google.android.gms.common.internal.Objects
 import korablique.recipecalculator.DishNutritionCalculator
 import korablique.recipecalculator.database.room.RecipeEntity
 import korablique.recipecalculator.model.proto.RecipeProtos
+import korablique.recipecalculator.util.FloatUtils
 
 // Please edit BucketList.isEmpty if any field is added
 data class Recipe(
@@ -13,6 +15,21 @@ data class Recipe(
         val ingredients: List<Ingredient>,
         val weight: Float,
         val comment: String) : Parcelable {
+    override fun equals(other: Any?): Boolean {
+        if (other !is Recipe) {
+            return false
+        }
+        return id == other.id
+                && foodstuff == other.foodstuff
+                && ingredients == other.ingredients
+                && FloatUtils.areFloatsEquals(weight, other.weight)
+                && comment == other.comment
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hashCode(id)
+    }
+
     companion object {
         fun from(
                 entity: RecipeEntity,

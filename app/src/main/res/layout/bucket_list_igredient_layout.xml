@@ -9,7 +9,6 @@
     android:layout_marginLeft="10dp"
     android:layout_marginRight="10dp"
     android:paddingTop="2.5dp"
-    android:paddingBottom="2.5dp"
     tools:background="@color/black">
 
     <View
@@ -26,7 +25,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         style="@style/RobotoMonoText"
-        android:paddingTop="8dp"
+        android:paddingTop="10dp"
         android:paddingBottom="8dp"
         android:paddingStart="10dp"
         android:gravity="center_vertical"
@@ -41,45 +40,39 @@
         android:id="@+id/extra_info_wrapper_layout"
         android:layout_width="0dp"
         android:layout_height="27dp"
-        android:paddingLeft="2.6dp"
-        android:paddingRight="2.6dp"
         android:orientation="horizontal"
         android:layout_marginEnd="5dp"
-        app:layout_constraintRight_toLeftOf="@id/drag_handle"
+        app:layout_constraintRight_toRightOf="@id/grams_text"
         app:layout_constraintTop_toTopOf="@+id/name"
         app:layout_constraintBottom_toBottomOf="@+id/name"
-        app:layout_constraintLeft_toLeftOf="@id/extra_info_block"
+        app:layout_constraintLeft_toLeftOf="@id/extra_info_block_editable"
         android:background="@drawable/calories_block_background"/>
-
-    <TextView
-        android:id="@+id/extra_info_block"
-        android:textColor="@color/dark_gray"
-        android:layout_height="match_parent"
-        android:layout_width="wrap_content"
-        android:paddingTop="3dp"
-        android:paddingBottom="3dp"
-        android:fontFamily="@font/roboto_mono_bold"
-        app:layout_constraintRight_toRightOf="@+id/extra_info_wrapper_layout"
-        app:layout_constraintTop_toTopOf="@+id/extra_info_wrapper_layout"
-        app:layout_constraintBottom_toBottomOf="@+id/extra_info_wrapper_layout"
-        tools:text="325kKal"
-        android:visibility="gone"/>
 
     <EditText
         android:id="@+id/extra_info_block_editable"
-        android:textColor="@color/dark_gray"
-        style="@style/RobotoMonoHintText"
+        style="@style/RobotoMonoText"
         android:textSize="14sp"
         android:inputType="numberDecimal"
         android:maxLength="5"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:fontFamily="@font/roboto_mono_bold"
-        app:layout_constraintRight_toRightOf="@+id/extra_info_wrapper_layout"
+        app:layout_constraintRight_toLeftOf="@+id/grams_text"
         app:layout_constraintTop_toTopOf="@+id/extra_info_wrapper_layout"
         app:layout_constraintBottom_toBottomOf="@+id/extra_info_wrapper_layout"
-        tools:text="325kKal"
-        android:visibility="visible"/>
+        tools:text="32555"/>
+
+    <TextView
+        android:id="@+id/grams_text"
+        style="@style/RobotoMonoText"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:layout_marginEnd="7dp"
+        app:layout_constraintRight_toLeftOf="@+id/drag_handle"
+        app:layout_constraintTop_toTopOf="@+id/extra_info_wrapper_layout"
+        app:layout_constraintBottom_toBottomOf="@+id/extra_info_wrapper_layout"
+        android:text="@string/grams_abbrv"/>
 
     <ImageView
         android:id="@+id/drag_handle"
@@ -92,6 +85,16 @@
         android:src="@drawable/ic_drag_handle_gray"
         android:visibility="visible"/>
 
+    <ImageView
+        android:id="@+id/add_comment_button"
+        android:layout_width="wrap_content"
+        android:layout_height="35dp"
+        android:src="@drawable/ic_add_comment_selector"
+        android:layout_marginEnd="70dp"
+        app:layout_constraintRight_toLeftOf="@+id/drag_handle"
+        app:layout_constraintTop_toTopOf="@+id/extra_info_wrapper_layout"
+        app:layout_constraintBottom_toBottomOf="@+id/extra_info_wrapper_layout"/>
+    
     <TextView
         android:id="@+id/ingredient_comment"
         style="@style/RobotoMonoHintText"
@@ -100,11 +103,23 @@
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingBottom="8dp"
+        android:textColor="@color/colorPrimary"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/extra_info_wrapper_layout"
         tools:text="@string/lorem_ipsum_short"
         android:visibility="gone" />
+
+    <View
+        android:id="@+id/ingredient_comment_clickable_wrapper"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="@id/ingredient_comment"
+        app:layout_constraintRight_toRightOf="@id/ingredient_comment"
+        app:layout_constraintTop_toTopOf="@id/ingredient_comment"
+        app:layout_constraintBottom_toBottomOf="@id/ingredient_comment"
+        android:background="@drawable/button_background"
+        android:visibility="gone"/>
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/barrier7"
@@ -112,5 +127,5 @@
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="ingredient_comment,name" />
+        app:constraint_referenced_ids="ingredient_comment,extra_info_block_editable" />
 </androidx.constraintlayout.widget.ConstraintLayout>

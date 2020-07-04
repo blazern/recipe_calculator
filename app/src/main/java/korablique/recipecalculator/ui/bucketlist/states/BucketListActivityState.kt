@@ -14,6 +14,7 @@ import androidx.constraintlayout.widget.ConstraintSet.RIGHT
 import androidx.constraintlayout.widget.ConstraintSet.TOP
 import korablique.recipecalculator.R
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.ui.EditTextsVisualDisabler
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 
 abstract class BucketListActivityState {
@@ -62,18 +63,15 @@ abstract class BucketListActivityState {
         findViewById<View>(R.id.button_close).setOnClickListener(null)
         findViewById<View>(R.id.button_edit).setOnClickListener(null)
         findViewById<View>(R.id.button_delete_recipe).setOnClickListener(null)
-        findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = true
-        findViewById<EditText>(R.id.total_weight_edit_text).isEnabled = true
 
-        innerConstraints.setVisibility(R.id.button_cooking_rippled_wrapper, View.VISIBLE)
         innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.VISIBLE)
         innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.GONE)
-        innerConstraints.constrainDefaultWidth(R.id.total_weight_edit_text, MATCH_CONSTRAINT_SPREAD)
-        innerConstraints.constrainWidth(R.id.total_weight_edit_text, MATCH_CONSTRAINT)
-        innerConstraints.connect(R.id.total_weight_edit_text, RIGHT, PARENT_ID, RIGHT)
 
-        outerConstraints.clear(R.id.actions_layout)
+        outerConstraints.clear(R.id.actions_layout, BOTTOM)
         outerConstraints.connect(R.id.actions_layout, TOP, PARENT_ID, BOTTOM)
+
+        EditTextsVisualDisabler.disable(findViewById(R.id.recipe_name_edit_text))
+        EditTextsVisualDisabler.enable(findViewById(R.id.total_weight_edit_text))
     }
 
     fun destroy() {
@@ -114,6 +112,7 @@ abstract class BucketListActivityState {
     open fun onActivityBackPressed(): Boolean = false
     open fun createIngredientsDragAndDropObserver(): BucketListAdapter.ItemDragAndDropObserver? = null
     open fun createIngredientsClickObserver(): BucketListAdapter.OnItemClickedObserver? = null
+    open fun createIngredientsCommentClickObserver(): BucketListAdapter.OnItemClickedObserver? = null
     open fun createIngredientsLongClickObserver(): BucketListAdapter.OnItemLongClickedObserver? = null
     open fun createAddIngredientClickObserver(): Runnable? = null
     open fun createIngredientWeightEditionObserver(): BucketListAdapter.ItemWeightEditionObserver? = null

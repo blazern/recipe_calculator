@@ -193,7 +193,7 @@ open class CalcEditText : AppCompatEditText {
      * Отдаёт текущий вычисленный текст.
      */
     fun getCurrentCalculatedValue(): Float? {
-        return currentCalculatedValue
+        return calcCurrentValue()
     }
 
     /**

@@ -11,6 +11,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.constraintlayout.widget.ConstraintSet.BOTTOM
 import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
+import androidx.constraintlayout.widget.ConstraintSet.TOP
 import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
@@ -21,14 +22,13 @@ import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.database.UpdateRecipeResult
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.ui.EditTextsVisualDisabler
 import korablique.recipecalculator.ui.TwoOptionsDialog
 import korablique.recipecalculator.ui.bucketlist.BucketList
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
 import korablique.recipecalculator.ui.bucketlist.IngredientCommentDialog
 import korablique.recipecalculator.ui.calckeyboard.CalcEditText
-import korablique.recipecalculator.ui.card.Card
-import korablique.recipecalculator.ui.card.CardDialog
 import korablique.recipecalculator.util.FloatUtils
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -48,8 +48,6 @@ class BucketListActivityRecipeEditingState private constructor(
         private val recipesRepository: RecipesRepository,
         private val mainThreadExecutor: MainThreadExecutor
 ) : BucketListActivityState() {
-    private var displayedInCardFoodstuffPosition = 0
-
     private lateinit var buttonClose: View
     private lateinit var buttonDelete: View
     private lateinit var totalWeightEditText: CalcEditText
@@ -100,13 +98,9 @@ class BucketListActivityRecipeEditingState private constructor(
 
     override fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.VISIBLE)
-        innerConstraints.setVisibility(R.id.button_cooking_rippled_wrapper, View.GONE)
         innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.GONE)
-        outerConstraints.clear(R.id.actions_layout)
+        outerConstraints.clear(R.id.actions_layout, TOP)
         outerConstraints.connect(R.id.actions_layout, BOTTOM, PARENT_ID, BOTTOM)
-
-        // Close the card if it's open
-        CardDialog.findCard(activity)?.dismiss()
 
         // Reinit comment dialog - the user might've written a long comment
         // and it's bad to lose it
@@ -124,9 +118,11 @@ class BucketListActivityRecipeEditingState private constructor(
 
         buttonClose = findViewById(R.id.button_close)
         buttonDelete = findViewById(R.id.button_delete_recipe)
-        saveAsRecipeButton = findViewById(R.id.save_as_recipe_button)
+        saveAsRecipeButton = findViewById(R.id.recipe_action_button)
         recipeNameEditText = findViewById(R.id.recipe_name_edit_text)
         totalWeightEditText = findViewById(R.id.total_weight_edit_text)
+        EditTextsVisualDisabler.enable(recipeNameEditText)
+        saveAsRecipeButton.setText(R.string.save_recipe)
 
         if (initialDisplayedRecipe.isFromDB) {
             buttonDelete.visibility = View.VISIBLE
@@ -135,7 +131,6 @@ class BucketListActivityRecipeEditingState private constructor(
         }
 
         recipeNameEditText.isEnabled = true
-        totalWeightEditText.isEnabled = true
 
         // If we're not restored and BucketList doesn't contain the initial recipe yet for
         // some reason - let's put it in.
@@ -284,33 +279,30 @@ class BucketListActivityRecipeEditingState private constructor(
                         && !bucketList.getList().isEmpty()
     }
 
-    override fun createIngredientsClickObserver(): BucketListAdapter.OnItemClickedObserver? {
+    override fun createIngredientWeightEditionObserver(): BucketListAdapter.ItemWeightEditionObserver? {
+        return object : BucketListAdapter.ItemWeightEditionObserver {
+            override fun onItemWeightEdited(ingredient: Ingredient, newWeight: Float, position: Int) {
+                var recipe = getRecipe()
+                val newIngredients = recipe.ingredients.toMutableList()
+                newIngredients[position] = recipe.ingredients[position].copy(weight = newWeight)
+
+                var newTotalWeight = 0f
+                newIngredients.forEach { newTotalWeight += it.weight }
+
+                recipe = recipe.copy(ingredients = newIngredients, weight = newTotalWeight)
+                recipe = recipe.recalculateNutrition()
+                bucketList.setRecipe(recipe)
+                onRecipeUpdated(recipe)
+                updateSaveButtonsEnability()
+            }
+        }
+    }
+
+    override fun createIngredientsCommentClickObserver(): BucketListAdapter.OnItemClickedObserver? {
         return object : BucketListAdapter.OnItemClickedObserver {
             override fun onItemClicked(ingredient: Ingredient, position: Int) {
-                displayedInCardFoodstuffPosition = position
-                val cardDialog: CardDialog = CardDialog.showCard(
-                        activity, ingredient.toWeightedFoodstuff())
-
-                val cardSaveButtonClickListener = Card.OnMainButtonSimpleClickListener { newFoodstuff ->
-                    CardDialog.hideCard(activity)
-
-                    var recipe = getRecipe()
-                    val oldIngredient = recipe.ingredients[displayedInCardFoodstuffPosition]
-                    val newIngredient = Ingredient.create(newFoodstuff, oldIngredient.comment)
-                    val newIngredients = recipe.ingredients.toMutableList()
-                    newIngredients[displayedInCardFoodstuffPosition] = newIngredient
-
-                    var newTotalWeight = 0f
-                    newIngredients.forEach { newTotalWeight += it.weight }
-
-                    recipe = recipe.copy(ingredients = newIngredients, weight = newTotalWeight)
-                    recipe = recipe.recalculateNutrition()
-                    bucketList.setRecipe(recipe)
-                    onRecipeUpdated(recipe)
-                    updateSaveButtonsEnability()
-                }
-
-                cardDialog.setUpButton1(cardSaveButtonClickListener, R.string.save)
+                val dialog = IngredientCommentDialog.showDialog(activity.supportFragmentManager, ingredient.comment)
+                initCommentDialog(dialog, position)
             }
         }
     }
@@ -335,10 +327,6 @@ class BucketListActivityRecipeEditingState private constructor(
                         bucketList.setRecipe(recipe)
                         onRecipeUpdated(bucketList.getRecipe())
                         updateSaveButtonsEnability()
-                        true
-                    } else if (item.itemId == R.id.comment_ingredient) {
-                        val dialog = IngredientCommentDialog.showDialog(activity.supportFragmentManager, ingredient.comment)
-                        initCommentDialog(dialog, position)
                         true
                     } else {
                         false

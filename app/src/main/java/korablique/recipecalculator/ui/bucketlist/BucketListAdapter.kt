@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import korablique.recipecalculator.R
 import korablique.recipecalculator.model.Ingredient
+import korablique.recipecalculator.ui.EditTextsVisualDisabler
 import korablique.recipecalculator.ui.MyViewHolder
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import java.lang.ref.WeakReference
@@ -52,6 +53,7 @@ class BucketListAdapter(private val context: Context)
     private var onItemLongClickedObserver: OnItemLongClickedObserver? = null
     private var onItemDragAndDropObserver: ItemDragAndDropObserver? = null
     private var onItemWeightEditionObserver: ItemWeightEditionObserver? = null
+    private var onItemCommentButtonClicked: OnItemClickedObserver? = null
     private var onAddIngredientButtonObserver: Runnable? = null
 
     private var recyclerView = WeakReference<RecyclerView>(null)
@@ -71,11 +73,34 @@ class BucketListAdapter(private val context: Context)
     private var draggableMode = false
     private var editableMode = false
 
+    fun deinitAllItemsObservers() {
+        onItemClickedObserver = null
+        onItemLongClickedObserver = null
+        onItemDragAndDropObserver = null
+        onItemWeightEditionObserver = null
+        onItemCommentButtonClicked = null
+        onAddIngredientButtonObserver = null
+        ingredientViewHolders.forEach {
+            if (it != null) {
+                initItemView(it)
+            }
+        }
+    }
+
     fun setOnItemClickedObserver(observer: OnItemClickedObserver?) {
         onItemClickedObserver = observer
-        ingredientViewHolders.forEachIndexed { _, viewHolder ->
-            if (viewHolder != null) {
-                initItemView(viewHolder)
+        ingredientViewHolders.forEach {
+            if (it != null) {
+                initItemView(it)
+            }
+        }
+    }
+
+    fun setOnItemCommentButtonClicked(observer: OnItemClickedObserver?) {
+        onItemCommentButtonClicked = observer
+        ingredientViewHolders.forEach {
+            if (it != null) {
+                initItemView(it)
             }
         }
     }
@@ -92,7 +117,6 @@ class BucketListAdapter(private val context: Context)
     fun initDragAndDrop(observer: ItemDragAndDropObserver?) {
         onItemDragAndDropObserver = observer
         draggableMode = onItemDragAndDropObserver != null
-        dragHelperCallback.draggableMode = draggableMode
         ingredientViewHolders.forEach {
             if (it != null) {
                 initItemView(it)
@@ -105,7 +129,7 @@ class BucketListAdapter(private val context: Context)
         editableMode = onItemWeightEditionObserver != null
         ingredientViewHolders.forEach {
             if (it != null) {
-                switchEditableInfoViews(it.itemView, editableMode)
+                switchEditableState(it.itemView, editableMode)
             }
         }
     }
@@ -161,12 +185,15 @@ class BucketListAdapter(private val context: Context)
         val view = viewHolder.itemView
 
         setTextViewText(view, R.id.name, ingredient.foodstuff.name)
-        setTextViewText(view, R.id.extra_info_block, context.getString(R.string.n_gramms, weightOf(ingredient)))
         if (!ingredient.comment.isEmpty()) {
             view.findViewById<View>(R.id.ingredient_comment).visibility = View.VISIBLE
+            view.findViewById<View>(R.id.ingredient_comment_clickable_wrapper).visibility = View.VISIBLE
+            view.findViewById<View>(R.id.add_comment_button).visibility = View.GONE
             setTextViewText(view, R.id.ingredient_comment, ingredient.comment)
         } else {
             view.findViewById<View>(R.id.ingredient_comment).visibility = View.GONE
+            view.findViewById<View>(R.id.ingredient_comment_clickable_wrapper).visibility = View.GONE
+            view.findViewById<View>(R.id.add_comment_button).visibility = View.VISIBLE
         }
 
         val onItemClickedObserver = onItemClickedObserver
@@ -176,6 +203,21 @@ class BucketListAdapter(private val context: Context)
             }
         } else {
             view.setOnClickListener(null)
+        }
+
+        val onItemCommentButtonClicked = onItemCommentButtonClicked
+        if (onItemCommentButtonClicked != null) {
+            view.findViewById<View>(R.id.add_comment_button).setOnClickListener {
+                onItemCommentButtonClicked.onItemClicked(ingredient, viewHolder.adapterPosition)
+            }
+            view.findViewById<View>(R.id.ingredient_comment_clickable_wrapper).setOnClickListener {
+                onItemCommentButtonClicked.onItemClicked(ingredient, viewHolder.adapterPosition)
+            }
+        } else {
+            view.findViewById<View>(R.id.add_comment_button).visibility = View.GONE
+            view.findViewById<View>(R.id.ingredient_comment_clickable_wrapper).visibility = View.GONE
+            view.findViewById<View>(R.id.add_comment_button).setOnClickListener(null)
+            view.findViewById<View>(R.id.ingredient_comment_clickable_wrapper).setOnClickListener(null)
         }
 
         val onItemLongClickedObserver = onItemLongClickedObserver
@@ -190,13 +232,17 @@ class BucketListAdapter(private val context: Context)
 
         makeViewDraggable(view, draggableMode)
         view.findViewById<View>(R.id.drag_handle).setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
+            if (event.action == MotionEvent.ACTION_DOWN && draggableMode) {
+                dragHelperCallback.draggableMode = true
                 itemTouchHelper?.startDrag(viewHolder)
+            } else if (event.action == MotionEvent.ACTION_UP
+                    || event.action == MotionEvent.ACTION_CANCEL) {
+                dragHelperCallback.draggableMode = false
             }
             false
         }
 
-        switchEditableInfoViews(view, editableMode)
+        switchEditableState(view, editableMode)
 
         // Always consume long tap so that the long tap listener of the parent item
         // won't get triggered on drag_handle long tap
@@ -215,6 +261,7 @@ class BucketListAdapter(private val context: Context)
     private fun initEditableWeightView(ingredient: Ingredient, viewHolder: RecyclerView.ViewHolder) {
         val view = viewHolder.itemView
         val weightEditText = view.findViewById<EditText>(R.id.extra_info_block_editable)
+        weightEditText.clearFocus() // Fix https://stackoverflow.com/q/7100555
 
         weightEditText.removeTextChangedListener(weightEditWatchers.remove(weightEditText))
 
@@ -245,10 +292,6 @@ class BucketListAdapter(private val context: Context)
                 }
                 val pos = viewHolder.adapterPosition
                 ingredients[pos] = ingredients[pos].copy(weight = updatedWeight.toFloat())
-                setTextViewText(
-                        view,
-                        R.id.extra_info_block,
-                        context.getString(R.string.n_gramms, updatedWeight))
                 onItemWeightEditionObserver.onItemWeightEdited(
                         ingredient, updatedWeight.toFloat(), viewHolder.adapterPosition)
             }
@@ -275,24 +318,10 @@ class BucketListAdapter(private val context: Context)
         newConstraintSet.applyTo(constraintLayout)
     }
 
-    private fun switchEditableInfoViews(view: View, useEditable: Boolean) {
-        val constraintLayout = view.findViewById<ConstraintLayout>(R.id.bucket_list_ingredient_layout)
-        val newConstraintSet = ConstraintSet()
-        newConstraintSet.clone(constraintLayout)
-        if (useEditable) {
-            newConstraintSet.setVisibility(R.id.extra_info_block, View.GONE)
-            newConstraintSet.setVisibility(R.id.extra_info_block_editable, View.VISIBLE)
-            newConstraintSet.connect(
-                    R.id.extra_info_wrapper_layout, ConstraintSet.LEFT,
-                    R.id.extra_info_block_editable, ConstraintSet.LEFT)
-        } else {
-            newConstraintSet.setVisibility(R.id.extra_info_block, View.VISIBLE)
-            newConstraintSet.setVisibility(R.id.extra_info_block_editable, View.GONE)
-            newConstraintSet.connect(
-                    R.id.extra_info_wrapper_layout, ConstraintSet.LEFT,
-                    R.id.extra_info_block, ConstraintSet.LEFT)
-        }
-        newConstraintSet.applyTo(constraintLayout)
+    private fun switchEditableState(view: View, useEditable: Boolean) {
+        EditTextsVisualDisabler.setFullyVisuallyEnabled(
+                view.findViewById(R.id.extra_info_block_editable),
+                useEditable)
     }
 
     override fun getItemCount(): Int {
@@ -352,7 +381,10 @@ class BucketListAdapter(private val context: Context)
     }
 
     private fun <T> setTextViewText(parent: View, viewId: Int, text: T) {
-        (parent.findViewById<View>(viewId) as TextView).text = text.toString()
+        val textView = parent.findViewById<TextView>(viewId)
+        if (textView.text.toString() != text) {
+            textView.text = text.toString()
+        }
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -361,7 +393,7 @@ class BucketListAdapter(private val context: Context)
         this.recyclerView = WeakReference(recyclerView)
 
         itemTouchHelper = ItemTouchHelper(dragHelperCallback)
-        itemTouchHelper!!.attachToRecyclerView(recyclerView);
+        itemTouchHelper!!.attachToRecyclerView(recyclerView)
     }
 
     override fun onItemMove(oldPosition: Int, newPosition: Int) {

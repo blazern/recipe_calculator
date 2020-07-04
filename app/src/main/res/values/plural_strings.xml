@@ -8,4 +8,13 @@
         <item quantity="many">%d лет</item>
         <item quantity="other">%d лет</item>
     </plurals>
+
+    <plurals name="grams">
+        <item quantity="zero">грамм</item>
+        <item quantity="one">грамм</item>
+        <item quantity="two">грамма</item>
+        <item quantity="few">грамма</item>
+        <item quantity="many">грамм</item>
+        <item quantity="other">грамм</item>
+    </plurals>
 </resources>

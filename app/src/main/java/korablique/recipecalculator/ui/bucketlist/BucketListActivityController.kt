@@ -192,9 +192,14 @@ class BucketListActivityController @Inject constructor(
             // Don't erase weight when text is empty and weight is 0,
             // because empty weight IS 0 weight.
         } else if (weightInEditText == null
-                || !FloatUtils.areFloatsEquals(recipe.weight, weightInEditText)) {
+                || !FloatUtils.areFloatsEquals(recipe.weight, weightInEditText, 0.01f)) {
             weightEditText.setText(DecimalUtils.toDecimalString(recipe.weight))
         }
+
+        val gramsText = findViewById<TextView>(R.id.weight_measurement_unit_text_view)
+        gramsText.text = gramsText.resources
+                .getQuantityString(R.plurals.grams, weightInEditText?.toInt() ?: 0)
+
         if (recipe.name != nameEditText.text.toString()) {
             nameEditText.text = recipe.name
         }
@@ -211,6 +216,10 @@ class BucketListActivityController @Inject constructor(
         // We want all transitions of all children object to be run with pretty animations
         TransitionManager.beginDelayedTransition(findViewById(R.id.bucket_list_activity_layout))
 
+        // Avoid old observers notifications as the recipe and current state
+        // are changing
+        adapter.deinitAllItemsObservers()
+
         if (!first) {
             currentState.destroy()
         }
@@ -220,20 +229,12 @@ class BucketListActivityController @Inject constructor(
 
         adapter.setUpAddIngredientButton(currentState.createAddIngredientClickObserver())
         adapter.setOnItemClickedObserver(currentState.createIngredientsClickObserver())
+        adapter.setOnItemCommentButtonClicked(currentState.createIngredientsCommentClickObserver())
         adapter.setOnItemLongClickedObserver(currentState.createIngredientsLongClickObserver())
         adapter.setUpWeightEditing(currentState.createIngredientWeightEditionObserver())
+        adapter.initDragAndDrop(currentState.createIngredientsDragAndDropObserver())
 
         findViewById<TextView>(R.id.title_text).setText(currentState.getTitleStringID())
-
-        adapter.initDragAndDrop(currentState.createIngredientsDragAndDropObserver())
-        switchConstraints(R.id.bucket_list_activity_layout, currentState.getConstraintSetDescriptionLayout())
-    }
-
-    private fun switchConstraints(rootId: Int, newConstraintsId: Int) {
-        val root = activity.findViewById<ConstraintLayout>(rootId)
-        val newConstraintSet = ConstraintSet()
-        newConstraintSet.clone(activity, newConstraintsId)
-        newConstraintSet.applyTo(root)
     }
 
     override fun finish(finishResult: FinishResult) {
