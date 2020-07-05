@@ -17,7 +17,7 @@
         android:layout_height="0dp"
         android:orientation="horizontal"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@+id/barrier7"
+        app:layout_constraintBottom_toBottomOf="@+id/barrier_bottom"
         android:background="@drawable/main_screen_element_background"/>
 
     <TextView
@@ -31,7 +31,7 @@
         android:gravity="center_vertical"
         android:ellipsize="end"
         android:maxLines="1"
-        app:layout_constraintRight_toLeftOf="@id/extra_info_wrapper_layout"
+        app:layout_constraintRight_toLeftOf="@id/barrier_name"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="lentil" />
@@ -122,10 +122,17 @@
         android:visibility="gone"/>
 
     <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier7"
+        android:id="@+id/barrier_bottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
         app:barrierDirection="bottom"
         app:constraint_referenced_ids="ingredient_comment,extra_info_block_editable" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="left"
+        app:constraint_referenced_ids="add_comment_button,extra_info_wrapper_layout" />
 </androidx.constraintlayout.widget.ConstraintLayout>
