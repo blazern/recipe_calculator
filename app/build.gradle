@@ -35,8 +35,8 @@ android {
         applicationId "korablique.recipecalculator"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 48
-        versionName "20.06.20"
+        versionCode 49
+        versionName "20.07.05"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
