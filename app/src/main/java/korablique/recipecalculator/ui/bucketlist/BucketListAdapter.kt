@@ -79,12 +79,13 @@ class BucketListAdapter(private val context: Context)
         onItemDragAndDropObserver = null
         onItemWeightEditionObserver = null
         onItemCommentButtonClicked = null
-        onAddIngredientButtonObserver = null
         ingredientViewHolders.forEach {
             if (it != null) {
                 initItemView(it)
             }
         }
+        // Need to notify about button addition or removal or a crash will follow
+        setUpAddIngredientButton(null)
     }
 
     fun setOnItemClickedObserver(observer: OnItemClickedObserver?) {
