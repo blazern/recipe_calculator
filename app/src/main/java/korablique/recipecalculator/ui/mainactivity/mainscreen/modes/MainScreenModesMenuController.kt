@@ -2,6 +2,7 @@ package korablique.recipecalculator.ui.mainactivity.mainscreen.modes
 
 import android.animation.Animator
 import android.animation.ObjectAnimator
+import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,21 +14,28 @@ import androidx.transition.TransitionManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.ActivityCallbacks
+import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.BaseFragment
 import korablique.recipecalculator.base.FragmentCallbacks
 import korablique.recipecalculator.dagger.FragmentScope
 import korablique.recipecalculator.database.RecipesRepository
+import korablique.recipecalculator.outside.partners.direct.FoodstuffsCorrespondenceManager
+import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry
 import korablique.recipecalculator.ui.bucketlist.BucketList
+import korablique.recipecalculator.ui.mainactivity.partners.PartnersListFragment
 import javax.inject.Inject
 
 @FragmentScope
 class MainScreenModesMenuController @Inject constructor(
+        private val activity: BaseActivity,
         private val fragment: BaseFragment,
         private val fragmentCallbacks: FragmentCallbacks,
         private val activityCallbacks: ActivityCallbacks,
         private val modesController: MainScreenModesController,
         private val bucketList: BucketList,
-        private val recipesRepository: RecipesRepository)
+        private val recipesRepository: RecipesRepository,
+        private val userParamsRegistry: ServerUserParamsRegistry,
+        private val foodstuffsCorrespondenceManager: FoodstuffsCorrespondenceManager)
     : FragmentCallbacks.Observer, ActivityCallbacks.Observer {
     private lateinit var menuButton: FloatingActionButton
 
@@ -76,6 +84,24 @@ class MainScreenModesMenuController @Inject constructor(
     }
 
     private fun initMenuLayout(layout: View) {
+        layout.findViewById<Button>(R.id.partners_menu_button).setOnClickListener {
+            PartnersListFragment.start(activity)
+            removeMenu(layout)
+        }
+
+        layout.findViewById<Button>(R.id.send_foodstuff_to_partner_menu_button).setEnabled(
+                userParamsRegistry.getUserParams() != null)
+        layout.findViewById<Button>(R.id.send_foodstuff_to_partner_menu_button).setOnClickListener {
+            removeMenu(layout)
+            if (modesController.modeId() == MainScreenMode.ID.SEND_FOODSTUFFS) {
+                return@setOnClickListener
+            }
+            modesController.switchModeTo(
+                    MainScreenSendFoodstuffsMode(
+                            modesController, fragment,
+                            recipesRepository, foodstuffsCorrespondenceManager))
+        }
+
         layout.findViewById<Button>(R.id.create_recipe_menu_button).setOnClickListener {
             removeMenu(layout)
             if (modesController.modeId() == MainScreenMode.ID.RECIPE) {

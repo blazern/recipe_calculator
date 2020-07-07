@@ -7,7 +7,6 @@ import korablique.recipecalculator.outside.partners.Partner
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentCaptor
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -19,8 +18,10 @@ class FoodstuffsCorrespondenceManagerTest {
         val directMsgsManager = mock<DirectMsgsManager>()
 
         val manager1 = FoodstuffsCorrespondenceManager(directMsgsManager, mock(), mock(), mock())
-        val foodstuff = Foodstuff.withName("carrot").withNutrition(1f, 2f, 3f, 4f)
-        manager1.sendFooodstuffToPartner(foodstuff, Partner("uid", "name"))
+        val foodstuffs = listOf(
+                Foodstuff.withName("carrot").withNutrition(1f, 2f, 3f, 4f),
+                Foodstuff.withName("tomato").withNutrition(4f, 3f, 2f, 1f))
+        manager1.sendFooodstuffsToPartner(foodstuffs, Partner("uid", "name"))
 
         val encodedFoodstuff = argumentCaptor<String>()
         verify(directMsgsManager).sendDirectMSGToPartner(any(), encodedFoodstuff.capture(), any())
@@ -30,7 +31,8 @@ class FoodstuffsCorrespondenceManagerTest {
 
         verify(foodstuffsList2, never()).saveFoodstuff(any())
         manager2.onNewDirectMessage(encodedFoodstuff.firstValue)
-        verify(foodstuffsList2).saveFoodstuff(eq(foodstuff))
+        verify(foodstuffsList2).saveFoodstuff(eq(foodstuffs[0].recreateWithId(0)))
+        verify(foodstuffsList2).saveFoodstuff(eq(foodstuffs[1].recreateWithId(0)))
 
         Unit
     }

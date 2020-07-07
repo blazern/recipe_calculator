@@ -49,8 +49,10 @@
     <string name="add_foodstuff_to_recipe">В рецепт</string>
     <string name="open_foodstuff_recipe">Рецепт</string>
     <string name="add_foodstuff_to_history">В журнал</string>
+    <string name="include_to_sent_foodstuffs">К отправляемым</string>
     <string name="selected_foodstuffs_snackbar_title_recipe_creation">Создание рецепта</string>
     <string name="selected_foodstuffs_snackbar_title_recipe_editing">Редактирование рецепта</string>
+    <string name="send_selected_foodstuffs_to_partner">Отправить продукты партнёру</string>
     <string name="bucket_list_title_recipe_creation">Новый рецепт</string>
     <string name="bucket_list_title_recipe_editing">Редактирование</string>
     <string name="bucket_list_title_recipe">Рецепт</string>
@@ -72,6 +74,7 @@
     <string name="undo">Отмена</string>
     <string name="foodstuff_deleted">Продукт удалён</string>
     <string name="work_with_recipe_canceled">Работа с рецептом прекращена</string>
+    <string name="work_with_foodstuffs_canceled">Работа с продуктами прекращена</string>
     <string name="change_foodstuff">Изменить продукт</string>
     <string name="search_results">Результаты поиска \"%s\"</string>
     <string name="add_new_foodstuff">Добавить новый продукт</string>
@@ -204,6 +207,7 @@
     <string name="preference_card_nutrition_extended_title">Растянутый БЖУ в карточке</string>
     <string name="preference_card_nutrition_extended_descr">Визуально полностью заполнять прогресс БЖУ в карточке продукта</string>
     <string name="up">Вверх</string>
+    <string name="foodstuffs_are_not_selected">Продукты не выбраны</string>
 
     <string-array name="physical_activity_array">
         <item name="passive_lifestyle">Сидячий образ жизни</item>

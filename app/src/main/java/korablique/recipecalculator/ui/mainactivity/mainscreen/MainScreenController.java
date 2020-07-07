@@ -58,7 +58,6 @@ public class MainScreenController
     private final MainScreenCardController cardController;
     private final MainScreenReadinessDispatcher readinessDispatcher;
     private final RxFragmentSubscriptions subscriptions;
-    private final TempLongClickedFoodstuffsHandler tempLongClickedFoodstuffsHandler;
     private final MainActivityFragmentsController mainActivityFragmentsController;
     private final MainScreenModesController mainScreenModesController;
     private SectionedAdapterParent adapterParent;
@@ -82,7 +81,6 @@ public class MainScreenController
             MainScreenCardController cardController,
             MainScreenReadinessDispatcher readinessDispatcher,
             RxFragmentSubscriptions subscriptions,
-            TempLongClickedFoodstuffsHandler tempLongClickedFoodstuffsHandler,
             MainActivityFragmentsController mainActivityFragmentsController,
             MainScreenModesController mainScreenModesController) {
         this.context = context;
@@ -96,7 +94,6 @@ public class MainScreenController
         this.cardController = cardController;
         this.readinessDispatcher = readinessDispatcher;
         this.subscriptions = subscriptions;
-        this.tempLongClickedFoodstuffsHandler = tempLongClickedFoodstuffsHandler;
         this.mainActivityFragmentsController = mainActivityFragmentsController;
         this.mainScreenModesController = mainScreenModesController;
         fragmentCallbacks.addObserver(this);
@@ -220,9 +217,7 @@ public class MainScreenController
             SingleItemAdapterChild foodstuffsTitle = new SingleItemAdapterChild(
                     R.layout.all_foodstuffs_header, observer);
             foodstuffAdapterChild = new SectionedFoodstuffsAdapterChild(
-                    (foodstuff, pos) -> cardController.showCard(foodstuff),
-                    (foodstuff, pos, view) ->
-                            tempLongClickedFoodstuffsHandler.onLongClick(foodstuff, view));
+                    (foodstuff, pos) -> cardController.showCard(foodstuff));
             adapterParent.addChild(foodstuffsTitle);
             adapterParent.addChild(foodstuffAdapterChild);
         }
@@ -232,9 +227,7 @@ public class MainScreenController
         if (!foodstuffs.isEmpty()) {
             if (topAdapterChild == null) {
                 topAdapterChild = new FoodstuffsAdapterChild(
-                        (foodstuff, pos) -> cardController.showCard(foodstuff),
-                        (foodstuff, pos, view) ->
-                                tempLongClickedFoodstuffsHandler.onLongClick(foodstuff, view));
+                        (foodstuff, pos) -> cardController.showCard(foodstuff));
                 topTitleAdapterChild = new SingleItemAdapterChild(R.layout.top_foodstuffs_header);
                 adapterParent.addChildToPosition(topTitleAdapterChild, 0);
                 adapterParent.addChildToPosition(topAdapterChild, 1);

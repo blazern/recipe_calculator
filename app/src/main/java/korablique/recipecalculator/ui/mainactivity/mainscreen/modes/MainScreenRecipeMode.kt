@@ -80,9 +80,6 @@ class MainScreenRecipeMode(
 
     override fun deinitialize() {
         bucketList.removeObserver(bucketListObserver)
-        snackbarController.setOnBasketClickRunnable(null)
-        snackbarController.setOnDismissListener(null)
-        snackbarController.hide()
         bucketList.clear()
     }
 

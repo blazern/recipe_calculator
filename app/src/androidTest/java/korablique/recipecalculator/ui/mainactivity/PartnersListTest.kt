@@ -17,6 +17,7 @@ import korablique.recipecalculator.util.EspressoUtils.matches
 import korablique.recipecalculator.util.checkNetworkChangesSnackbarReaction
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.allOf
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -265,5 +266,37 @@ class PartnersListTest : MainActivityTestsBase() {
 
         onView(withText("partner name1")).check(matches(isDisplayed()))
         onView(withText("partner name2")).check(isNotDisplayed())
+    }
+
+    @Test
+    fun partnerListOpening_fromMainScreen() {
+        fakeGPAuthorizer.authResult = GPAuthResult.Success("gptoken")
+        fakeHttpClient.setResponse(".*register.*") {
+            RequestResult.Success(Response("""
+                {
+                    "status": "ok",
+                    "user_id": "$UID",
+                    "client_token": "$TOKEN"
+                }
+            """.trimIndent()))
+        }
+
+        mActivityRule.launchActivity(null)
+
+        // Interactive params obtainer will register through GP
+        GlobalScope.launch(mainThreadExecutor) {
+            interactiveServerUserParamsObtainer.obtainUserParams()
+        }
+
+        // No partners list yet
+        onView(withId(R.id.partners_list_fragment)).check(isNotDisplayed())
+
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
+
+        // Partners list opened
+        onView(withId(R.id.partners_list_fragment)).check(matches(isDisplayed()))
+        onView(withId(R.id.add_fab)).check(matches(isDisplayed()))
+        onView(withId(R.id.no_partners_layout)).check(matches(isDisplayed()))
     }
 }

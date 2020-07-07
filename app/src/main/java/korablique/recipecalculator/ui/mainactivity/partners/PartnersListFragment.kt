@@ -28,8 +28,8 @@ class PartnersListFragment : BaseFragment() {
                     .commit()
         }
 
-        fun startToSendFoodstuff(activity: BaseActivity, foodstuff: Foodstuff) {
-            PartnersListFragmentController.startToSendFoodstuff(activity, foodstuff)
+        fun startToSendFoodstuff(activity: BaseActivity, foodstuffs: List<Foodstuff>) {
+            PartnersListFragmentController.startToSendFoodstuff(activity, foodstuffs)
         }
     }
 

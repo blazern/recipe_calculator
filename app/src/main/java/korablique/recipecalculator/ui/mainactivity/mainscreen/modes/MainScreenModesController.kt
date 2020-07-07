@@ -8,6 +8,7 @@ import korablique.recipecalculator.dagger.FragmentScope
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.model.Ingredient
+import korablique.recipecalculator.outside.partners.direct.FoodstuffsCorrespondenceManager
 import korablique.recipecalculator.ui.bucketlist.BucketList
 import korablique.recipecalculator.ui.mainactivity.mainscreen.SelectedFoodstuffsSnackbar
 import javax.inject.Inject
@@ -20,7 +21,8 @@ class MainScreenModesController @Inject constructor(
         private val fragment: BaseFragment,
         private val fragmentCallbacks: FragmentCallbacks,
         private val bucketList: BucketList,
-        private val recipesRepository: RecipesRepository)
+        private val recipesRepository: RecipesRepository,
+        private val foodstuffsCorrespondenceManager: FoodstuffsCorrespondenceManager)
     : FragmentCallbacks.Observer, MainScreenMode.ModesSwitcher {
     private lateinit var mode: MainScreenMode
     private lateinit var foodstuffsSnackbar: SelectedFoodstuffsSnackbar
@@ -56,9 +58,13 @@ class MainScreenModesController @Inject constructor(
 
     private fun restoreMode(savedInstanceState: Bundle): MainScreenMode {
         val id = MainScreenMode.ID.values()[savedInstanceState.getInt(MODE_ID)]
+        val state = savedInstanceState.getBundle(MODE_SAVED_STATE)
         return when (id) {
             MainScreenMode.ID.DEFAULT -> MainScreenDefaultMode(recipesRepository, fragment)
             MainScreenMode.ID.RECIPE -> MainScreenRecipeMode(this, fragment, bucketList, recipesRepository)
+            MainScreenMode.ID.SEND_FOODSTUFFS -> MainScreenSendFoodstuffsMode(
+                    this, fragment, recipesRepository,
+                    foodstuffsCorrespondenceManager, savedState = state)
         }
     }
 
@@ -79,6 +85,11 @@ class MainScreenModesController @Inject constructor(
 
     override fun switchModeTo(mode: MainScreenMode) {
         this.mode.deinitialize()
+
+        foodstuffsSnackbar.setOnBasketClickRunnable(null)
+        foodstuffsSnackbar.setOnDismissListener(null)
+        foodstuffsSnackbar.hide()
+
         this.mode = mode
         this.mode.initialize(foodstuffsSnackbar)
     }

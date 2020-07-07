@@ -46,28 +46,22 @@ public class SearchResultsFragment extends BaseFragment implements ActivityCallb
     MainActivity mainActivity;
     @Inject
     MainScreenCardController cardController;
-    @Inject
-    TempLongClickedFoodstuffsHandler tempLongClickedFoodstuffsHandler;
 
     private AdapterParent adapter = new AdapterParent();
 
     private AdapterChild topTitleAdapter = new SingleItemAdapterChild(R.layout.top_foodstuffs_header);
     private FoodstuffsAdapterChild topAdapter =
-            new FoodstuffsAdapterChild(this::onFoodstuffClicked, this::onFoodstuffLongClicked);
+            new FoodstuffsAdapterChild(this::onFoodstuffClicked);
     private AdapterChild allTitleAdapter =
             new SingleItemAdapterChild(R.layout.all_foodstuffs_header_no_add_button);
     private FoodstuffsAdapterChild allAdapter =
-            new FoodstuffsAdapterChild(this::onFoodstuffClicked, this::onFoodstuffLongClicked);
+            new FoodstuffsAdapterChild(this::onFoodstuffClicked);
 
     @Nullable
     private String query;
 
     private void onFoodstuffClicked(Foodstuff foodstuff, int displayedPosition) {
         cardController.showCard(foodstuff);
-    }
-
-    private boolean onFoodstuffLongClicked(Foodstuff foodstuff, int displayedPosition, View view) {
-        return tempLongClickedFoodstuffsHandler.onLongClick(foodstuff, view);
     }
 
     @Override

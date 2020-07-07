@@ -26,7 +26,7 @@ import korablique.recipecalculator.ui.netsnack.NetworkSnackbarControllersFactory
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val FOODSTUFF_PARCEL_TO_PARTNER = "FOODSTUFF_PARCEL_TO_PARTNER"
+private const val FOODSTUFFS_PARCEL_TO_PARTNER = "FOODSTUFFS_PARCEL_TO_PARTNER"
 
 @FragmentScope
 class PartnersListFragmentController @Inject constructor(
@@ -48,9 +48,9 @@ class PartnersListFragmentController @Inject constructor(
     private lateinit var netSnackbarController: NetworkSnackbarController
 
     companion object {
-        internal fun startToSendFoodstuff(activity: BaseActivity, foodstuff: Foodstuff) {
+        internal fun startToSendFoodstuff(activity: BaseActivity, foodstuffs: List<Foodstuff>) {
             val args = Bundle()
-            args.putParcelable(FOODSTUFF_PARCEL_TO_PARTNER, foodstuff)
+            args.putParcelableArrayList(FOODSTUFFS_PARCEL_TO_PARTNER, ArrayList<Foodstuff>(foodstuffs))
             PartnersListFragment.start(activity, args)
         }
     }
@@ -107,10 +107,10 @@ class PartnersListFragmentController @Inject constructor(
     }
 
     private fun onPartnerClick(partner: Partner) {
-        val foodstuff = fragment.arguments?.getParcelable<Foodstuff>(FOODSTUFF_PARCEL_TO_PARTNER)
-        if (foodstuff != null) {
+        val foodstuffs = fragment.arguments?.getParcelableArrayList<Foodstuff>(FOODSTUFFS_PARCEL_TO_PARTNER)
+        if (foodstuffs != null) {
             fragment.lifecycleScope.launch(mainThreadExecutor) {
-                foodstuffsCorrespondenceManager.sendFooodstuffToPartner(foodstuff, partner)
+                foodstuffsCorrespondenceManager.sendFooodstuffsToPartner(foodstuffs, partner)
                 fragment.close()
             }
         }

@@ -5,7 +5,11 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.assertion.PositionAssertions.isCompletelyBelow
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isEnabled
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.LargeTest
 import androidx.test.runner.AndroidJUnit4
 import korablique.recipecalculator.R
@@ -19,6 +23,7 @@ import korablique.recipecalculator.util.EspressoUtils.matches
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.hamcrest.CoreMatchers.allOf
+import org.hamcrest.CoreMatchers.not
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -73,16 +78,36 @@ class FoodstuffsCorrespondenceTest : MainActivityTestsBase() {
     }
 
     @Test
-    fun canSendFoodstuff() {
+    fun canSendFoodstuffs() {
         auth()
 
         assertEquals(0, fakeHttpClient.getRequestsMatching(".*direct_partner_msg.*").size)
 
+        // Foodstuffs snackbar not shown
+        onView(withText(R.string.send_selected_foodstuffs_to_partner)).check(isNotDisplayed())
+
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.send_foodstuff_to_partner_menu_button)).check(matches(isEnabled()))
+        onView(withId(R.id.send_foodstuff_to_partner_menu_button)).perform(click())
+
+        // Foodstuffs snackbar is shown
+        onView(withText(R.string.send_selected_foodstuffs_to_partner)).check(matches(isDisplayed()))
+
+        // Select foodstuffs
         onView(allOf(
                 withText(foodstuffs[0].name),
                 matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))
-        ).perform(longClick())
-        onView(withText(R.string.send_to_partner)).perform(click())
+        ).perform(click())
+        onView(withId(R.id.button2)).perform(click())
+
+        onView(allOf(
+                withText(foodstuffs[1].name),
+                matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))
+        ).perform(click())
+        onView(withId(R.id.button2)).perform(click())
+
+        // Click on foodstuffs snackbar
+        onView(withId(R.id.basket)).perform(click())
 
         onView(withId(R.id.partners_list_fragment)).check(matches(isDisplayed()))
         onView(withText("partner name")).perform(click())
@@ -90,17 +115,18 @@ class FoodstuffsCorrespondenceTest : MainActivityTestsBase() {
         onView(withId(R.id.partners_list_fragment)).check(isNotDisplayed())
         onView(withText(R.string.foodstuff_is_sent)).check(matches(isDisplayed()))
 
+        // Foodstuffs snackbar not shown again
+        onView(withText(R.string.send_selected_foodstuffs_to_partner)).check(isNotDisplayed())
+
         val request = fakeHttpClient.getRequestsMatching(".*direct_partner_msg.*").first()
         assertTrue("URL: ${request.url}", request.url.contains("partner_user_id=uid"))
     }
 
     @Test
     fun cannotSendFoodstuff_whenNotLoggedIn() {
-        onView(allOf(
-                withText(foodstuffs[0].name),
-                matches(isCompletelyBelow(withText(R.string.all_foodstuffs_header))))
-        ).perform(longClick())
-        onView(withText(R.string.send_to_partner)).check(isNotDisplayed())
+        // Not logged in
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.send_foodstuff_to_partner_menu_button)).check(matches(not(isEnabled())))
     }
 
     @Test
@@ -111,7 +137,7 @@ class FoodstuffsCorrespondenceTest : MainActivityTestsBase() {
     private fun testReceivedFoodstuffInMainScreen() {
         val name = "newcoolfoodstuff"
         val foodstuff = Foodstuff.withName(name).withNutrition(1f, 2f, 3f, 4f)
-        val msg = FoodstuffsCorrespondenceManager.createFoodstuffDirectMsg(foodstuff)
+        val msg = FoodstuffsCorrespondenceManager.createFoodstuffsDirectMsg(listOf(foodstuff))
         directMsgsManager.onNewDirectMsg(msg.first, msg.second)
 
         val snackbarMsg = context.getString(R.string.foodstuff_is_received, name)

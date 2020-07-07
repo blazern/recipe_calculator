@@ -14,6 +14,7 @@ interface MainScreenMode {
     enum class ID {
         DEFAULT,
         RECIPE,
+        SEND_FOODSTUFFS,
     }
 
     interface ModesSwitcher {

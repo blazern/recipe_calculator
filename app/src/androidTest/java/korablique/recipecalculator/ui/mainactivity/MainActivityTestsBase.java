@@ -73,7 +73,6 @@ import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenFragment
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenReadinessDispatcher;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenSearchController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.SearchResultsFragment;
-import korablique.recipecalculator.ui.mainactivity.mainscreen.TempLongClickedFoodstuffsHandler;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.UpFABController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesMenuController;
@@ -128,7 +127,6 @@ public class MainActivityTestsBase {
     protected FakeHttpClient fakeHttpClient;
     protected BroccalcHttpContext httpContext;
     protected FakeGPAuthorizer fakeGPAuthorizer;
-    protected TempLongClickedFoodstuffsHandler longClickedFoodstuffsHandler;
     protected HistoryViewHoldersPool historyViewHoldersPool;
     protected PartnersRegistry partnersRegistry;
     protected FakeNetworkStateDispatcher fakeNetworkStateDispatcher;
@@ -239,8 +237,6 @@ public class MainActivityTestsBase {
                                 activity, activityCallbacks, fragmentsController);
                         activitySubscriptions = new RxActivitySubscriptions(activityCallbacks);
 
-                        longClickedFoodstuffsHandler =
-                                new TempLongClickedFoodstuffsHandler(activity, serverUserParamsRegistry);
                         historyViewHoldersPool = new HistoryViewHoldersPool(
                                 computationThreadsExecutor, mainThreadExecutor, activity);
 
@@ -249,8 +245,7 @@ public class MainActivityTestsBase {
                                         activity, activityCallbacks, serverUserParamsRegistry,
                                         userParametersWorker);
 
-                        return Arrays.asList(activity, controller, interactiveServerUserParamsObtainer,
-                                longClickedFoodstuffsHandler);
+                        return Arrays.asList(activity, controller, interactiveServerUserParamsObtainer);
                     })
                     .withFragmentScoped((injectionTarget -> {
                         if (injectionTarget instanceof NewMeasurementsDialog
@@ -269,10 +264,12 @@ public class MainActivityTestsBase {
                                     new MainScreenReadinessDispatcher();
 
                             mainScreenModesController = new MainScreenModesController(
-                                    fragment, fragmentCallbacks, bucketList, recipesRepository);
+                                    fragment, fragmentCallbacks, bucketList, recipesRepository,
+                                    foodstuffsCorrespondenceManager);
                             mainScreenModesMenuController = new MainScreenModesMenuController(
-                                    fragment, fragmentCallbacks, activity.getActivityCallbacks(),
-                                    mainScreenModesController, bucketList, recipesRepository);
+                                    activity, fragment, fragmentCallbacks, activity.getActivityCallbacks(),
+                                    mainScreenModesController, bucketList, recipesRepository,
+                                    serverUserParamsRegistry, foodstuffsCorrespondenceManager);
 
                             mainScreenCardController = new MainScreenCardController(
                                     activity, fragment, fragmentCallbacks, lifecycle,
@@ -294,8 +291,7 @@ public class MainActivityTestsBase {
                                     activity.getActivityCallbacks(), bucketList, topList,
                                     foodstuffsList, mainActivitySelectedDateStorage,
                                     mainScreenCardController, readinessDispatcher,
-                                    subscriptions, longClickedFoodstuffsHandler,
-                                    fragmentsController, mainScreenModesController);
+                                    subscriptions, fragmentsController, mainScreenModesController);
                             return Arrays.asList(subscriptions, mainScreenController,
                                     upFABController, mainScreenCardController, searchController,
                                     mainScreenModesController, mainScreenModesMenuController);
