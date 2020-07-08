@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "818864099682-7g2gai4pr9g974inoo2s80o7hgr7bhsp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "korablique.recipecalculator",
+            "certificate_hash": "af319d999ebbc11369f48e85187a780708007fc7"
+          }
+        },
+        {
           "client_id": "818864099682-fmbehtg6dflt1lfmihv9te8kt7s1arq7.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -28,7 +36,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "818864099682-fmbehtg6dflt1lfmihv9te8kt7s1arq7.apps.googleusercontent.com",
+              "client_id": "818864099682-45o7guahod4e27offl7pugq0tqf6augr.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
@@ -57,7 +65,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "818864099682-fmbehtg6dflt1lfmihv9te8kt7s1arq7.apps.googleusercontent.com",
+              "client_id": "818864099682-45o7guahod4e27offl7pugq0tqf6augr.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
