@@ -7,6 +7,7 @@ import io.reactivex.Observable
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.CurrentActivityProvider
 import korablique.recipecalculator.base.RxGlobalSubscriptions
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.database.FoodstuffsList
 import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.model.Recipe
@@ -75,12 +76,11 @@ class FoodstuffsCorrespondenceManager @Inject constructor(
     }
 
     override fun onNewDirectMessage(msg: String) {
-
-
-
+        Log.i("FoodstuffsCorrespondenceManager.onNewDirectMessage start")
         val foodstuffMsg = try {
             FoodstuffsMsgProtos.FoodstuffsMsg.parseFrom(Base64.decode(msg, Base64.DEFAULT))
         } catch (e: Exception) {
+            Log.w(e, "FoodstuffsCorrespondenceManager.onNewDirectMessage error1")
             null
         }
         if (foodstuffMsg == null) {
@@ -103,8 +103,12 @@ class FoodstuffsCorrespondenceManager @Inject constructor(
                             if (it.size == 1) {
                                 tryShowReceivedFoodstuffSnackbar(it[0])
                             }
+                            Log.i("FoodstuffsCorrespondenceManager.onNewDirectMessage " +
+                                    "foodstuffs saved: $it")
                         },
                         {
+                            Log.e(it, "FoodstuffsCorrespondenceManager.onNewDirectMessage " +
+                                    "couldn't save foodstuff")
                             // Couldn't save foodstuff, nothing to do
                         })
         globalSubscriptions.add(d)

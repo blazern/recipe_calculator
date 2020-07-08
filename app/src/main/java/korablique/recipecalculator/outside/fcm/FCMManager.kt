@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import korablique.recipecalculator.base.executors.MainThreadExecutor
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.base.prefs.PrefsOwner.FCM_MANAGER
 import korablique.recipecalculator.base.prefs.SharedPrefsManager
 import korablique.recipecalculator.outside.http.BroccalcHttpContext
@@ -74,18 +75,22 @@ class FCMManager @Inject constructor(
     }
 
     private fun maybeAcquireTokenAndSendToServer() {
+        Log.i("FCMManager.maybeAcquireTokenAndSendToServer start")
         GlobalScope.launch(mainThreadExecutor) {
             val userParams = userParamsRegistry.getUserParams()
             if (userParams == null) {
+                Log.i("FCMManager.maybeAcquireTokenAndSendToServer userParams == null (not logged in)")
                 return@launch
             }
 
             val token = fcmTokenObtainer.requestToken()
             if (token == null) {
+                Log.w("FCMManager.maybeAcquireTokenAndSendToServer token == null")
                 return@launch
             }
 
             if (!networkStateDispatcher.isNetworkAvailable()) {
+                Log.i("FCMManager.maybeAcquireTokenAndSendToServer no network")
                 return@launch
             }
 
@@ -93,6 +98,8 @@ class FCMManager @Inject constructor(
             val lastTokenOwner = prefsManager.getString(FCM_MANAGER, PREF_TOKEN_OWNER)
             if (token == lastToken
                     && userParams.uid == lastTokenOwner) {
+                Log.i("FCMManager.maybeAcquireTokenAndSendToServer lastToken == token " +
+                        "($lastToken == $token)")
                 return@launch
             }
 
@@ -116,11 +123,13 @@ class FCMManager @Inject constructor(
     fun onMessageReceived(data: Map<String, String>) {
         val msgType = data[SERV_FIELD_MSG_TYPE]
         if (msgType == null) {
-//            Crashlytics.logException(RuntimeException("Server FCM message without msg type: $data"))
+            Log.w("FCMManager.onMessageReceived: server FCM message without msg type: $data")
             return
         }
         val jsonKeyValues = data.map { """ "${it.key}":"${it.value}" """ }
         val jsonMsg = jsonKeyValues.joinToString(separator = ",\n", prefix = "{", postfix = "}")
+        Log.i("FCMManager.onMessageReceived: msgType: $msgType, msg: $jsonMsg, " +
+                "receiver: ${messageReceivers[msgType]}")
         messageReceivers[msgType]?.onNewFcmMessage(jsonMsg)
     }
 

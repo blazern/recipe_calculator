@@ -7,6 +7,7 @@ import korablique.recipecalculator.R
 import korablique.recipecalculator.RequestCodes
 import korablique.recipecalculator.base.ActivityCallbacks
 import korablique.recipecalculator.base.BaseActivity
+import korablique.recipecalculator.base.logging.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -28,7 +29,7 @@ open class GPAuthorizerImpl @Inject constructor() : GPAuthorizer {
         val googleSignInClient = GoogleSignIn.getClient(context, googleSignInOptions)
         val silentResult = silentSignIn(googleSignInClient)
 
-        return when (silentResult) {
+        val result = when (silentResult) {
             is SilentGPAuthResult.ExplicitSignInRequired -> {
                 explicitSignIn(context, googleSignInClient)
             }
@@ -39,6 +40,11 @@ open class GPAuthorizerImpl @Inject constructor() : GPAuthorizer {
                 GPAuthResult.Failure(silentResult.exception)
             }
         }
+        Log.i("GPAuthorizerImpl.auth result: $result")
+        if (result is GPAuthResult.Failure) {
+            Log.w(result.exception, "GPAuthorizerImpl.auth error")
+        }
+        return result
     }
 
     private suspend fun explicitSignIn(

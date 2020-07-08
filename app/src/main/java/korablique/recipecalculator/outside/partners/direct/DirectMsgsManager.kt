@@ -6,6 +6,7 @@ import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.outside.fcm.FCMManager
 import korablique.recipecalculator.outside.http.BroccalcHttpContext
 import korablique.recipecalculator.outside.http.BroccalcNetJobResult
@@ -44,9 +45,11 @@ class DirectMsgsManager @Inject constructor(
     }
 
     override fun onNewFcmMessage(msg: String) {
+        Log.i("DirectMsgsManager.onNewFcmMessage start, msg: $msg")
         val directMsgWrapped = try {
             moshi.adapter<DirectMsgWrapped>(DirectMsgWrapped::class.java).fromJson(msg)
         } catch (e: Exception) {
+            Log.w(e, "DirectMsgsManager.onNewFcmMessage error1")
             null
         }
         if (directMsgWrapped == null) {
@@ -57,6 +60,7 @@ class DirectMsgsManager @Inject constructor(
             moshi.adapter<DirectMsg>(DirectMsg::class.java)
                     .fromJson(String(Base64.decode(directMsgWrapped.msg, Base64.DEFAULT)))
         } catch (e: Exception) {
+            Log.w(e, "DirectMsgsManager.onNewFcmMessage error2")
             null
         }
         if (directMsg == null) {
@@ -68,6 +72,7 @@ class DirectMsgsManager @Inject constructor(
 
     @VisibleForTesting
     fun onNewDirectMsg(type: String, msg: String) {
+        Log.i("DirectMsgsManager.onNewDirectMsg, receiver: ${messageReceivers[type]}")
         val receiver = messageReceivers[type] ?: return
         receiver.onNewDirectMessage(msg)
     }
