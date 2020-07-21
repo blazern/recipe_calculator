@@ -5,8 +5,6 @@ import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.base.logging.Log
-import korablique.recipecalculator.base.prefs.PrefsOwner.FCM_MANAGER
-import korablique.recipecalculator.base.prefs.SharedPrefsManager
 import korablique.recipecalculator.outside.http.BroccalcHttpContext
 import korablique.recipecalculator.outside.http.BroccalcNetJobResult
 import korablique.recipecalculator.outside.network.NetworkStateDispatcher
@@ -20,14 +18,11 @@ import javax.inject.Singleton
 
 @VisibleForTesting
 const val SERV_FIELD_MSG_TYPE = "msg_type"
-private const val PREF_TOKEN = "token"
-private const val PREF_TOKEN_OWNER = "token_owner"
 
 @Singleton
 class FCMManager @Inject constructor(
         private val context: Context,
         private val mainThreadExecutor: MainThreadExecutor,
-        private val prefsManager: SharedPrefsManager,
         private val networkStateDispatcher: NetworkStateDispatcher,
         private val httpContext: BroccalcHttpContext,
         private val userParamsRegistry: ServerUserParamsRegistry,
@@ -46,6 +41,8 @@ class FCMManager @Inject constructor(
     }
 
     private val messageReceivers = mutableMapOf<String, MessageReceiver>()
+    private var sentFcmToken: String? = null
+    private var sentFcmTokenOwner: String? = null
 
     interface MessageReceiver {
         fun onNewFcmMessage(msg: String)
@@ -94,12 +91,10 @@ class FCMManager @Inject constructor(
                 return@launch
             }
 
-            val lastToken = prefsManager.getString(FCM_MANAGER, PREF_TOKEN)
-            val lastTokenOwner = prefsManager.getString(FCM_MANAGER, PREF_TOKEN_OWNER)
-            if (token == lastToken
-                    && userParams.uid == lastTokenOwner) {
-                Log.i("FCMManager.maybeAcquireTokenAndSendToServer lastToken == token " +
-                        "($lastToken == $token)")
+            if (token == sentFcmToken
+                    && userParams.token == sentFcmTokenOwner) {
+                Log.i("FCMManager.maybeAcquireTokenAndSendToServer sentFcmToken == token " +
+                        "($sentFcmToken == $token)")
                 return@launch
             }
 
@@ -115,8 +110,8 @@ class FCMManager @Inject constructor(
             httpRequest(url, UpdateFCMTokenResponse::class)
         }
         if (response is BroccalcNetJobResult.Ok) {
-            prefsManager.putString(FCM_MANAGER, PREF_TOKEN, fcmToken)
-            prefsManager.putString(FCM_MANAGER, PREF_TOKEN_OWNER, userParams.uid)
+            sentFcmToken = fcmToken
+            sentFcmTokenOwner = userParams.token
         }
     }
 

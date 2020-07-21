@@ -180,7 +180,7 @@ public class MainActivityTestsBase {
 
                         fcmManager =
                                 new FCMManager(
-                                        context, mainThreadExecutor, prefsManager,
+                                        context, mainThreadExecutor,
                                         fakeNetworkStateDispatcher, httpContext, serverUserParamsRegistry,
                                         new FakeFCMTokenProvider(() -> "fcmtoken"));
 

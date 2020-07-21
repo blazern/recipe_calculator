@@ -25,12 +25,12 @@ import java.lang.IllegalArgumentException
 private const val UID = "123e4567-e89b-12d3-a456-426655440000"
 private const val TOKEN = "123e4567-e89b-12d3-a456-426655440001"
 private const val UID2 = "123e4567-e89b-12d3-a456-426655440020"
+private const val TOKEN2 = "123e4567-e89b-12d3-a456-426655440002"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest=Config.NONE)
 class FCMManagerTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
-    val prefsManager = spy(SharedPrefsManager(context))
 
     val netStateDispatcher = FakeNetworkStateDispatcher()
 
@@ -53,7 +53,7 @@ class FCMManagerTest {
 
     val fcmManagerCreator = {
         FCMManager(
-                context, InstantMainThreadExecutor(), prefsManager,
+                context, InstantMainThreadExecutor(),
                 netStateDispatcher, httpContext, userParamsRegistry,
                 FakeFCMTokenProvider { token })
     }
@@ -69,13 +69,6 @@ class FCMManagerTest {
     private fun setUserParams(userParams: ServerUserParams?) {
         whenever(userParamsRegistry.getUserParams()).thenReturn(userParams)
         userParamsRegistryObservers.forEach { it.onUserParamsChange(userParams) }
-    }
-
-    @Test
-    fun `stores token to prefs`() {
-        verify(prefsManager, never()).putString(any(), any(), any())
-        updateFCMToken("mynewtoken")
-        verify(prefsManager).putString(any(), any(), eq("mynewtoken"))
     }
 
     @Test
@@ -199,7 +192,6 @@ class FCMManagerTest {
         assertEquals(Msg("mymsgtype", "other_val"), msg)
     }
 
-
     @Test
     fun `received FCM message ignored if there's no type`() {
         updateFCMToken("mynewtoken")
@@ -224,7 +216,7 @@ class FCMManagerTest {
         assertEquals(1, httpClient.getRequestsMatching(".*update_fcm_token.*").size)
         setUserParams(
                 ServerUserParams(
-                        UID2, TOKEN))
+                        UID2, TOKEN2))
         assertEquals(2, httpClient.getRequestsMatching(".*update_fcm_token.*").size)
     }
 
