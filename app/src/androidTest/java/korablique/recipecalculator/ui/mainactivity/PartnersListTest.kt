@@ -42,8 +42,8 @@ class PartnersListTest : MainActivityTestsBase() {
         }
         mActivityRule.launchActivity(null)
 
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
 
         onView(withId(R.id.button_google_sign_in)).check(matches(isDisplayed()))
         onView(withId(R.id.add_fab)).check(isNotDisplayed())
@@ -76,8 +76,8 @@ class PartnersListTest : MainActivityTestsBase() {
             interactiveServerUserParamsObtainer.obtainUserParams()
         }
 
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
 
         onView(withId(R.id.button_google_sign_in)).check(isNotDisplayed())
         onView(withId(R.id.add_fab)).check(matches(isDisplayed()))
@@ -116,8 +116,8 @@ class PartnersListTest : MainActivityTestsBase() {
         }
         mActivityRule.launchActivity(null)
 
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
 
         onView(withId(R.id.button_google_sign_in)).check(matches(isDisplayed()))
         onView(withId(R.id.add_fab)).check(isNotDisplayed())
@@ -173,8 +173,8 @@ class PartnersListTest : MainActivityTestsBase() {
             interactiveServerUserParamsObtainer.obtainUserParams()
         }
 
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
 
         onView(withId(R.id.button_google_sign_in)).check(isNotDisplayed())
         onView(withId(R.id.add_fab)).check(matches(isDisplayed()))
@@ -191,8 +191,8 @@ class PartnersListTest : MainActivityTestsBase() {
     fun networkUnavailableMessage() {
         mActivityRule.launchActivity(null)
 
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
 
         checkNetworkChangesSnackbarReaction(fakeNetworkStateDispatcher)
     }
@@ -234,9 +234,8 @@ class PartnersListTest : MainActivityTestsBase() {
             interactiveServerUserParamsObtainer.obtainUserParams()
         }
 
-
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
 
         onView(withText("partner name1")).check(matches(isDisplayed()))
         onView(withText("partner name2")).check(matches(isDisplayed()))

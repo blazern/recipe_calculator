@@ -85,11 +85,6 @@ public class ProfileController implements FragmentCallbacks.Observer, UserParame
             UserParametersActivity.start(fragment.getContext());
         });
 
-        View partnersButton = fragmentView.findViewById(R.id.layout_button_partners);
-        partnersButton.setOnClickListener(view -> {
-            PartnersListFragment.Companion.start(activity);
-        });
-
         View settingsButton = fragmentView.findViewById(R.id.layout_button_settings);
         settingsButton.setOnClickListener(view -> SettingsActivity.start(activity));
 

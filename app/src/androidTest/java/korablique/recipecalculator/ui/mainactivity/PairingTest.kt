@@ -67,8 +67,8 @@ class PairingTest : MainActivityTestsBase() {
             interactiveServerUserParamsObtainer.obtainUserParams()
         }
 
-        onView(withId(R.id.menu_item_profile)).perform(click())
-        onView(withId(R.id.layout_button_partners)).perform(click())
+        onView(withId(R.id.mode_fab)).perform(click())
+        onView(withId(R.id.partners_menu_button)).perform(click())
     }
 
     @Test
