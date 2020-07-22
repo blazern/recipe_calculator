@@ -13,9 +13,11 @@ import korablique.recipecalculator.R
 import korablique.recipecalculator.base.NTuple4
 import korablique.recipecalculator.model.Nutrient
 import korablique.recipecalculator.model.Nutrition
+import korablique.recipecalculator.ui.DecimalUtils.toDecimalString
 import korablique.recipecalculator.ui.inputfilters.NumericBoundsInputFilter
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher.OnTextChangedListener
+import korablique.recipecalculator.util.FloatUtils
 
 open class NutritionValuesWrapper
         @JvmOverloads constructor(private val layout: ConstraintLayout, withCalories: Boolean = true) {
@@ -151,17 +153,25 @@ open class NutritionValuesWrapper
     }
 
     private fun setNutritionValue(nutritionLayout: ViewGroup, nutritionValue: Double) {
-        val strValue = DecimalUtils.toDecimalString(nutritionValue)
         val editText = nutritionLayout.findViewById<EditText>(R.id.nutrition_edit_text)
         if (editText != null) {
-            if (editText.text.toString() != strValue) {
-                editText.setText(strValue)
+            setNutritionTextViewValue(editText, nutritionValue)
+            return
+        }
+        setNutritionTextViewValue(nutritionLayout.findViewById(R.id.nutrition_text_view), nutritionValue)
+    }
+
+    private fun setNutritionTextViewValue(textView: TextView, nutritionValue: Double) {
+        if (textView.text.isEmpty()) {
+            if (!FloatUtils.areFloatsEquals(0.0, nutritionValue)) {
+                textView.text = toDecimalString(nutritionValue)
+            } else {
+                // textView is already empty, no need to change its value
             }
             return
         }
-        val textView = nutritionLayout.findViewById<TextView>(R.id.nutrition_text_view)
-        if (textView.text.toString() != strValue) {
-            textView.text = strValue
+        if (!FloatUtils.areFloatsEquals(nutritionValue, textView.text.toString().toDouble())) {
+            textView.text = toDecimalString(nutritionValue)
         }
     }
 
