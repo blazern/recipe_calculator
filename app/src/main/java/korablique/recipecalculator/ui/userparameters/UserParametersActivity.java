@@ -17,7 +17,6 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
-import com.crashlytics.android.Crashlytics;
 import com.redmadrobot.inputmask.MaskedTextChangedListener;
 
 import org.joda.time.DateTime;
@@ -41,6 +40,7 @@ import korablique.recipecalculator.base.Optional;
 import korablique.recipecalculator.base.RxActivitySubscriptions;
 import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
+import korablique.recipecalculator.base.logging.Log;
 import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
@@ -326,7 +326,7 @@ public class UserParametersActivity extends BaseActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.set_user_params);
         } else {
-            Crashlytics.log("getSupportActionBar returned null");
+            Log.INSTANCE.e("getSupportActionBar returned null");
         }
     }
 

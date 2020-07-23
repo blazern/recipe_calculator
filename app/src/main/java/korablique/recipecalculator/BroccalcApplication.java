@@ -5,7 +5,7 @@ import android.app.Application;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 
-import com.crashlytics.android.Crashlytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import javax.inject.Inject;
 
@@ -14,7 +14,6 @@ import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 import dagger.android.HasBroadcastReceiverInjector;
 import dagger.android.HasServiceInjector;
-import io.fabric.sdk.android.Fabric;
 import korablique.recipecalculator.base.logging.Log;
 import korablique.recipecalculator.dagger.Injector;
 import korablique.recipecalculator.dagger.InjectorHolder;
@@ -49,9 +48,6 @@ public class BroccalcApplication extends Application
     @Override
     public void onCreate() {
         super.onCreate();
-        if (!BuildConfig.DEBUG) {
-            Fabric.with(this, new Crashlytics());
-        }
         Log.INSTANCE.init(this);
         Log.INSTANCE.i("Application Cold Start");
         if (!TestEnvironmentDetector.isInTests()) {

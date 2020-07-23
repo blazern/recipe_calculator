@@ -5,7 +5,7 @@ import androidx.annotation.NonNull
 import com.bosphere.filelogger.FL
 import com.bosphere.filelogger.FLConfig
 import com.bosphere.filelogger.FLConst
-import com.crashlytics.android.Crashlytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import korablique.recipecalculator.BuildConfig
 import org.jetbrains.annotations.NonNls
 import timber.log.Timber
@@ -79,12 +79,12 @@ object Log {
 
 private class CrashlyticsTimberTree : Timber.Tree() {
     override fun log(priority: Int, tag: String?, @NonNull message: String, t: Throwable?) {
-        Crashlytics.log(priority, tag ?: "", message)
+        FirebaseCrashlytics.getInstance().log(tag ?: "" + message)
         if (t != null) {
-            Crashlytics.log("Exception: $t")
+            FirebaseCrashlytics.getInstance().log("Exception: $t")
         }
         if (priority == android.util.Log.ERROR && t != null) {
-            Crashlytics.logException(t)
+            FirebaseCrashlytics.getInstance().recordException(t)
         }
     }
 }
