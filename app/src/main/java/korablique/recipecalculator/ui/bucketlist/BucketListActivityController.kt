@@ -102,7 +102,7 @@ class BucketListActivityController @Inject constructor(
         nutritionValuesWrapper = NutritionValuesWrapper(
                 findViewById<ConstraintLayout>(R.id.nutrition_progress_with_values))
 
-        adapter = BucketListAdapter(activity)
+        adapter = BucketListAdapter(activity, calcKeyboardController)
         findViewById<RecyclerView>(R.id.ingredients_list).adapter = adapter
 
         commentLayoutController = CommentLayoutController(findViewById(R.id.comment_layout))
@@ -227,6 +227,11 @@ class BucketListActivityController @Inject constructor(
         currentState.init(this, adapter)
         onRecipeUpdated(currentState.getRecipe())
 
+        // Force reset displayed weights so that weights like "10+20"
+        // would turn into calculated values.
+        forceResetDisplayedWeight()
+        adapter.forceResetDisplayedWeights()
+
         adapter.setUpAddIngredientButton(currentState.createAddIngredientClickObserver())
         adapter.setOnItemClickedObserver(currentState.createIngredientsClickObserver())
         adapter.setOnItemCommentButtonClicked(currentState.createIngredientsCommentClickObserver())
@@ -235,6 +240,12 @@ class BucketListActivityController @Inject constructor(
         adapter.initDragAndDrop(currentState.createIngredientsDragAndDropObserver())
 
         findViewById<TextView>(R.id.title_text).setText(currentState.getTitleStringID())
+    }
+
+    private fun forceResetDisplayedWeight() {
+        val weightEditText = findViewById<CalcEditText>(R.id.total_weight_edit_text)
+        val weightInEditText = weightEditText.getCurrentCalculatedValue() ?: 0f
+        weightEditText.setText(DecimalUtils.toDecimalString(weightInEditText))
     }
 
     override fun finish(finishResult: FinishResult) {

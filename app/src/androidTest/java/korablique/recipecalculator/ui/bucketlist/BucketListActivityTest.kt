@@ -75,6 +75,7 @@ import korablique.recipecalculator.ui.mainactivity.history.HistoryFragment
 import korablique.recipecalculator.util.DBTestingUtils.Companion.clearAllData
 import korablique.recipecalculator.util.EspressoUtils.isNotDisplayed
 import korablique.recipecalculator.util.EspressoUtils.matches
+import korablique.recipecalculator.util.EspressoUtils.moveCursorToEnd
 import korablique.recipecalculator.util.FloatUtils
 import korablique.recipecalculator.util.InjectableActivityTestRule
 import korablique.recipecalculator.util.SyncMainThreadExecutor
@@ -1543,6 +1544,55 @@ class BucketListActivityTest {
 
         // Verify initial state is editing state
         verifyRecipeEditingState(initialRecipe)
+    }
+
+    @Test
+    fun calculateWeights() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 333,
+                listOf(UIIngredient("dough", "111"), UIIngredient("oil", "222")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.button_edit)).perform(click())
+        verifyRecipeEditingState(initialRecipe)
+
+        // Calculate dough weight
+        onView(withText("111")).perform(click())
+        onView(withText("111")).perform(moveCursorToEnd())
+        onView(withId(R.id.button_minus)).perform(click())
+        onView(withId(R.id.button_1)).perform(click())
+        onView(withText("111-1")).check(matches(isDisplayed()))
+
+        // Total weight could be recalculated so force change it back
+        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("333"))
+
+        // Calculate total weight
+        onView(withId(R.id.total_weight_edit_text)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).perform(moveCursorToEnd())
+        onView(withId(R.id.button_minus)).perform(click())
+        onView(withId(R.id.button_3)).perform(click())
+        onView(withText("333-3")).check(matches(isDisplayed()))
+
+        // Save recipe
+        Espresso.pressBack() // Close keyboard
+        onView(withId(R.id.recipe_action_button)).check(matches(withText(R.string.save_recipe)))
+        onView(withId(R.id.recipe_action_button)).perform(click())
+
+        // Weights expected to be calculated
+        onView(withText("111-1")).check(isNotDisplayed())
+        onView(withText("333-3")).check(isNotDisplayed())
+        onView(withText("110")).check(matches(isDisplayed()))
+        onView(withText("330")).check(matches(isDisplayed()))
+        verifyRecipeDisplayingState(initialRecipe.copy(
+                weight = 330f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 110f),
+                        initialRecipe.ingredients[1])))
     }
 
     private fun createSavedRecipe(

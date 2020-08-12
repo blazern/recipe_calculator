@@ -228,42 +228,73 @@ open class CalcEditText : AppCompatEditText {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        val calculatedValPreview = calculatedValuePreviewText() ?: return
+        calculateTextBounds(textBounds)
+        val x = textBounds.right.toFloat()
+        val y = textBounds.bottom.toFloat()
+        val xPadding = drawnCalculatedValueXPadding()
+
+        canvas.drawText(calculatedValPreview, x + xPadding, y, calculatedValuePaint)
+    }
+
+    private fun calculatedValuePreviewText(): String? {
         // Нарисуем после введенного пользователем текста серенькое вычисленное значение
         // введённого пользователем текста.
         val currentCalculatedValue = this.currentCalculatedValue
         if (currentCalculatedValue == null || !currentTextAcceptableForCalcPreview) {
             // Если пользовательский текст не вычисляем или не содержит операторов - рисовать не будем.
-            return
+            return null
         }
-        val textBounds = calculateTextBounds()
-        val x = textBounds.right.toFloat()
-        val y = textBounds.bottom.toFloat()
-        // Небольшой сдвиг, чтобы рисуемый нами текст не сливался с текстом пользователя.
-        val xPadding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5f, resources.displayMetrics)
+        return "=" + toDecimalString(currentCalculatedValue)
+    }
 
-        val decimalStr = toDecimalString(currentCalculatedValue)
-        canvas.drawText("=$decimalStr", x + xPadding, y, calculatedValuePaint)
+    /**
+     * Небольшой сдвиг, чтобы рисуемый нами текст не сливался с текстом пользователя.
+     */
+    private fun drawnCalculatedValueXPadding(): Float {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5f, resources.displayMetrics)
     }
 
     // Вычислять границы рисуемого EditText'ом текста дело непростое.
     // Поэтому код вычисления нагло сворован из https://stackoverflow.com/a/52545927
-    private fun calculateTextBounds(): Rect {
+    private fun calculateTextBounds(out: Rect) {
         // NOTE: скобки очень длинные,
         // поэтому не учитываем их в рассчитывании Y позиции отрисовки текста
         val text = getText().toString()
         val textWithoutBrackets = text.replace("(", "").replace(")", "")
+        return calculateTextBounds(out, text, textWithoutBrackets)
+    }
 
+    // Вычислять границы рисуемого EditText'ом текста дело непростое.
+    // Поэтому код вычисления нагло сворован из https://stackoverflow.com/a/52545927
+    private fun calculateTextBounds(out: Rect, text: String, textWithoutTallChars: String = text) {
         val textPaint = getPaint()
-        textPaint.getTextBounds(text, 0, text.length, textBounds)
-        textPaint.getTextBounds(textWithoutBrackets, 0, textWithoutBrackets.length, textWithoutBracketsBounds)
+        textPaint.getTextBounds(text, 0, text.length, out)
+        textPaint.getTextBounds(textWithoutTallChars, 0, textWithoutTallChars.length, textWithoutBracketsBounds)
 
         val baseline = getBaseline()
-        textBounds.top = baseline + textBounds.top
-        textBounds.bottom = baseline + textWithoutBracketsBounds.bottom
+        out.top = baseline + out.top
+        out.bottom = baseline + textWithoutBracketsBounds.bottom
         val startPadding = getPaddingStart()
-        textBounds.left += startPadding
-        textBounds.right = textPaint.measureText(text).toInt() + startPadding
+        out.left += startPadding
+        out.right = textPaint.measureText(text).toInt() + startPadding
+    }
 
-        return textBounds
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+        val textBounds = Rect()
+        val fullTextBounds = Rect()
+
+        val calculatedTextPreview = calculatedValuePreviewText() ?: return
+        val fullText = getText().toString() + calculatedTextPreview
+        calculateTextBounds(fullTextBounds, fullText)
+        fullTextBounds.right += drawnCalculatedValueXPadding().toInt()
+
+        calculateTextBounds(textBounds)
+        if (textBounds.width() != fullTextBounds.width()) {
+            val textBoundsDiff = fullTextBounds.width() - textBounds.width()
+            setMeasuredDimension(measuredWidth + textBoundsDiff, measuredHeight)
+        }
     }
 }

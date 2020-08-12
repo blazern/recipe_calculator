@@ -14,6 +14,7 @@ import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.ui.bucketlist.BucketList
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
+import korablique.recipecalculator.ui.calckeyboard.CalcEditText
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import korablique.recipecalculator.util.FloatUtils
 
@@ -29,8 +30,8 @@ class BucketListActivityCookingState private constructor(
         private val recipesRepository: RecipesRepository,
         private val mainThreadExecutor: MainThreadExecutor
 ) : BucketListActivityState() {
-    private lateinit var totalWeightTextWatcher: SimpleTextWatcher<EditText>
-    private lateinit var totalWeightEditText: EditText
+    private lateinit var totalWeightTextWatcher: SimpleTextWatcher<CalcEditText>
+    private lateinit var totalWeightEditText: CalcEditText
 
     constructor(
             savedState: Bundle,
@@ -87,17 +88,8 @@ class BucketListActivityCookingState private constructor(
 
         totalWeightEditText = activity.findViewById(R.id.total_weight_edit_text);
         totalWeightTextWatcher = SimpleTextWatcher(totalWeightEditText) {
-            val updatedText = totalWeightEditText.text.toString()
-            var updatedWeight = 0
-            if (!TextUtils.isEmpty(updatedText)) {
-                val textWeight = updatedText.toBigDecimal()
-                updatedWeight = if (textWeight > Int.MAX_VALUE.toBigDecimal()) {
-                    Int.MAX_VALUE
-                } else {
-                    textWeight.toInt()
-                }
-            }
-            if (!FloatUtils.areFloatsEquals(updatedWeight.toFloat(), displayedRecipe.weight)) {
+            val updatedWeight = totalWeightEditText.getCurrentCalculatedValue() ?: 0f
+            if (!FloatUtils.areFloatsEquals(updatedWeight, displayedRecipe.weight)) {
                 val factor = updatedWeight / initialRecipe.weight
                 updateRecipeWithFactor(factor)
             }

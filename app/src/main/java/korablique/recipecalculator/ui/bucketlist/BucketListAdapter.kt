@@ -15,9 +15,12 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import korablique.recipecalculator.R
+import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.ui.EditTextsVisualDisabler
 import korablique.recipecalculator.ui.MyViewHolder
+import korablique.recipecalculator.ui.calckeyboard.CalcEditText
+import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import java.lang.ref.WeakReference
 import java.util.*
@@ -26,7 +29,9 @@ import kotlin.math.roundToInt
 private const val VIEW_TYPE_INGREDIENT = 0
 private const val VIEW_TYPE_ADD_INGREDIENT_BUTTON = 1
 
-class BucketListAdapter(private val context: Context)
+class BucketListAdapter(
+        private val context: BaseActivity,
+        private val calcKeyboardController: CalcKeyboardController)
     : RecyclerView.Adapter<MyViewHolder>(), AdapterDragHelperCallback.Delegate {
 
     interface OnItemClickedObserver {
@@ -261,8 +266,10 @@ class BucketListAdapter(private val context: Context)
 
     private fun initEditableWeightView(ingredient: Ingredient, viewHolder: RecyclerView.ViewHolder) {
         val view = viewHolder.itemView
-        val weightEditText = view.findViewById<EditText>(R.id.extra_info_block_editable)
+        val weightEditText = view.findViewById<CalcEditText>(R.id.extra_info_block_editable)
         weightEditText.clearFocus() // Fix https://stackoverflow.com/q/7100555
+
+        calcKeyboardController.useCalcKeyboardWith(weightEditText, context)
 
         weightEditText.removeTextChangedListener(weightEditWatchers.remove(weightEditText))
 
@@ -270,10 +277,7 @@ class BucketListAdapter(private val context: Context)
         // current weight, we won't change the displayed weight.
         // This way the user won't be interrupted if they modify the displayed weight right now.
         val weight = weightOf(ingredient)
-        var displayedWeight = 0
-        if (!TextUtils.isEmpty(weightEditText.text.toString())) {
-            displayedWeight = weightEditText.text.toString().toInt()
-        }
+        val displayedWeight = weightEditText.getCurrentCalculatedValue()?.toInt() ?: 0
         if (displayedWeight != weight) {
             weightEditText.setText(weight.toString())
         }
@@ -281,20 +285,11 @@ class BucketListAdapter(private val context: Context)
         val weightWatcher = SimpleTextWatcher(weightEditText) {
             val onItemWeightEditionObserver = onItemWeightEditionObserver
             if (onItemWeightEditionObserver != null) {
-                val updatedText = weightEditText.text.toString()
-                var updatedWeight = 0
-                if (!TextUtils.isEmpty(updatedText)) {
-                    val textWeight = updatedText.toBigDecimal()
-                    updatedWeight = if (textWeight > Int.MAX_VALUE.toBigDecimal()) {
-                        Int.MAX_VALUE
-                    } else {
-                        textWeight.toInt()
-                    }
-                }
+                val updatedWeight = weightEditText.getCurrentCalculatedValue() ?: 0f
                 val pos = viewHolder.adapterPosition
-                ingredients[pos] = ingredients[pos].copy(weight = updatedWeight.toFloat())
+                ingredients[pos] = ingredients[pos].copy(weight = updatedWeight)
                 onItemWeightEditionObserver.onItemWeightEdited(
-                        ingredient, updatedWeight.toFloat(), viewHolder.adapterPosition)
+                        ingredient, updatedWeight, viewHolder.adapterPosition)
             }
         }
         weightEditWatchers[weightEditText] = weightWatcher
@@ -404,5 +399,16 @@ class BucketListAdapter(private val context: Context)
     private fun weightOf(ingredient: Ingredient): Int = when (ingredient.weight.isFinite()) {
         true -> ingredient.weight.roundToInt()
         else -> 0
+    }
+
+    fun forceResetDisplayedWeights() {
+        ingredientViewHolders.forEach {
+            if (it != null) {
+                val view = it.itemView
+                val ingredient = ingredients[it.adapterPosition]
+                val weightEditText = view.findViewById<CalcEditText>(R.id.extra_info_block_editable)
+                weightEditText.setText(weightOf(ingredient).toString())
+            }
+        }
     }
 }

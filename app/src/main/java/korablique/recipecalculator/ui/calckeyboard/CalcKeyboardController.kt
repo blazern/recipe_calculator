@@ -91,8 +91,18 @@ class CalcKeyboardController @Inject constructor() {
         // клавиатуру-калькулятор.
         var parent: ViewGroup? = editText.parent as ViewGroup
         while (parent != null) {
+            // Ожидаем, что тегом будет помечен либо один из родителей, ...
             if (parent.tag == CALC_KEYBOARD_PARENT_EXPECTED_TAG) {
                 return parent
+            }
+
+            // ... либо один из детей первого уровня одного из родителей
+            var index = 0
+            while (index < parent.childCount) {
+                if (parent.getChildAt(index).tag == CALC_KEYBOARD_PARENT_EXPECTED_TAG) {
+                    return parent.getChildAt(index) as ViewGroup
+                }
+                ++index;
             }
 
             if (parent.parent is ViewGroup) {

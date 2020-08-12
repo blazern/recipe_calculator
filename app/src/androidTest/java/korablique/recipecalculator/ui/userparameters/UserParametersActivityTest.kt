@@ -262,7 +262,7 @@ class UserParametersActivityTest {
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
                 withId(R.id.nutrition_edit_text)))
-                .perform(replaceText(newProtein.toString()))
+                .perform(replaceText(toDecimalString(newProtein)))
 
         val proteinDiff = oldProtein - newProtein
         val expectedCalories = (oldCalories - proteinDiff * 4)

@@ -162,15 +162,18 @@ open class NutritionValuesWrapper
     }
 
     private fun setNutritionTextViewValue(textView: TextView, nutritionValue: Double) {
-        if (textView.text.isEmpty()) {
+        val text = textView.text.toString()
+        if (text.isEmpty()
+                && textView is EditText
+                && textView.hasFocus()) {
             if (!FloatUtils.areFloatsEquals(0.0, nutritionValue)) {
-                textView.text = toDecimalString(nutritionValue)
+                textView.setText(toDecimalString(nutritionValue))
             } else {
                 // textView is already empty, no need to change its value
             }
             return
         }
-        if (!FloatUtils.areFloatsEquals(nutritionValue, textView.text.toString().toDouble())) {
+        if (text.isEmpty() || !FloatUtils.areFloatsEquals(nutritionValue, text.toDouble())) {
             textView.text = toDecimalString(nutritionValue)
         }
     }

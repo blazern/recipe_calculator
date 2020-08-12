@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 
 import junit.framework.AssertionFailedError;
@@ -16,6 +17,8 @@ import org.hamcrest.TypeSafeMatcher;
 import androidx.annotation.MainThread;
 import androidx.fragment.app.Fragment;
 import androidx.test.espresso.NoMatchingViewException;
+import androidx.test.espresso.UiController;
+import androidx.test.espresso.ViewAction;
 import androidx.test.espresso.ViewAssertion;
 import androidx.test.espresso.util.HumanReadables;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -28,7 +31,10 @@ import korablique.recipecalculator.base.Callback;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import kotlin.jvm.functions.Function1;
 
+import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
+import static org.hamcrest.Matchers.allOf;
 
 public class EspressoUtils {
     private EspressoUtils() {
@@ -189,5 +195,25 @@ public class EspressoUtils {
                 fragmentAction.onResult(fragment);
             }
         });
+    }
+
+    public static ViewAction moveCursorToEnd() {
+        return new ViewAction() {
+            @Override
+            public Matcher<View> getConstraints() {
+                return allOf(isDisplayed(), isEnabled(), isAssignableFrom(EditText.class));
+            }
+
+            @Override
+            public String getDescription() {
+                return "Move cursor to the end";
+            }
+
+            @Override
+            public void perform(UiController uiController, View view) {
+                EditText editText = (EditText) view;
+                editText.setSelection(editText.getText().length());
+            }
+        };
     }
 }

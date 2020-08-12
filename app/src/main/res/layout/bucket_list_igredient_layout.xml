@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bucket_list_ingredient_layout"
     android:orientation="horizontal"
     android:layout_width="match_parent"
@@ -48,18 +49,35 @@
         app:layout_constraintLeft_toLeftOf="@id/extra_info_block_editable"
         android:background="@drawable/calories_block_background"/>
 
-    <EditText
+    <korablique.recipecalculator.ui.calckeyboard.CalcEditText
         android:id="@+id/extra_info_block_editable"
         style="@style/RobotoMonoText"
         android:textSize="14sp"
-        android:inputType="numberDecimal"
-        android:maxLength="5"
+        android:maxLines="1"
+        android:maxLength="9"
+        custom:min_value="0"
+        custom:max_value="99999"
+        custom:digits_after_decimal_dot="1"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         app:layout_constraintRight_toLeftOf="@+id/grams_text"
         app:layout_constraintTop_toTopOf="@+id/extra_info_wrapper_layout"
         app:layout_constraintBottom_toBottomOf="@+id/extra_info_wrapper_layout"
-        tools:text="32555"/>
+        tools:text="125"/>
+    <View
+        android:id="@+id/extra_info_invisible_start"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_marginEnd="60dp"
+        app:layout_constraintRight_toLeftOf="@+id/drag_handle"
+        app:layout_constraintBaseline_toBaselineOf="@+id/grams_text"
+        android:visibility="visible"/>
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/extra_info_left_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="left"
+        app:constraint_referenced_ids="extra_info_block_editable,extra_info_invisible_start" />
 
     <TextView
         android:id="@+id/grams_text"
@@ -89,9 +107,9 @@
         android:id="@+id/add_comment_button"
         android:layout_width="wrap_content"
         android:layout_height="35dp"
+        android:layout_marginRight="10dp"
         android:src="@drawable/ic_add_comment_selector"
-        android:layout_marginEnd="70dp"
-        app:layout_constraintRight_toLeftOf="@+id/drag_handle"
+        app:layout_constraintRight_toLeftOf="@+id/extra_info_left_barrier"
         app:layout_constraintTop_toTopOf="@+id/extra_info_wrapper_layout"
         app:layout_constraintBottom_toBottomOf="@+id/extra_info_wrapper_layout"/>
     
