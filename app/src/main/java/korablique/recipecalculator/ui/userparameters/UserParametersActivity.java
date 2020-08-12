@@ -406,9 +406,9 @@ public class UserParametersActivity extends BaseActivity {
         if (numberField.getText().toString().isEmpty()) {
             return false;
         }
-        int number;
+        float number;
         try {
-            number = Integer.parseInt(numberField.getText().toString());
+            number = Float.parseFloat(numberField.getText().toString());
         } catch (NumberFormatException e) {
             return false;
         }
