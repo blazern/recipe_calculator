@@ -21,5 +21,5 @@
 #-renamesourcefileattribute SourceFile
 
 -keepattributes SourceFile,LineNumberTable
-# Keep custom exceptions.
--keep public class * extends java.lang.Exception
+-keep public class * extends java.lang.Exception # Keep custom exceptions.
+-keep class kotlin.Metadata { *; }

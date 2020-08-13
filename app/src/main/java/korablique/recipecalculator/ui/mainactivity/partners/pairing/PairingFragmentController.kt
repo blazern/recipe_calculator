@@ -8,6 +8,7 @@ import android.text.Editable
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import androidx.annotation.Keep
 import androidx.lifecycle.lifecycleScope
 import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter
 import com.google.android.material.snackbar.Snackbar
@@ -231,12 +232,14 @@ class PairingFragmentController @Inject constructor(
     }
 }
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class StartPairingResponse(
         val pairing_code: Int,
         val pairing_code_expiration_date: Long
 )
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class PairingRequestResponse(
         val status: String

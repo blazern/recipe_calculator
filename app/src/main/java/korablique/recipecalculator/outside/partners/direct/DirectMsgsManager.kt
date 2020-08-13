@@ -2,6 +2,7 @@ package korablique.recipecalculator.outside.partners.direct
 
 import android.content.Context
 import android.util.Base64
+import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -102,17 +103,20 @@ class DirectMsgsManager @Inject constructor(
     }
 }
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class DirectMsgWrapped(
         val msg: String
 )
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class DirectMsg(
         val msg_type: String,
         val msg: String
 )
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class DirectPartnerMsgResponse(
         val status: String

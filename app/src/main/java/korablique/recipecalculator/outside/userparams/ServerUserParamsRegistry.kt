@@ -1,6 +1,7 @@
 package korablique.recipecalculator.outside.userparams
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import korablique.recipecalculator.base.BaseActivity
@@ -233,6 +234,7 @@ class ServerUserParamsRegistry @Inject constructor(
     }
 }
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class MoveDeviceAccountResponse(
         val user_id: String,
@@ -240,12 +242,13 @@ private data class MoveDeviceAccountResponse(
         val user_name: String
 )
 
-
+@Keep
 @JsonClass(generateAdapter = true)
 private data class RegisterResponse(
         val user_id: String,
         val client_token: String
 )
 
+@Keep
 @JsonClass(generateAdapter = true)
 private class EmptyResponse()

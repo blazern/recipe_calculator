@@ -1,5 +1,6 @@
 package korablique.recipecalculator.outside.http
 
+import androidx.annotation.Keep
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -94,7 +95,7 @@ class BroccalcHttpContext @Inject constructor(
             responseStrToType(responseStr, GeneralServerResponse::class)
         } catch (e: Exception) {
             val errMsg = "Response couldn't be casted to ${GeneralServerResponse::class}. Response str: $responseStr"
-            Log.w("BroccalcHttpContext: $errMsg")
+            Log.w(e, "BroccalcHttpContext: $errMsg")
             return BroccalcNetJobResult.Error.ResponseFormatError(Exception(errMsg, e))
         }
 
@@ -155,5 +156,6 @@ private data class UnwrapException(
         val result: BroccalcNetJobResult<*>)
     : RuntimeException("Should never cause a crash")
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class GeneralServerResponse(val status: String)

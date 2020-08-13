@@ -1,6 +1,7 @@
 package korablique.recipecalculator.outside.fcm
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import korablique.recipecalculator.base.executors.MainThreadExecutor
@@ -137,6 +138,7 @@ class FCMManager @Inject constructor(
     }
 }
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class UpdateFCMTokenResponse(
         val status: String

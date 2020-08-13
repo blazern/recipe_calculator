@@ -1,6 +1,7 @@
 package korablique.recipecalculator.outside.partners
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.JsonClass
 import korablique.recipecalculator.R
@@ -147,17 +148,20 @@ class PartnersRegistry @Inject constructor(
     }
 }
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class ReceivedPartner(
         val partner_user_id: String,
         val partner_name: String
 )
 
+@Keep
 @JsonClass(generateAdapter = true)
 private data class ListPartnersResponse(
         val partners: List<ReceivedPartner>
 )
 
+@Keep
 @JsonClass(generateAdapter = true)
 private class EmptyResponse()
 
