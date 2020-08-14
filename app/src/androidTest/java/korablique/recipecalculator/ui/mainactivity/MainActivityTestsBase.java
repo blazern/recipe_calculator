@@ -57,6 +57,7 @@ import korablique.recipecalculator.outside.userparams.InteractiveServerUserParam
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry;
 import korablique.recipecalculator.search.FoodstuffsSearchEngine;
 import korablique.recipecalculator.session.SessionController;
+import korablique.recipecalculator.ui.TwoOptionsDialog;
 import korablique.recipecalculator.ui.bucketlist.BucketList;
 import korablique.recipecalculator.ui.bucketlist.BucketListActivity;
 import korablique.recipecalculator.ui.bucketlist.BucketListActivityController;
@@ -205,7 +206,7 @@ public class MainActivityTestsBase {
                         recipesRepository = new RecipesRepository(
                                 recipeDatabaseWorker, foodstuffsList, mainThreadExecutor);
 
-                        calcKeyboardController = new CalcKeyboardController();
+                        calcKeyboardController = new CalcKeyboardController(context, prefsManager);
 
                         return Arrays.asList(databaseWorker, historyWorker, userParametersWorker,
                                 foodstuffsList, databaseHolder,
@@ -249,8 +250,9 @@ public class MainActivityTestsBase {
                     })
                     .withFragmentScoped((injectionTarget -> {
                         if (injectionTarget instanceof NewMeasurementsDialog
-                                || injectionTarget instanceof CardDialog) {
-                            return Collections.emptyList();
+                                || injectionTarget instanceof CardDialog
+                                || injectionTarget instanceof TwoOptionsDialog) {
+                            return Collections.singletonList(prefsManager);
                         }
 
                         BaseFragment fragment = (BaseFragment) injectionTarget;

@@ -53,12 +53,6 @@ public class CardDialog extends BaseBottomDialog {
     private boolean disableButton2WhenWeight0 = true;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        InjectorHolder.getInjector().inject(this);
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {

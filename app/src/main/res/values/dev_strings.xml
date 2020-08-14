@@ -3,5 +3,6 @@
     <string name="server_address">https://blazern.me/broccalc</string>
     <string name="file_provider_authority">com.broccalc.fileprovider</string>
     <string name="preference_key_send_logs">logs</string>
-    <string name="preference_key_card_nutrition_extended">logs</string>
+    <string name="preference_key_card_nutrition_extended">nutrition_extended</string>
+    <string name="preference_key_calc_keyboard_enabled">calc_keyboard_enabled</string>
 </resources>

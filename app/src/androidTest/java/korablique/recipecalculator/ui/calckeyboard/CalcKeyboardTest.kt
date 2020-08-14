@@ -7,19 +7,23 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.LargeTest
 import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.CurrentActivityProvider
+import korablique.recipecalculator.base.prefs.PrefsCleaningHelper
+import korablique.recipecalculator.base.prefs.PrefsOwner
+import korablique.recipecalculator.base.prefs.SharedPrefsManager
 import korablique.recipecalculator.test.CalcKeyboardTestActivity
 import korablique.recipecalculator.util.EspressoUtils.isNotDisplayed
 import korablique.recipecalculator.util.FloatUtils
 import korablique.recipecalculator.util.InjectableActivityTestRule
 import korablique.recipecalculator.util.SyncMainThreadExecutor
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -30,33 +34,53 @@ import org.junit.runner.RunWith
 class CalcKeyboardTest {
     private lateinit var context: Context
     private val mainThreadExecutor = SyncMainThreadExecutor()
+    private lateinit var prefsManager: SharedPrefsManager
 
     @get:Rule
     val activityRule: ActivityTestRule<CalcKeyboardTestActivity> =
             InjectableActivityTestRule.forActivity(CalcKeyboardTestActivity::class.java)
+            .withManualStart()
             .withSingletones {
                 context = InstrumentationRegistry.getTargetContext()
+                PrefsCleaningHelper.cleanAllPrefs(context)
+                prefsManager = SharedPrefsManager(context)
                 val currentActivityProvider = CurrentActivityProvider()
-                val calcKeyboardController = CalcKeyboardController()
+                val calcKeyboardController = CalcKeyboardController(context, prefsManager)
                 listOf(calcKeyboardController, currentActivityProvider)
             }
             .build()
 
     @Test
     fun calcKeyboardAppearsWhenCalcEditTextIsFocused() {
+        activityRule.launchActivity(null)
         onView(withId(R.id.calc_keyboard)).check(doesNotExist())
         onView(withId(R.id.calc_edit_text)).perform(click())
         onView(withId(R.id.calc_keyboard)).check(matches(isDisplayed()))
     }
 
     @Test
+    fun calcKeyboardDoesNotAppearsWhenPreferenceSaysSo() {
+        prefsManager.putBool(
+                PrefsOwner.NO_OWNER,
+                context.getString(R.string.preference_key_calc_keyboard_enabled),
+                false)
+
+        activityRule.launchActivity(null)
+
+        onView(withId(R.id.calc_edit_text)).perform(click())
+        onView(withId(R.id.calc_keyboard)).check(doesNotExist())
+    }
+
+    @Test
     fun calcKeyboardDoesNotAppearsWhenNormalEditTextIsFocused() {
+        activityRule.launchActivity(null)
         onView(withId(R.id.normal_edit_text)).perform(click())
         onView(withId(R.id.calc_keyboard)).check(doesNotExist())
     }
 
     @Test
     fun calcKeyboardShownWhenFocusMovesFromNormalToCalcEditText() {
+        activityRule.launchActivity(null)
         onView(withId(R.id.normal_edit_text)).perform(click())
 
         onView(withId(R.id.calc_keyboard)).check(doesNotExist())
@@ -66,6 +90,7 @@ class CalcKeyboardTest {
 
     @Test
     fun calcKeyboardHiddenWhenFocusMovesFromCalcToNormalEditText() {
+        activityRule.launchActivity(null)
         onView(withId(R.id.calc_edit_text)).perform(click())
 
         onView(withId(R.id.calc_keyboard)).check(matches(isDisplayed()))
@@ -75,6 +100,8 @@ class CalcKeyboardTest {
 
     @Test
     fun canWriteAndEraseTextWithCalcKeyboard() {
+        activityRule.launchActivity(null)
+
         // Открываем клавиатуру
         onView(withId(R.id.calc_edit_text)).perform(click())
 
@@ -97,6 +124,8 @@ class CalcKeyboardTest {
 
     @Test
     fun canWriteAndCalculateMathExpressions() {
+        activityRule.launchActivity(null)
+
         // Открываем клавиатуру
         onView(withId(R.id.calc_edit_text)).perform(click())
 
@@ -117,6 +146,8 @@ class CalcKeyboardTest {
 
     @Test
     fun backspaceLongClickWorks() {
+        activityRule.launchActivity(null)
+
         // Открываем клавиатуру
         onView(withId(R.id.calc_edit_text)).perform(click())
 
@@ -142,6 +173,8 @@ class CalcKeyboardTest {
 
     @Test
     fun cannotWriteTextOutOfPositiveBound() {
+        activityRule.launchActivity(null)
+
         mainThreadExecutor.execute {
             val calcEditText = activityRule.activity.findViewById<CalcEditText>(R.id.calc_edit_text)
             calcEditText.setBounds(0f, 10f)
@@ -165,6 +198,8 @@ class CalcKeyboardTest {
 
     @Test
     fun cannotWriteTextOutOfNegativeBound() {
+        activityRule.launchActivity(null)
+
         mainThreadExecutor.execute {
             val calcEditText = activityRule.activity.findViewById<CalcEditText>(R.id.calc_edit_text)
             calcEditText.setBounds(-10f, 10f)
@@ -189,6 +224,8 @@ class CalcKeyboardTest {
 
     @Test
     fun cannotWriteMinusSign_ifTextMustBePositive() {
+        activityRule.launchActivity(null)
+
         mainThreadExecutor.execute {
             val calcEditText = activityRule.activity.findViewById<CalcEditText>(R.id.calc_edit_text)
             calcEditText.setBounds(0f, 10f)
@@ -207,6 +244,8 @@ class CalcKeyboardTest {
 
     @Test
     fun editProgressText_worksSameAsCalcEditText() {
+        activityRule.launchActivity(null)
+
         // Открываем клавиатуру
         onView(withId(R.id.edit_progress_text)).perform(click())
 
@@ -229,6 +268,8 @@ class CalcKeyboardTest {
 
     @Test
     fun limitationOfDigitsAfterDot_works() {
+        activityRule.launchActivity(null)
+
         // Открываем клавиатуру
         onView(withId(R.id.calc_edit_text_with_1_digit_after_dot)).perform(click())
 
@@ -245,6 +286,8 @@ class CalcKeyboardTest {
 
     @Test
     fun canEraseAllTypedText() {
+        activityRule.launchActivity(null)
+
         mainThreadExecutor.execute {
             val calcEditText = activityRule.activity.findViewById<CalcEditText>(R.id.calc_edit_text)
             calcEditText.setBounds(0f, 10f)
@@ -263,6 +306,8 @@ class CalcKeyboardTest {
 
     @Test
     fun focusJumping() {
+        activityRule.launchActivity(null)
+
         // Открываем клавиатуру
         onView(withId(R.id.calc_edit_text_with_next_focus)).perform(click())
         onView(withId(R.id.calc_keyboard)).check(matches(isDisplayed()))
@@ -285,6 +330,8 @@ class CalcKeyboardTest {
 
     @Test
     fun bracketsUsage() {
+        activityRule.launchActivity(null)
+
         onView(withId(R.id.calc_edit_text)).perform(click())
 
         onView(withId(R.id.button_bracket_left)).perform(click())

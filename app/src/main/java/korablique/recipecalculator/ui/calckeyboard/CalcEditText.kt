@@ -5,14 +5,16 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.text.InputFilter
+import android.text.InputType
 import android.text.SpannableString
+import android.text.method.DigitsKeyListener
 import android.util.AttributeSet
 import android.util.TypedValue
 import androidx.appcompat.widget.AppCompatEditText
 import com.udojava.evalex.Expression
 import korablique.recipecalculator.R
-import korablique.recipecalculator.ui.inputfilters.DecimalNumberInputFilter
 import korablique.recipecalculator.ui.DecimalUtils.toDecimalString
+import korablique.recipecalculator.ui.inputfilters.DecimalNumberInputFilter
 import korablique.recipecalculator.ui.inputfilters.FunctionalInputFilter
 import java.math.BigDecimal
 import java.util.regex.Pattern
@@ -23,6 +25,7 @@ open class CalcEditText : AppCompatEditText {
     // строк вида "2+", но рисовать для строк вида "2+2", т.к. "2+ =2" выглядит глупо.
     private val textAcceptableForCalcPreviewRegex = Pattern.compile(""".*[\-+×÷()].+""")
     private val extraOperatorsRegex = Pattern.compile(""".*[\-+*/][\-+*/].*""")
+    private val allowedOperators = "-+×÷()"
     private val operatorsRegex = Pattern.compile("""[\-+×÷()]""")
     private val operatorsWithoutBracketsRegex = Pattern.compile("""[\-+×÷]""")
     private val numbersFilters = mutableListOf<InputFilter>()
@@ -65,6 +68,10 @@ open class CalcEditText : AppCompatEditText {
 
         calculatedValuePaint = Paint(paint)
         calculatedValuePaint.color = resources.getColor(R.color.calc_edit_text_calculated_value_color)
+
+        inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED
+        keyListener = DigitsKeyListener.getInstance("0123456789.$allowedOperators");
+
         isFullyConstructed = true
     }
 

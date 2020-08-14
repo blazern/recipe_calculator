@@ -206,8 +206,11 @@
     <string name="manually">Вручную</string>
     <string name="preference_card_nutrition_extended_title">Растянутый БЖУ в карточке</string>
     <string name="preference_card_nutrition_extended_descr">Визуально полностью заполнять прогресс БЖУ в карточке продукта</string>
+    <string name="preference_calc_keyboard_enabled_title">Клавиатура-калькулятор</string>
+    <string name="preference_calc_keyboard_enabled_descr">Использовать клавиатуру-калькулятор вместо системной клавиатуры</string>
     <string name="up">Вверх</string>
     <string name="foodstuffs_are_not_selected">Продукты не выбраны</string>
+    <string name="restart_app_for_setting_to_apply">Теперь требуется перезапуск приложения</string>
 
     <string-array name="physical_activity_array">
         <item name="passive_lifestyle">Сидячий образ жизни</item>

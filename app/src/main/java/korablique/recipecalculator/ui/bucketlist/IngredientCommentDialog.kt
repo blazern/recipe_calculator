@@ -19,7 +19,7 @@ class IngredientCommentDialog : BaseBottomDialog() {
     private var saveButtonListener: ((String)->Unit)? = null
     private var dismissListener: (()->Unit)? = null
 
-    override fun shouldOpenKeyboardWhenShown() = true
+    override fun calcKeyboardExpectedOnStart() = false
 
     override fun onCreateView(inflater: LayoutInflater,
                               container: ViewGroup?,
@@ -27,7 +27,7 @@ class IngredientCommentDialog : BaseBottomDialog() {
         val dialogLayout = LayoutInflater.from(context)
                 .inflate(R.layout.bucket_list_ingredient_comment_dialog_layout, container)
 
-        val arguments = arguments!!
+        val arguments = requireArguments()
         val initialComment = arguments.getString(EXTRA_INITIAL_COMMENT)
         dialogLayout.findViewById<TextView>(R.id.comment).text = initialComment
         dialogLayout.findViewById<Button>(R.id.save_button).setOnClickListener {

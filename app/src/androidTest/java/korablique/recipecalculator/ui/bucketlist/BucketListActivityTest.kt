@@ -156,11 +156,12 @@ class BucketListActivityTest {
                         recipeDatabaseWorker, foodstuffsList, mainThreadExecutor)
                 currentActivityProvider = CurrentActivityProvider()
                 bucketList = BucketList(prefsManager)
-                calcKeyboardController = CalcKeyboardController()
+                calcKeyboardController = CalcKeyboardController(context, prefsManager)
                 listOf(mainThreadExecutor, databaseThreadExecutor, databaseWorker,
                         historyWorker, userParametersWorker, foodstuffsList,
                         timeProvider, currentActivityProvider, bucketList,
-                        CalcKeyboardController(), recipesRepository, calcKeyboardController,
+                        CalcKeyboardController(context, prefsManager),
+                        recipesRepository, calcKeyboardController,
                         prefsManager)
             }
             .withActivityScoped { target: Any ->

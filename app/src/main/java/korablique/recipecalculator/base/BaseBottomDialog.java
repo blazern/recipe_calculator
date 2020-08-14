@@ -12,21 +12,34 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import javax.inject.Inject;
+
 import korablique.recipecalculator.R;
+import korablique.recipecalculator.base.prefs.PrefsOwner;
+import korablique.recipecalculator.base.prefs.SharedPrefsManager;
+import korablique.recipecalculator.dagger.InjectorHolder;
 
 public class BaseBottomDialog extends DialogFragment {
     private final List<OnBackPressObserver> onBackPressObservers = new CopyOnWriteArrayList<>();
+
+    @Inject
+    SharedPrefsManager prefsManager;
 
     public interface OnBackPressObserver {
         /**
          * @return true if event is consumed. If the event is consumed, the dialog won't close on back press.
          */
         boolean onBackPressed();
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        InjectorHolder.getInjector().inject(this);
     }
 
     @Override
@@ -44,15 +57,24 @@ public class BaseBottomDialog extends DialogFragment {
             dialog1.getWindow().setAttributes(layoutParams);
             dialog1.getWindow().setBackgroundDrawable(background);
         });
-        if (shouldOpenKeyboardWhenShown()) {
+
+        if (showKeyboardOnStart()) {
             dialog1.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         }
         dialog1.setOnKeyListener(this::onKey);
         return dialog1;
     }
 
-    protected boolean shouldOpenKeyboardWhenShown() {
-        return false;
+    private boolean showKeyboardOnStart() {
+        boolean calcKeyboardEnabled =
+                prefsManager.getBool(PrefsOwner.NO_OWNER,
+                        getString(R.string.preference_key_calc_keyboard_enabled),
+                        true);
+        return !calcKeyboardEnabled || !calcKeyboardExpectedOnStart();
+    }
+
+    protected boolean calcKeyboardExpectedOnStart() {
+        return true;
     }
 
     private boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {

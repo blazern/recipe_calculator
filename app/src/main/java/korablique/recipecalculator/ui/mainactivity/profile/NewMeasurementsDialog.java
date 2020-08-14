@@ -34,14 +34,8 @@ public class NewMeasurementsDialog extends BaseBottomDialog {
     private OnSaveNewMeasurementsListener onSaveNewMeasurementsListener;
 
     @Override
-    protected boolean shouldOpenKeyboardWhenShown() {
-        return true;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        InjectorHolder.getInjector().inject(this);
+    protected boolean calcKeyboardExpectedOnStart() {
+        return false;
     }
 
     @Override

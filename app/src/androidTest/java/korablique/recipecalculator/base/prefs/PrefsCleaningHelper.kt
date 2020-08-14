@@ -2,6 +2,7 @@ package korablique.recipecalculator.base.prefs
 
 import android.app.Activity
 import android.content.Context
+import android.preference.PreferenceManager
 
 object PrefsCleaningHelper {
     fun cleanAllPrefs(context: Context) {
@@ -11,5 +12,9 @@ object PrefsCleaningHelper {
                     .clear()
                     .commit()
         }
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .clear()
+                .commit()
     }
 }

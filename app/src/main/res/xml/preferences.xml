@@ -10,4 +10,10 @@
         app:key="@string/preference_key_card_nutrition_extended"
         app:title="@string/preference_card_nutrition_extended_title"
         app:summary="@string/preference_card_nutrition_extended_descr"/>
+
+    <CheckBoxPreference
+        app:key="@string/preference_key_calc_keyboard_enabled"
+        app:title="@string/preference_calc_keyboard_enabled_title"
+        app:summary="@string/preference_calc_keyboard_enabled_descr"
+        app:defaultValue="true"/>
 </PreferenceScreen>

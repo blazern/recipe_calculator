@@ -1,7 +1,9 @@
 package korablique.recipecalculator.ui.calckeyboard
 
+import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
@@ -16,6 +18,9 @@ import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.BaseBottomDialog
 import java.lang.IllegalStateException
 import androidx.constraintlayout.widget.ConstraintSet
+import korablique.recipecalculator.R
+import korablique.recipecalculator.base.prefs.PrefsOwner
+import korablique.recipecalculator.base.prefs.SharedPrefsManager
 import korablique.recipecalculator.ui.KeyboardHandler
 
 private const val CALC_KEYBOARD_PARENT_EXPECTED_TAG = "calc_keyboard_parent"
@@ -24,7 +29,9 @@ private const val CALC_KEYBOARD_PARENT_EXPECTED_TAG = "calc_keyboard_parent"
  * Заменяет системную клавиатуру у переданных в него EditText'ов на клавиатуру-калькулятор.
  */
 @Singleton
-class CalcKeyboardController @Inject constructor() {
+class CalcKeyboardController @Inject constructor(
+        private val context: Context,
+        private val prefsManager: SharedPrefsManager) {
     private val shownKeyboards = WeakHashMap<View, CalcKeyboard>()
 
     /**
@@ -46,6 +53,14 @@ class CalcKeyboardController @Inject constructor() {
      * по этим нажатиям скрывать клавиатуру-калькулятор.
      */
     private fun useCalcKeyboardWith(editText: CalcEditText, backPressHandlingInitializer: ()->Unit) {
+        if (!prefsManager.getBool(
+                        PrefsOwner.NO_OWNER,
+                        context.getString(R.string.preference_key_calc_keyboard_enabled),
+                        true)) {
+            // If calc-keyboard disabled - return
+            return;
+        }
+
         // Не показываем системную клавиатуру при захвате фокуса
         editText.showSoftInputOnFocus = false
 
