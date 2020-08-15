@@ -6,6 +6,7 @@ import dagger.android.ContributesAndroidInjector;
 import korablique.recipecalculator.base.BaseActivity;
 import korablique.recipecalculator.dagger.ActivityScope;
 import korablique.recipecalculator.dagger.FragmentScope;
+import korablique.recipecalculator.ui.TwoOptionsDialog;
 import korablique.recipecalculator.ui.card.CardDialog;
 import korablique.recipecalculator.ui.mainactivity.MainActivity;
 
@@ -20,4 +21,12 @@ public abstract class BucketListActivityModule {
     static BaseActivity provideBaseActivity(MainActivity activity) {
         return activity;
     }
+
+    @FragmentScope
+    @ContributesAndroidInjector
+    abstract IngredientCommentDialog ingredientCommentDialogInjector();
+
+    @FragmentScope
+    @ContributesAndroidInjector
+    abstract TwoOptionsDialog twoOptionsDialogInjector();
 }
