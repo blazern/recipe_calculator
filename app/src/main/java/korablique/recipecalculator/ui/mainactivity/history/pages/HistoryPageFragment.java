@@ -40,7 +40,9 @@ public class HistoryPageFragment extends BaseFragment {
                         "Expected either date from constructor or saved state, "
                                 + "cannot work without a date (no saved state)");
             }
-            date = (LocalDate) savedInstanceState.getSerializable(EXTRA_DATE);
+            if (savedInstanceState.containsKey(EXTRA_DATE)) {
+                date = LocalDate.parse(savedInstanceState.getString(EXTRA_DATE));
+            }
             if (date == null) {
                 throw new IllegalStateException(
                         "Expected either date from constructor or saved state, "
@@ -52,7 +54,7 @@ public class HistoryPageFragment extends BaseFragment {
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
-        outState.putSerializable(EXTRA_DATE, date);
+        outState.putString(EXTRA_DATE, date.toString());
         super.onSaveInstanceState(outState);
     }
 
