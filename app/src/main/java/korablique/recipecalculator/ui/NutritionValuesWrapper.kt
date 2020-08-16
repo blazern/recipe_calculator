@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.NTuple4
 import korablique.recipecalculator.model.Nutrient
@@ -33,13 +32,6 @@ open class NutritionValuesWrapper
     protected val carbsTextView: TextView
     protected val caloriesTextView: TextView?
 
-    private val proteinEditText: EditText?
-    private val fatsEditText: EditText?
-    private val carbsEditText: EditText?
-    private val caloriesEditText: EditText?
-
-    private val pendingChangedByUserNutrients = setOf<Nutrient>()
-
     interface NutritionChangeCallback {
         fun onNutritionChange(
                 oldNutrition: Nutrition,
@@ -61,17 +53,12 @@ open class NutritionValuesWrapper
         }
 
         proteinTextView = proteinLayout.findViewById(R.id.nutrition_text_view)
-        proteinEditText = proteinLayout.findViewById(R.id.nutrition_edit_text)
         fatsTextView = fatsLayout.findViewById(R.id.nutrition_text_view)
-        fatsEditText = fatsLayout.findViewById(R.id.nutrition_edit_text)
         carbsTextView = carbsLayout.findViewById(R.id.nutrition_text_view)
-        carbsEditText = carbsLayout.findViewById(R.id.nutrition_edit_text)
         if (caloriesLayout != null) {
             caloriesTextView = caloriesLayout.findViewById(R.id.nutrition_text_view)
-            caloriesEditText = caloriesLayout.findViewById(R.id.nutrition_edit_text)
         } else {
             caloriesTextView = null
-            caloriesEditText = null
         }
 
         setNutritionTable(proteinLayout, R.string.protein, R.drawable.new_card_protein_icon)
@@ -81,10 +68,13 @@ open class NutritionValuesWrapper
             setNutritionTable(caloriesLayout, R.string.calories, R.drawable.invisible_drawable)
         }
 
-        initTextViews(proteinLayout, proteinEditText, proteinTextView, Nutrient.PROTEIN)
-        initTextViews(fatsLayout, fatsEditText, fatsTextView, Nutrient.FATS)
-        initTextViews(carbsLayout, carbsEditText, carbsTextView, Nutrient.CARBS)
-        initTextViews(caloriesLayout, caloriesEditText, caloriesTextView, Nutrient.CALORIES)
+        initTextView(proteinTextView, Nutrient.PROTEIN)
+        initTextView(fatsTextView, Nutrient.FATS)
+        initTextView(carbsTextView, Nutrient.CARBS)
+        initTextView(caloriesTextView, Nutrient.CALORIES)
+
+        // Not editable by default
+        setEditable(false)
     }
 
     // только задает цвета кружкам и названия в шапке
@@ -100,40 +90,24 @@ open class NutritionValuesWrapper
         }
     }
 
-    private fun initTextViews(
-            layout: ViewGroup?,
-            editText: EditText?,
+    private fun initTextView(
             textView: TextView?,
             nutrient: Nutrient) {
-        if (editText != null && textView != null) {
-            editText.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
-            editText.addTextChangedListener(SimpleTextWatcher(editText,
-                    OnTextChangedListener {
-                        textView.text = editText.text
-                        val oldNutrition = lastNutrition
-                        updateLastNutrition(textView, nutrient)
-                        if (!oldNutrition.equals(lastNutrition)) {
-                            val userInited = editText.hasFocus()
-                            nutritionChangeCallbacks.forEach {
-                                it.onNutritionChange(oldNutrition, lastNutrition, nutrient, userInited)
-                            }
-                        }
-                    }))
-        } else if (textView != null && layout != null) {
-            setNutritionTable(layout, nutrient.strID(), nutrient.iconID())
-            textView.addTextChangedListener(SimpleTextWatcher(editText,
-                    OnTextChangedListener {
-                        val oldNutrition = lastNutrition
-                        updateLastNutrition(textView, nutrient)
-                        if (!oldNutrition.equals(lastNutrition)) {
-                            nutritionChangeCallbacks.forEach {
-                                it.onNutritionChange(oldNutrition, lastNutrition, nutrient, byUser = false)
-                            }
-                        }
-                    }))
-        } else {
-            // Nothing to do
+        if (textView == null) {
+            return
         }
+        textView.filters += NumericBoundsInputFilter.withBounds(0f, 9999f)
+        textView.addTextChangedListener(SimpleTextWatcher(textView,
+                OnTextChangedListener {
+                    val oldNutrition = lastNutrition
+                    updateLastNutrition(textView, nutrient)
+                    if (!oldNutrition.equals(lastNutrition)) {
+                        val userInited = textView.hasFocus()
+                        nutritionChangeCallbacks.forEach {
+                            it.onNutritionChange(oldNutrition, lastNutrition, nutrient, userInited)
+                        }
+                    }
+                }))
     }
 
     private fun updateLastNutrition(textView: TextView,
@@ -153,9 +127,9 @@ open class NutritionValuesWrapper
     }
 
     private fun setNutritionValue(nutritionLayout: ViewGroup, nutritionValue: Double) {
-        val editText = nutritionLayout.findViewById<EditText>(R.id.nutrition_edit_text)
-        if (editText != null) {
-            setNutritionTextViewValue(editText, nutritionValue)
+        val textView = nutritionLayout.findViewById<TextView>(R.id.nutrition_text_view)
+        if (textView != null) {
+            setNutritionTextViewValue(textView, nutritionValue)
             return
         }
         setNutritionTextViewValue(nutritionLayout.findViewById(R.id.nutrition_text_view), nutritionValue)
@@ -195,23 +169,18 @@ open class NutritionValuesWrapper
 
     fun setEditable(editable: Boolean) {
         TransitionManager.beginDelayedTransition(layout)
-        setEditable(editable, proteinLayout)
-        setEditable(editable, fatsLayout)
-        setEditable(editable, carbsLayout)
-        setEditable(editable, caloriesLayout)
-    }
-
-    private fun setEditable(editable: Boolean, layout: ConstraintLayout?) {
-        val newConstraintSet = ConstraintSet()
-        newConstraintSet.clone(layout)
-        if (editable) {
-            newConstraintSet.setVisibility(R.id.nutrition_edit_text, View.VISIBLE)
-            newConstraintSet.setVisibility(R.id.nutrition_text_view, View.GONE)
-        } else {
-            newConstraintSet.setVisibility(R.id.nutrition_edit_text, View.GONE)
-            newConstraintSet.setVisibility(R.id.nutrition_text_view, View.VISIBLE)
+        if (proteinTextView is EditText) {
+            EditTextsVisualDisabler.setFullyVisuallyEnabled(proteinTextView, editable)
         }
-        newConstraintSet.applyTo(layout)
+        if (fatsTextView is EditText) {
+            EditTextsVisualDisabler.setFullyVisuallyEnabled(fatsTextView, editable)
+        }
+        if (carbsTextView is EditText) {
+            EditTextsVisualDisabler.setFullyVisuallyEnabled(carbsTextView, editable)
+        }
+        if (caloriesTextView is EditText) {
+            EditTextsVisualDisabler.setFullyVisuallyEnabled(caloriesTextView, editable)
+        }
     }
 
     fun addNutritionChangeCallback(callback: NutritionChangeCallback) {

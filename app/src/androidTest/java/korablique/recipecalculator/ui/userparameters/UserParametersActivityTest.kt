@@ -11,11 +11,8 @@ import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isChecked
 import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isNotChecked
-import androidx.test.espresso.matcher.ViewMatchers.isSelected
 import androidx.test.espresso.matcher.ViewMatchers.withId
-import androidx.test.espresso.matcher.ViewMatchers.withSpinnerText
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -48,7 +45,6 @@ import korablique.recipecalculator.model.UserParameters
 import korablique.recipecalculator.outside.http.BroccalcHttpContext
 import korablique.recipecalculator.outside.userparams.InteractiveServerUserParamsObtainer
 import korablique.recipecalculator.outside.userparams.ServerUserParamsRegistry
-import korablique.recipecalculator.ui.DecimalUtils
 import korablique.recipecalculator.ui.DecimalUtils.toDecimalString
 import korablique.recipecalculator.ui.mainactivity.MainActivity
 import korablique.recipecalculator.ui.mainactivity.MainActivityController
@@ -246,7 +242,7 @@ class UserParametersActivityTest {
 
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .perform(scrollTo())
 
         val oldProtein = getRateValue(R.id.protein_layout)
@@ -257,11 +253,11 @@ class UserParametersActivityTest {
         val newProtein = oldProtein - 30f
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .perform(click())
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .perform(replaceText(toDecimalString(newProtein)))
 
         val proteinDiff = oldProtein - newProtein
@@ -269,15 +265,15 @@ class UserParametersActivityTest {
 
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .check(matches(withText(toDecimalString(newProtein))))
         onView(allOf(
                 isDescendantOfA(withId(R.id.fats_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .check(matches(withText(toDecimalString(oldFats))))
         onView(allOf(
                 isDescendantOfA(withId(R.id.carbs_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .check(matches(withText(toDecimalString(oldCarbs))))
 
         val newCalories = getRateValue(R.id.calories_layout)
@@ -323,7 +319,7 @@ class UserParametersActivityTest {
 
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .perform(scrollTo())
 
         val oldProtein = getRateValue(R.id.protein_layout)
@@ -334,11 +330,11 @@ class UserParametersActivityTest {
         val newCalories = oldCalories / 10f
         onView(allOf(
                 isDescendantOfA(withId(R.id.calories_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .perform(click())
         onView(allOf(
                 isDescendantOfA(withId(R.id.calories_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .perform(replaceText(newCalories.toString()))
 
         val expectedProtein = oldProtein / 10f
@@ -347,15 +343,15 @@ class UserParametersActivityTest {
 
         onView(allOf(
                 isDescendantOfA(withId(R.id.protein_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .check(matches(withText(toDecimalString(expectedProtein))))
         onView(allOf(
                 isDescendantOfA(withId(R.id.fats_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .check(matches(withText(toDecimalString(expectedFats))))
         onView(allOf(
                 isDescendantOfA(withId(R.id.carbs_layout)),
-                withId(R.id.nutrition_edit_text)))
+                withId(R.id.nutrition_text_view)))
                 .check(matches(withText(toDecimalString(expectedCarbs))))
 
         onView(withId(R.id.button_save)).perform(scrollTo())
@@ -382,7 +378,7 @@ class UserParametersActivityTest {
         mainThreadExecutor.execute {
             rate = activityRule.activity
                     .findViewById<ViewGroup>(rateLayoutId)
-                    .findViewById<TextView>(R.id.nutrition_edit_text)
+                    .findViewById<TextView>(R.id.nutrition_text_view)
                     .text.toString().toFloat()
         }
         return rate!!

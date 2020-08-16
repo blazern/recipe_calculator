@@ -31,27 +31,18 @@
         android:background="@drawable/new_card_protein_icon"/>
 
     <!--значение-->
-    <TextView
-        android:id="@+id/nutrition_text_view"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/nutrition_name"
-        android:layout_marginTop="5dp"
-        style="@style/RobotoMonoText"
-        tools:text="35 г."/>
     <EditText
-        android:id="@+id/nutrition_edit_text"
+        android:id="@+id/nutrition_text_view"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/nutrition_name"
         android:layout_marginTop="13.8dp"
+        android:paddingStart="0dp"
         android:maxLength="6"
         android:inputType="numberDecimal"
         style="@style/RobotoMonoText"
         tools:text="35"
-        android:visibility="gone"
         android:saveEnabled="false"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
