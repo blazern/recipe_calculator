@@ -2,6 +2,7 @@ package korablique.recipecalculator.ui.bucketlist.states
 
 import android.os.Bundle
 import android.view.View
+import android.widget.CheckBox
 import android.widget.EditText
 import androidx.annotation.IdRes
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -66,6 +67,7 @@ abstract class BucketListActivityState {
 
         innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.VISIBLE)
         innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.GONE)
+        innerConstraints.setVisibility(R.id.weights_recalculation_checkbox, View.GONE)
 
         outerConstraints.clear(R.id.actions_layout, BOTTOM)
         outerConstraints.connect(R.id.actions_layout, TOP, PARENT_ID, BOTTOM)

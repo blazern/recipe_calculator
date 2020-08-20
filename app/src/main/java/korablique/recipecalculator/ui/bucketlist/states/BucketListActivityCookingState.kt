@@ -98,6 +98,7 @@ class BucketListActivityCookingState private constructor(
 
         innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.GONE)
         innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.GONE)
+        innerConstraints.setVisibility(R.id.weights_recalculation_checkbox, View.VISIBLE)
     }
 
     override fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
