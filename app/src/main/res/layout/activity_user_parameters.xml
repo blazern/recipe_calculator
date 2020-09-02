@@ -417,7 +417,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@id/statistics_layout"
-                android:padding="20dp">
+                android:paddingTop="6dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="20dp"
+                android:paddingStart="20dp">
 
                 <Button
                     android:id="@+id/button_save"
