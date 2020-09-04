@@ -17,6 +17,9 @@ import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.support.HasSupportFragmentInjector;
 import korablique.recipecalculator.R;
 import korablique.recipecalculator.base.BaseActivity;
 import korablique.recipecalculator.database.FoodstuffsList;
@@ -32,7 +35,7 @@ import korablique.recipecalculator.ui.pluralprogressbar.PluralProgressBar;
 import static korablique.recipecalculator.ui.DecimalUtils.toDecimalString;
 import static korablique.recipecalculator.ui.card.Card.EDITED_FOODSTUFF;
 
-public class EditFoodstuffActivity extends BaseActivity {
+public class EditFoodstuffActivity extends BaseActivity implements HasSupportFragmentInjector {
     public static final String EDIT_FOODSTUFF_ACTION = "EDIT_FOODSTUFF_ACTION";
     public static final String EXTRA_RESULT_FOODSTUFF = "EXTRA_RESULT_FOODSTUFF";
     public static final String ARE_YOU_SURE_DIALOG_TAG = "ARE_YOU_SURE_DIALOG_TAG";
@@ -40,6 +43,8 @@ public class EditFoodstuffActivity extends BaseActivity {
     FoodstuffsList foodstuffsList;
     @Inject
     CalcKeyboardController calcKeyboardController;
+    @Inject
+    DispatchingAndroidInjector<Fragment> fragmentInjector;
     private PluralProgressBar pluralProgressBar;
     private EditText foodstuffNameEditText;
     private EditProgressText proteinEditText;
@@ -48,6 +53,11 @@ public class EditFoodstuffActivity extends BaseActivity {
     private CalcEditText caloriesEditText;
     private Button saveButton;
     private EditProgressTextCommonMaxController nutritionsCommonMaxController;
+
+    @Override
+    public AndroidInjector<Fragment> supportFragmentInjector() {
+        return fragmentInjector;
+    }
 
     @Override
     protected Integer getLayoutId() {
