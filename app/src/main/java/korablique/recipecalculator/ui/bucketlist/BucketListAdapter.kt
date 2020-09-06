@@ -287,9 +287,10 @@ class BucketListAdapter(
             if (onItemWeightEditionObserver != null) {
                 val updatedWeight = weightEditText.getCurrentCalculatedValue() ?: 0f
                 val pos = viewHolder.adapterPosition
-                ingredients[pos] = ingredients[pos].copy(weight = updatedWeight)
+                val ingredientBeforeWeightUpdate = ingredients[pos]
+                ingredients[pos] = ingredientBeforeWeightUpdate.copy(weight = updatedWeight)
                 onItemWeightEditionObserver.onItemWeightEdited(
-                        ingredient, updatedWeight, viewHolder.adapterPosition)
+                        ingredientBeforeWeightUpdate, updatedWeight, viewHolder.adapterPosition)
             }
         }
         weightEditWatchers[weightEditText] = weightWatcher

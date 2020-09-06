@@ -1596,6 +1596,110 @@ class BucketListActivityTest {
                         initialRecipe.ingredients[1])))
     }
 
+    @Test
+    fun cookingWeightsRecalculationEnabilitySwitches() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 30,
+                listOf(UIIngredient("dough", "10"), UIIngredient("oil", "20")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.recipe_action_button)).perform(click())
+        verifyCookingState(initialRecipe)
+
+        // Edit oil weight WITHOUT weights recalculation
+        onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
+        onView(allOf(
+                withParent(hasDescendant(withText("oil"))),
+                withId(R.id.extra_info_block_editable)))
+                .perform(replaceText("30"))
+        verifyCookingState(initialRecipe.copy(
+                ingredients = listOf(
+                        initialRecipe.ingredients[0],
+                        initialRecipe.ingredients[1].copy(weight = 30f))))
+
+        // Update oil weigh WITH weights recalculation
+        onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
+        onView(allOf(
+                withParent(hasDescendant(withText("oil"))),
+                withId(R.id.extra_info_block_editable)))
+                .perform(replaceText("60"))
+        verifyCookingState(initialRecipe.copy(
+                weight = 60f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 20f),
+                        initialRecipe.ingredients[1].copy(weight = 60f))))
+
+        // Edit total weight WITHOUT weights recalculation
+        onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("100"))
+        verifyCookingState(initialRecipe.copy(
+                weight = 100f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 20f),
+                        initialRecipe.ingredients[1].copy(weight = 60f))))
+
+        // Update total weight WITH weights recalculation
+        onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
+        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("50"))
+        verifyCookingState(initialRecipe.copy(
+                weight = 50f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 10f),
+                        initialRecipe.ingredients[1].copy(weight = 30f))))
+
+        // Exit cooking mode
+        onView(withId(R.id.button_close)).perform(click())
+        verifyRecipeDisplayingState(initialRecipe)
+    }
+
+    /**
+     * @see BucketListActivityCookingState#recalculateFactorsOnNewWeight
+     */
+    @Test
+    fun cookingWeightsRecalculationAfterSpecificWeightSetToZero() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 30,
+                listOf(UIIngredient("dough", "10"), UIIngredient("oil", "20")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.recipe_action_button)).perform(click())
+        verifyCookingState(initialRecipe)
+
+        // Update dough weigh WITHOUT weights recalculation
+        onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
+        onView(allOf(
+                withParent(hasDescendant(withText("dough"))),
+                withId(R.id.extra_info_block_editable)))
+                .perform(replaceText("0"))
+        verifyCookingState(initialRecipe.copy(
+                weight = 30f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 0f),
+                        initialRecipe.ingredients[1].copy(weight = 20f))))
+
+        // Change dough weight to 2x from initial WITH weights recalculation
+        onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
+        onView(allOf(
+                withParent(hasDescendant(withText("dough"))),
+                withId(R.id.extra_info_block_editable)))
+                .perform(replaceText("20"))
+        verifyCookingState(initialRecipe.copy(
+                weight = 60f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 20f),
+                        initialRecipe.ingredients[1].copy(weight = 40f))))
+    }
+
     private fun createSavedRecipe(
             name: String,
             weight: Int,
@@ -1850,5 +1954,4 @@ class BucketListActivityTest {
                     coordinates
                 }, Press.FINGER)
     }
-
 }

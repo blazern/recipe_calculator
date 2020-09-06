@@ -1,8 +1,8 @@
 package korablique.recipecalculator.ui.bucketlist.states
 
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.View
+import android.widget.CheckBox
 import android.widget.EditText
 import androidx.constraintlayout.widget.ConstraintSet
 import korablique.recipecalculator.R
@@ -16,7 +16,7 @@ import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
 import korablique.recipecalculator.ui.calckeyboard.CalcEditText
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
-import korablique.recipecalculator.util.FloatUtils
+import korablique.recipecalculator.util.FloatUtils.areFloatsEquals
 
 private const val EXTRA_INITIAL_RECIPE = "EXTRA_INITIAL_RECIPE"
 private const val EXTRA_DISPLAYED_RECIPE = "EXTRA_DISPLAYED_RECIPE"
@@ -32,6 +32,11 @@ class BucketListActivityCookingState private constructor(
 ) : BucketListActivityState() {
     private lateinit var totalWeightTextWatcher: SimpleTextWatcher<CalcEditText>
     private lateinit var totalWeightEditText: CalcEditText
+    private lateinit var weightsRecalculationCheckbox: CheckBox
+
+    private var commonWeightFactor = 1f
+    private val ingredientsSpecificWeightsFactors = mutableMapOf<Long, Float>()
+    private var totalWeightSpecificFactor = 1f
 
     constructor(
             savedState: Bundle,
@@ -89,15 +94,55 @@ class BucketListActivityCookingState private constructor(
         totalWeightEditText = activity.findViewById(R.id.total_weight_edit_text);
         totalWeightTextWatcher = SimpleTextWatcher(totalWeightEditText) {
             val updatedWeight = totalWeightEditText.getCurrentCalculatedValue() ?: 0f
-            if (!FloatUtils.areFloatsEquals(updatedWeight, displayedRecipe.weight)) {
-                val factor = updatedWeight / initialRecipe.weight
-                updateRecipeWithFactor(factor)
+            val recalculatedFactors = recalculateFactorsOnNewWeight(
+                    initialRecipe.weight,
+                    displayedRecipe.weight,
+                    updatedWeight,
+                    totalWeightSpecificFactor,
+                    commonWeightFactor)
+            if (recalculatedFactors != null) {
+                commonWeightFactor = recalculatedFactors.first
+                totalWeightSpecificFactor = recalculatedFactors.second
+                updateRecipeWithCurrentFactors()
             }
         }
         totalWeightEditText.addTextChangedListener(totalWeightTextWatcher)
 
         innerConstraints.setVisibility(R.id.button_delete_rippled_wrapper, View.GONE)
         innerConstraints.setVisibility(R.id.button_edit_rippled_wrapper, View.GONE)
+        innerConstraints.setVisibility(R.id.weights_recalculation_checkbox, View.VISIBLE)
+        weightsRecalculationCheckbox = findViewById(R.id.weights_recalculation_checkbox)
+        weightsRecalculationCheckbox.isChecked = true
+    }
+
+    private fun recalculateFactorsOnNewWeight(
+            initialWeight: Float,
+            currentWeight: Float,
+            newWeight: Float,
+            specificFactor: Float,
+            commonFactor: Float): Pair<Float, Float>? {
+        if (areFloatsEquals(newWeight, currentWeight)
+                || areFloatsEquals(0f, initialWeight)) {
+            return null
+        }
+
+        // If specific weight was set to 0, and while in recalculation mode same weight was
+        // changed, then the foodstuff-specific factor must be reset back to 1 to avoid
+        // division by 0.
+        val specificFactorFixed = if (weightsRecalculationCheckbox.isChecked
+                && areFloatsEquals(0f, specificFactor)) {
+            1f
+        } else {
+            specificFactor
+        }
+
+        return if (weightsRecalculationCheckbox.isChecked) {
+            val newCommonFactor = newWeight/initialWeight/specificFactorFixed
+            Pair(newCommonFactor, specificFactorFixed)
+        } else {
+            val newSpecificFactor = newWeight/initialWeight/commonFactor
+            Pair(commonFactor, newSpecificFactor)
+        }
     }
 
     override fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
@@ -108,21 +153,32 @@ class BucketListActivityCookingState private constructor(
         return object : BucketListAdapter.ItemWeightEditionObserver {
             override fun onItemWeightEdited(ingredient: Ingredient, newWeight: Float, position: Int) {
                 val initialWeight = initialRecipe.ingredients[position].weight
-                val factor = if (newWeight == 0f || initialWeight == 0f) {
-                    0f
-                } else {
-                    newWeight / initialRecipe.ingredients[position].weight
+                val specificFactor = ingredientsSpecificWeightsFactors[ingredient.id] ?: 1f
+
+                val recalculatedFactors = recalculateFactorsOnNewWeight(
+                        initialWeight,
+                        ingredient.weight,
+                        newWeight,
+                        specificFactor,
+                        commonWeightFactor)
+                if (recalculatedFactors != null) {
+                    commonWeightFactor = recalculatedFactors.first
+                    ingredientsSpecificWeightsFactors[ingredient.id] = recalculatedFactors.second
+                    updateRecipeWithCurrentFactors()
                 }
-                updateRecipeWithFactor(factor)
             }
         }
     }
 
-    private fun updateRecipeWithFactor(factor: Float) {
+    private fun updateRecipeWithCurrentFactors() {
         val updatedIngredients =
-                initialRecipe.ingredients.map { it.copy(weight = it.weight * factor) }
+                initialRecipe.ingredients.map {
+                    val specificFactor = ingredientsSpecificWeightsFactors[it.id] ?: 1f
+                    it.copy(
+                        weight = it.weight * commonWeightFactor * specificFactor)
+                }
         displayedRecipe = initialRecipe.copy(
-                weight = initialRecipe.weight * factor,
+                weight = initialRecipe.weight * commonWeightFactor * totalWeightSpecificFactor,
                 ingredients = updatedIngredients)
         onRecipeUpdated(displayedRecipe)
     }

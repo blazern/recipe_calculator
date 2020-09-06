@@ -211,6 +211,7 @@
     <string name="up">Вверх</string>
     <string name="foodstuffs_are_not_selected">Продукты не выбраны</string>
     <string name="restart_app_for_setting_to_apply">Теперь требуется перезапуск приложения</string>
+    <string name="automatic_weights_recalculation">Автоматический перерассчет масс</string>
 
     <string-array name="physical_activity_array">
         <item name="passive_lifestyle">Сидячий образ жизни</item>
