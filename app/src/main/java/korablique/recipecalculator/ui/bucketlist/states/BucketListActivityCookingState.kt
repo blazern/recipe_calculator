@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintSet
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
@@ -17,6 +18,7 @@ import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
 import korablique.recipecalculator.ui.calckeyboard.CalcEditText
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import korablique.recipecalculator.util.FloatUtils.areFloatsEquals
+import kotlin.math.abs
 
 private const val EXTRA_INITIAL_RECIPE = "EXTRA_INITIAL_RECIPE"
 private const val EXTRA_DISPLAYED_RECIPE = "EXTRA_DISPLAYED_RECIPE"
@@ -32,6 +34,7 @@ class BucketListActivityCookingState private constructor(
 ) : BucketListActivityState() {
     private lateinit var totalWeightTextWatcher: SimpleTextWatcher<CalcEditText>
     private lateinit var totalWeightEditText: CalcEditText
+    private lateinit var totalWeightErrorTextView: TextView
     private lateinit var weightsRecalculationCheckbox: CheckBox
 
     private var commonWeightFactor = 1f
@@ -92,6 +95,7 @@ class BucketListActivityCookingState private constructor(
         }
 
         totalWeightEditText = activity.findViewById(R.id.total_weight_edit_text);
+        totalWeightErrorTextView = activity.findViewById(R.id.total_weight_error_text)
         totalWeightTextWatcher = SimpleTextWatcher(totalWeightEditText) {
             val updatedWeight = totalWeightEditText.getCurrentCalculatedValue() ?: 0f
             val recalculatedFactors = recalculateFactorsOnNewWeight(
@@ -104,6 +108,11 @@ class BucketListActivityCookingState private constructor(
                 commonWeightFactor = recalculatedFactors.first
                 totalWeightSpecificFactor = recalculatedFactors.second
                 updateRecipeWithCurrentFactors()
+
+                val areAllWeightsEqual = areTotalWeightAndIngredientsWeightsSumAprxEqual()
+                if (areAllWeightsEqual) {
+                    totalWeightErrorTextView.visibility = View.GONE
+                }
             }
         }
         totalWeightEditText.addTextChangedListener(totalWeightTextWatcher)
@@ -147,6 +156,7 @@ class BucketListActivityCookingState private constructor(
 
     override fun destroyImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         totalWeightEditText.removeTextChangedListener(totalWeightTextWatcher)
+        innerConstraints.setVisibility(totalWeightErrorTextView.id, View.GONE)
     }
 
     override fun createIngredientWeightEditionObserver(): BucketListAdapter.ItemWeightEditionObserver? {
@@ -164,23 +174,48 @@ class BucketListActivityCookingState private constructor(
                 if (recalculatedFactors != null) {
                     commonWeightFactor = recalculatedFactors.first
                     ingredientsSpecificWeightsFactors[ingredient.id] = recalculatedFactors.second
+
+                    val wereAllWeightsEqual = areTotalWeightAndIngredientsWeightsSumAprxEqual()
                     updateRecipeWithCurrentFactors()
+                    val areAllWeightsEqual = areTotalWeightAndIngredientsWeightsSumAprxEqual()
+
+                    if (wereAllWeightsEqual && !areAllWeightsEqual) {
+                        val ingredientsWeightsSum = displayedRecipe.ingredients
+                                .sumByDouble { it.weight.toDouble() }.toFloat()
+                        displayedRecipe = displayedRecipe.copy(weight = ingredientsWeightsSum)
+                        onRecipeUpdated(displayedRecipe)
+                        totalWeightErrorTextView.visibility = View.GONE
+                    } else if (areAllWeightsEqual) {
+                        totalWeightErrorTextView.visibility = View.GONE
+                    } else {
+                        totalWeightErrorTextView.visibility = View.VISIBLE
+                    }
                 }
             }
         }
     }
 
+    private fun areTotalWeightAndIngredientsWeightsSumAprxEqual(): Boolean {
+        val totalWeight = displayedRecipe.weight
+        val ingredientsWeight = displayedRecipe.ingredients.sumByDouble { it.weight.toDouble() }.toFloat()
+        return abs(totalWeight - ingredientsWeight) < 0.01f * totalWeight
+    }
+
     private fun updateRecipeWithCurrentFactors() {
         val updatedIngredients =
                 initialRecipe.ingredients.map {
-                    val specificFactor = ingredientsSpecificWeightsFactors[it.id] ?: 1f
                     it.copy(
-                        weight = it.weight * commonWeightFactor * specificFactor)
+                        weight = it.weight * commonWeightFactor * specificFactorOf(it))
                 }
+
         displayedRecipe = initialRecipe.copy(
                 weight = initialRecipe.weight * commonWeightFactor * totalWeightSpecificFactor,
                 ingredients = updatedIngredients)
         onRecipeUpdated(displayedRecipe)
+    }
+
+    private fun specificFactorOf(ingredient: Ingredient): Float {
+        return ingredientsSpecificWeightsFactors[ingredient.id] ?: 1f
     }
 
     override fun onActivityBackPressed(): Boolean {
