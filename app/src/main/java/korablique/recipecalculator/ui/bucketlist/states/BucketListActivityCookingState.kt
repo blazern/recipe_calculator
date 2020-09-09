@@ -12,6 +12,7 @@ import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.ui.TwoOptionsDialog
 import korablique.recipecalculator.ui.bucketlist.BucketList
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
@@ -22,6 +23,7 @@ import kotlin.math.abs
 
 private const val EXTRA_INITIAL_RECIPE = "EXTRA_INITIAL_RECIPE"
 private const val EXTRA_DISPLAYED_RECIPE = "EXTRA_DISPLAYED_RECIPE"
+private const val TAG_CANCELLATION_DIALOG = "TAG_CANCELLATION_DIALOG"
 
 class BucketListActivityCookingState private constructor(
         private val initialRecipe: Recipe,
@@ -87,6 +89,9 @@ class BucketListActivityCookingState private constructor(
     override fun getRecipe(): Recipe = displayedRecipe
 
     override fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
+        TwoOptionsDialog.findDialog(
+                activity.supportFragmentManager, TAG_CANCELLATION_DIALOG)?.dismiss()
+
         findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = false
         commentLayoutController.setEditable(false)
 
@@ -146,10 +151,10 @@ class BucketListActivityCookingState private constructor(
         }
 
         return if (weightsRecalculationCheckbox.isChecked) {
-            val newCommonFactor = newWeight/initialWeight/specificFactorFixed
+            val newCommonFactor = newWeight / initialWeight / specificFactorFixed
             Pair(newCommonFactor, specificFactorFixed)
         } else {
-            val newSpecificFactor = newWeight/initialWeight/commonFactor
+            val newSpecificFactor = newWeight / initialWeight / commonFactor
             Pair(commonFactor, newSpecificFactor)
         }
     }
@@ -205,7 +210,7 @@ class BucketListActivityCookingState private constructor(
         val updatedIngredients =
                 initialRecipe.ingredients.map {
                     it.copy(
-                        weight = it.weight * commonWeightFactor * specificFactorOf(it))
+                            weight = it.weight * commonWeightFactor * specificFactorOf(it))
                 }
 
         displayedRecipe = initialRecipe.copy(
@@ -219,10 +224,34 @@ class BucketListActivityCookingState private constructor(
     }
 
     override fun onActivityBackPressed(): Boolean {
+        if (displayedRecipe == initialRecipe) {
+            finishCookingState()
+            return true
+        }
+        val dialog = TwoOptionsDialog.showDialog(
+                activity,
+                TAG_CANCELLATION_DIALOG,
+                R.string.cancel_cooking_mode_dialog_title,
+                R.string.cancel_cooking_mode_dialog_confirmation,
+                R.string.cancel_cooking_mode_dialog_cancellation)
+        dialog.setOnButtonsClickListener {
+            dialog.dismiss()
+            when (it) {
+                TwoOptionsDialog.ButtonName.POSITIVE -> {
+                    finishCookingState()
+                }
+                TwoOptionsDialog.ButtonName.NEGATIVE -> {
+                    // The dialog is dismissed anyway
+                }
+            }
+        }
+        return true
+    }
+
+    private fun finishCookingState() {
         switchState(
                 BucketListActivityDisplayRecipeState(
                         initialRecipe, commentLayoutController, activity,
                         bucketList, recipesRepository, mainThreadExecutor))
-        return true
     }
 }

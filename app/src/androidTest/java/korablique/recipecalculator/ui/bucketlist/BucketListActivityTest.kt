@@ -1426,6 +1426,7 @@ class BucketListActivityTest {
 
             // Exit the cooking mode and verify that the weight are unchanged
             onView(withId(R.id.button_close)).perform(click())
+            onView(withId(R.id.positive_button)).perform(click())
             verifyRecipeDisplayingState(initialRecipe)
         } catch (e: Throwable) {
             e.printStackTrace()
@@ -1491,6 +1492,7 @@ class BucketListActivityTest {
 
         // Exit cooking mode
         onView(withId(R.id.button_close)).perform(click())
+        onView(withId(R.id.positive_button)).perform(click())
         verifyRecipeDisplayingState(initialRecipe)
     }
 
@@ -1655,6 +1657,7 @@ class BucketListActivityTest {
 
         // Exit cooking mode
         onView(withId(R.id.button_close)).perform(click())
+        onView(withId(R.id.positive_button)).perform(click())
         verifyRecipeDisplayingState(initialRecipe)
     }
 
@@ -1775,6 +1778,79 @@ class BucketListActivityTest {
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 60f),
                         initialRecipe.ingredients[1].copy(weight = 20f))))
+    }
+
+    @Test
+    fun cookingStateFinishingByBackPress() {
+        cookingStateFinishing(byBackPress = true)
+    }
+
+    @Test
+    fun cookingStateFinishingByCloseButton() {
+        cookingStateFinishing(byBackPress = false)
+    }
+
+    private fun cookingStateFinishing(byBackPress: Boolean) {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 30,
+                listOf(UIIngredient("dough", "10"), UIIngredient("oil", "20")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.recipe_action_button)).perform(click())
+        verifyCookingState(initialRecipe)
+
+        // Finish without modifying recipe
+        if (byBackPress) {
+            onView(withId(R.id.button_close)).perform(click())
+        } else {
+            Espresso.pressBack()
+        }
+
+        // Immediate finished without dialogs
+        verifyRecipeDisplayingState(initialRecipe)
+
+        // Back to cooking
+        onView(withId(R.id.recipe_action_button)).perform(click())
+        verifyCookingState(initialRecipe)
+
+        // Modify recipe and try to finish
+        onView(withId(R.id.total_weight_edit_text)).perform(replaceText("60"))
+        if (byBackPress) {
+            onView(withId(R.id.button_close)).perform(click())
+        } else {
+            Espresso.pressBack()
+        }
+
+        // Verify dialog is shown and close it
+        onView(withId(R.id.two_options_dialog_layout)).check(matches(isDisplayed()))
+        onView(withId(R.id.negative_button)).perform(click())
+
+        // Still cooking state
+        verifyCookingState(initialRecipe.copy(
+                weight = 60f,
+                ingredients = listOf(
+                        initialRecipe.ingredients[0].copy(weight = 20f),
+                        initialRecipe.ingredients[1].copy(weight = 40f))))
+
+        // Try to finish
+        if (byBackPress) {
+            onView(withId(R.id.button_close)).perform(click())
+        } else {
+            Espresso.pressBack()
+        }
+
+        // Dialog shown
+        onView(withId(R.id.two_options_dialog_layout)).check(matches(isDisplayed()))
+        // Finish cooking
+        onView(withId(R.id.positive_button)).perform(click())
+
+        // Verify initial state
+        verifyRecipeDisplayingState(initialRecipe)
     }
 
     private fun createSavedRecipe(
