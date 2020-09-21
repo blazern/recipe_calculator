@@ -240,6 +240,7 @@ class BucketListActivityCookingState private constructor(
                         val ingredientsWeightsSum = displayedRecipe.ingredients
                                 .sumByDouble { it.weight.toDouble() }.toFloat()
                         displayedRecipe = displayedRecipe.copy(weight = ingredientsWeightsSum)
+                        displayedRecipe = displayedRecipe.recalculateNutrition()
                         onRecipeUpdated(displayedRecipe)
                         totalWeightErrorTextView.visibility = View.GONE
                     } else if (areAllWeightsEqual) {
@@ -268,6 +269,7 @@ class BucketListActivityCookingState private constructor(
         displayedRecipe = initialRecipe.copy(
                 weight = initialRecipe.weight * commonWeightFactor * totalWeightSpecificFactor,
                 ingredients = updatedIngredients)
+        displayedRecipe = displayedRecipe.recalculateNutrition()
         onRecipeUpdated(displayedRecipe)
     }
 

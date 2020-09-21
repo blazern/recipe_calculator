@@ -1631,20 +1631,24 @@ class BucketListActivityTest {
         // Edit total weight WITHOUT weights recalculation
         onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
         onView(withId(R.id.total_weight_edit_text)).perform(replaceText("100"))
-        verifyCookingState(initialRecipe.copy(
+        var updatedRecipe = initialRecipe.copy(
                 weight = 100f,
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 20f),
-                        initialRecipe.ingredients[1].copy(weight = 60f))))
+                        initialRecipe.ingredients[1].copy(weight = 60f)))
+        updatedRecipe = updatedRecipe.recalculateNutrition()
+        verifyCookingState(updatedRecipe)
 
         // Update total weight WITH weights recalculation
         onView(withId(R.id.weights_recalculation_checkbox)).perform(click())
         onView(withId(R.id.total_weight_edit_text)).perform(replaceText("50"))
-        verifyCookingState(initialRecipe.copy(
+        updatedRecipe = initialRecipe.copy(
                 weight = 50f,
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 10f),
-                        initialRecipe.ingredients[1].copy(weight = 30f))))
+                        initialRecipe.ingredients[1].copy(weight = 30f)))
+        updatedRecipe = updatedRecipe.recalculateNutrition()
+        verifyCookingState(updatedRecipe)
 
         // Exit cooking mode
         onView(withId(R.id.button_close)).perform(click())
@@ -1725,11 +1729,13 @@ class BucketListActivityTest {
         // Update total weigh WITHOUT weights recalculation
         // Total weight now != sum of ingredients weights
         onView(withId(R.id.total_weight_edit_text)).perform(replaceText("50"))
-        verifyCookingState(initialRecipe.copy(
+        var updatedRecipe = initialRecipe.copy(
                 weight = 50f,
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 20f),
-                        initialRecipe.ingredients[1].copy(weight = 20f))))
+                        initialRecipe.ingredients[1].copy(weight = 20f)))
+        updatedRecipe = updatedRecipe.recalculateNutrition()
+        verifyCookingState(updatedRecipe)
 
         // Total weight error msg not yet visible
         onView(withText(R.string.cannot_recalculate_total_weight)).check(isNotDisplayed())
@@ -1741,21 +1747,25 @@ class BucketListActivityTest {
                 .perform(replaceText("40"))
         // Total weight is expected not to change now, because
         // before that total weight != sum of ingredient weights (20 + 20 != 50)
-        verifyCookingState(initialRecipe.copy(
+        updatedRecipe = initialRecipe.copy(
                 weight = 50f,
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 40f),
-                        initialRecipe.ingredients[1].copy(weight = 20f))))
+                        initialRecipe.ingredients[1].copy(weight = 20f)))
+        updatedRecipe = updatedRecipe.recalculateNutrition()
+        verifyCookingState(updatedRecipe)
         // Total weight error msg now expected to be visible
         onView(withText(R.string.cannot_recalculate_total_weight)).check(matches(isDisplayed()))
 
         // Changing total weight back to the value of weights sum
         onView(withId(R.id.total_weight_edit_text)).perform(replaceText("60"))
-        verifyCookingState(initialRecipe.copy(
+        updatedRecipe = initialRecipe.copy(
                 weight = 60f,
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 40f),
-                        initialRecipe.ingredients[1].copy(weight = 20f))))
+                        initialRecipe.ingredients[1].copy(weight = 20f)))
+        updatedRecipe = updatedRecipe.recalculateNutrition()
+        verifyCookingState(updatedRecipe)
         // Total weight error msg is gone
         onView(withText(R.string.cannot_recalculate_total_weight)).check(isNotDisplayed())
 
@@ -1764,11 +1774,13 @@ class BucketListActivityTest {
                 withParent(hasDescendant(withText("dough"))),
                 withId(R.id.extra_info_block_editable)))
                 .perform(replaceText("60"))
-        verifyCookingState(initialRecipe.copy(
+        updatedRecipe = initialRecipe.copy(
                 weight = 80f,
                 ingredients = listOf(
                         initialRecipe.ingredients[0].copy(weight = 60f),
-                        initialRecipe.ingredients[1].copy(weight = 20f))))
+                        initialRecipe.ingredients[1].copy(weight = 20f)))
+        updatedRecipe = updatedRecipe.recalculateNutrition()
+        verifyCookingState(updatedRecipe)
     }
 
     @Test
