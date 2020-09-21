@@ -58,6 +58,7 @@
     <string name="bucket_list_title_recipe">Рецепт</string>
     <string name="bucket_list_title_cooking">Режим готовки</string>
     <string name="bucket_list_action_button_cooking">Режим готовки</string>
+    <string name="bucket_list_action_button_add_to_history">В Журнал</string>
     <string name="meal">Приём пищи</string>
     <string name="meal_notification">Не забудьте внести в приложение, что вы кушали</string>
     <string name="channel_name">Напоминание о приеме пищи</string>

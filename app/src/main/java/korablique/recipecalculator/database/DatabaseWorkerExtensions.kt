@@ -8,3 +8,10 @@ suspend fun DatabaseWorker.requestFoodstuffsByIds(ids: List<Long>): List<Foodstu
         = suspendCoroutine { continuation ->
     requestFoodstuffsByIds(ids) { continuation.resume(it) }
 }
+
+suspend fun DatabaseWorker.saveUnlistedFoodstuff(foodstuff: Foodstuff): Foodstuff
+        = suspendCoroutine { continuation ->
+    saveUnlistedFoodstuff(foodstuff) { foodstuffId ->
+        continuation.resume(foodstuff.recreateWithId(foodstuffId))
+    }
+}

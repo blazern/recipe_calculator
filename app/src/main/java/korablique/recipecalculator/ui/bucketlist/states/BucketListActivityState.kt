@@ -15,6 +15,7 @@ import androidx.constraintlayout.widget.ConstraintSet.RIGHT
 import androidx.constraintlayout.widget.ConstraintSet.TOP
 import korablique.recipecalculator.R
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.model.WeightedFoodstuff
 import korablique.recipecalculator.ui.EditTextsVisualDisabler
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 
@@ -38,6 +39,7 @@ abstract class BucketListActivityState {
     }
     sealed class FinishResult {
         data class Ok(val recipe: Recipe?) : FinishResult()
+        data class OkAddToHistory(val foodstuff: WeightedFoodstuff) : FinishResult()
         object Canceled : FinishResult()
     }
 

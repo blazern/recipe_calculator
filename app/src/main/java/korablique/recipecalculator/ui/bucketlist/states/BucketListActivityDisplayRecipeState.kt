@@ -11,7 +11,9 @@ import androidx.constraintlayout.widget.ConstraintSet.RIGHT
 import androidx.constraintlayout.widget.ConstraintSet.TOP
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
+import korablique.recipecalculator.base.TimeProvider
 import korablique.recipecalculator.base.executors.MainThreadExecutor
+import korablique.recipecalculator.database.DatabaseWorker
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.ui.EditTextsVisualDisabler
@@ -25,19 +27,25 @@ class BucketListActivityDisplayRecipeState(
         private val commentLayoutController: CommentLayoutController,
         private val activity: BaseActivity,
         private val bucketList: BucketList,
+        private val databaseWorker: DatabaseWorker,
         private val recipesRepository: RecipesRepository,
-        private val mainThreadExecutor: MainThreadExecutor
+        private val mainThreadExecutor: MainThreadExecutor,
+        private val timeProvider: TimeProvider
 ) : BucketListActivityState() {
 
     constructor(savedInstanceState: Bundle,
                 commentLayoutController: CommentLayoutController,
                 activity: BaseActivity,
                 bucketList: BucketList,
+                databaseWorker: DatabaseWorker,
                 recipesRepository: RecipesRepository,
-                mainThreadExecutor: MainThreadExecutor):
+                mainThreadExecutor: MainThreadExecutor,
+                timeProvider: TimeProvider):
             this(savedInstanceState.getParcelable(EXTRA_DISPLAYED_RECIPE) as Recipe,
                     commentLayoutController,
-                    activity, bucketList, recipesRepository, mainThreadExecutor)
+                    activity, bucketList,
+                    databaseWorker, recipesRepository, mainThreadExecutor,
+                    timeProvider)
 
     override fun getStateID(): ID = ID.DisplayState
     override fun getTitleStringID(): Int = R.string.bucket_list_title_recipe
@@ -55,7 +63,8 @@ class BucketListActivityDisplayRecipeState(
         findViewById<View>(R.id.button_edit).setOnClickListener {
             switchState(BucketListActivityRecipeEditingState(
                     recipe, commentLayoutController, activity, bucketList,
-                    recipesRepository, mainThreadExecutor))
+                    databaseWorker, recipesRepository, mainThreadExecutor,
+                    timeProvider))
         }
 
         val actionButton = findViewById<Button>(R.id.recipe_action_button)
@@ -63,7 +72,7 @@ class BucketListActivityDisplayRecipeState(
         actionButton.setOnClickListener {
             switchState(BucketListActivityCookingState(
                     recipe, commentLayoutController, activity, bucketList,
-                    recipesRepository, mainThreadExecutor))
+                    databaseWorker, recipesRepository, mainThreadExecutor, timeProvider))
         }
 
         commentLayoutController.setEditable(false)

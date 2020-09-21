@@ -35,8 +35,6 @@ import korablique.recipecalculator.database.UserParametersWorker;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.HistoryEntry;
 import korablique.recipecalculator.model.Nutrition;
-import korablique.recipecalculator.model.RateCalculator;
-import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.ui.card.Card;
@@ -215,7 +213,7 @@ public class HistoryPageController implements
     private void initCard() {
         CardDialog existingCardDialog = CardDialog.findCard(context);
         if (existingCardDialog != null) {
-            existingCardDialog.setUpButton1(onAddFoodstuffButtonClickListener, CARD_BUTTON_TEXT_RES);
+            existingCardDialog.setUpButton1(CARD_BUTTON_TEXT_RES, onAddFoodstuffButtonClickListener);
             existingCardDialog.setOnDeleteButtonClickListener(onDeleteButtonClickListener);
         }
     }
@@ -262,7 +260,7 @@ public class HistoryPageController implements
             // листенер на нажатия на элемент адаптера
             adapter.setOnItemClickObserver((historyEntry) -> {
                 CardDialog card = CardDialog.showCard(context, historyEntry.getFoodstuff());
-                card.setUpButton1(onAddFoodstuffButtonClickListener, CARD_BUTTON_TEXT_RES);
+                card.setUpButton1(CARD_BUTTON_TEXT_RES, onAddFoodstuffButtonClickListener);
                 card.setOnDeleteButtonClickListener(onDeleteButtonClickListener);
             });
             updateNutritionProgress(currentUserParams);
@@ -271,10 +269,7 @@ public class HistoryPageController implements
 
     @Override
     public void onHistoryChange() {
-        // Если История поменялась, но фрагмент Истории не показан - История была изменена
-        // не через экран Истории - обновимся, чтобы при заходе на экран Истории были отображены
-        // правильные продукты.
-        if (fragmentView != null && !fragmentView.isShown()) {
+        if (fragmentView != null) {
             updateWrappers();
         }
     }

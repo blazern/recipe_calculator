@@ -1,15 +1,19 @@
 package korablique.recipecalculator.ui.bucketlist.states
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.TextView
+import android.widget.*
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.ConstraintSet.*
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
+import korablique.recipecalculator.base.TimeProvider
 import korablique.recipecalculator.base.executors.MainThreadExecutor
+import korablique.recipecalculator.database.CreateRecipeResult
+import korablique.recipecalculator.database.DatabaseWorker
 import korablique.recipecalculator.database.RecipesRepository
+import korablique.recipecalculator.database.saveUnlistedFoodstuff
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Recipe
 import korablique.recipecalculator.ui.TwoOptionsDialog
@@ -17,9 +21,17 @@ import korablique.recipecalculator.ui.bucketlist.BucketList
 import korablique.recipecalculator.ui.bucketlist.BucketListAdapter
 import korablique.recipecalculator.ui.bucketlist.CommentLayoutController
 import korablique.recipecalculator.ui.calckeyboard.CalcEditText
+import korablique.recipecalculator.ui.card.CardDialog
 import korablique.recipecalculator.ui.numbersediting.SimpleTextWatcher
 import korablique.recipecalculator.util.FloatUtils.areFloatsEquals
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.DateTimeFormatter
+import java.lang.IllegalArgumentException
+import java.util.*
 import kotlin.math.abs
+
 
 private const val EXTRA_INITIAL_RECIPE = "EXTRA_INITIAL_RECIPE"
 private const val EXTRA_DISPLAYED_RECIPE = "EXTRA_DISPLAYED_RECIPE"
@@ -31,8 +43,10 @@ class BucketListActivityCookingState private constructor(
         private val commentLayoutController: CommentLayoutController,
         private val activity: BaseActivity,
         private val bucketList: BucketList,
+        private val databaseWorker: DatabaseWorker,
         private val recipesRepository: RecipesRepository,
-        private val mainThreadExecutor: MainThreadExecutor
+        private val mainThreadExecutor: MainThreadExecutor,
+        private val timeProvider: TimeProvider
 ) : BucketListActivityState() {
     private lateinit var totalWeightTextWatcher: SimpleTextWatcher<CalcEditText>
     private lateinit var totalWeightEditText: CalcEditText
@@ -48,16 +62,20 @@ class BucketListActivityCookingState private constructor(
             commentLayoutController: CommentLayoutController,
             activity: BaseActivity,
             bucketList: BucketList,
+            databaseWorker: DatabaseWorker,
             recipesRepository: RecipesRepository,
-            mainThreadExecutor: MainThreadExecutor)
+            mainThreadExecutor: MainThreadExecutor,
+            timeProvider: TimeProvider)
             : this(
             savedState.getParcelable(EXTRA_INITIAL_RECIPE) as Recipe,
             savedState.getParcelable(EXTRA_DISPLAYED_RECIPE) as Recipe,
             commentLayoutController,
             activity,
             bucketList,
+            databaseWorker,
             recipesRepository,
-            mainThreadExecutor
+            mainThreadExecutor,
+            timeProvider
     )
 
     constructor(
@@ -65,16 +83,20 @@ class BucketListActivityCookingState private constructor(
             commentLayoutController: CommentLayoutController,
             activity: BaseActivity,
             bucketList: BucketList,
+            databaseWorker: DatabaseWorker,
             recipesRepository: RecipesRepository,
-            mainThreadExecutor: MainThreadExecutor)
+            mainThreadExecutor: MainThreadExecutor,
+            timeProvider: TimeProvider)
             : this(
             initialRecipe,
             initialRecipe,
             commentLayoutController,
             activity,
             bucketList,
+            databaseWorker,
             recipesRepository,
-            mainThreadExecutor
+            mainThreadExecutor,
+            timeProvider
     )
 
     override fun saveInstanceState(): Bundle {
@@ -91,6 +113,7 @@ class BucketListActivityCookingState private constructor(
     override fun initImpl(innerConstraints: ConstraintSet, outerConstraints: ConstraintSet) {
         TwoOptionsDialog.findDialog(
                 activity.supportFragmentManager, TAG_CANCELLATION_DIALOG)?.dismiss()
+        CardDialog.findCard(activity)?.dismiss()
 
         findViewById<EditText>(R.id.recipe_name_edit_text).isEnabled = false
         commentLayoutController.setEditable(false)
@@ -127,7 +150,36 @@ class BucketListActivityCookingState private constructor(
         innerConstraints.setVisibility(R.id.weights_recalculation_checkbox, View.VISIBLE)
         weightsRecalculationCheckbox = findViewById(R.id.weights_recalculation_checkbox)
         weightsRecalculationCheckbox.isChecked = true
+
+        outerConstraints.clear(R.id.actions_layout, TOP)
+        outerConstraints.connect(R.id.actions_layout, BOTTOM, PARENT_ID, BOTTOM)
+        val actionButton = findViewById<Button>(R.id.recipe_action_button)
+        actionButton.setText(R.string.bucket_list_action_button_add_to_history)
+        actionButton.setOnClickListener {
+            val dateFormat = DateTimeFormat.mediumDate().withLocale(currentLocale())
+            val now = timeProvider.now().toString(dateFormat)
+            val newFoodstuff = displayedRecipe.foodstuff
+                    .recreateWithName("${displayedRecipe.name} $now")
+
+            val card = CardDialog.showCard(activity, newFoodstuff)
+            card.setUpButton2(R.string.add_to_history) { weightedFoodstuffFromCard ->
+                GlobalScope.launch(mainThreadExecutor) {
+                    val savedFoodstuff =
+                            databaseWorker.saveUnlistedFoodstuff(newFoodstuff)
+                    finish(FinishResult.OkAddToHistory(
+                            savedFoodstuff.withWeight(
+                                    weightedFoodstuffFromCard.weight)))
+                }
+            }
+        }
     }
+
+    private fun currentLocale(): Locale =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            activity.resources.configuration.locales.get(0)
+        } else {
+            activity.resources.configuration.locale
+        }
 
     private fun recalculateFactorsOnNewWeight(
             initialWeight: Float,
@@ -252,6 +304,7 @@ class BucketListActivityCookingState private constructor(
         switchState(
                 BucketListActivityDisplayRecipeState(
                         initialRecipe, commentLayoutController, activity,
-                        bucketList, recipesRepository, mainThreadExecutor))
+                        bucketList, databaseWorker, recipesRepository, mainThreadExecutor,
+                        timeProvider))
     }
 }

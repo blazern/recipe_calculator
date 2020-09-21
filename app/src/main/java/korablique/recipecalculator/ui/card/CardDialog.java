@@ -15,7 +15,6 @@ import javax.inject.Inject;
 
 import korablique.recipecalculator.base.BaseBottomDialog;
 import korablique.recipecalculator.base.prefs.SharedPrefsManager;
-import korablique.recipecalculator.dagger.InjectorHolder;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController;
@@ -107,12 +106,12 @@ public class CardDialog extends BaseBottomDialog {
     }
 
     public void setUpButton1(
-            Card.OnMainButtonSimpleClickListener listener, @StringRes int buttonTextRes) {
-        setUpButton1(listener.convert(), buttonTextRes);
+            @StringRes int buttonTextRes, Card.OnMainButtonSimpleClickListener listener) {
+        setUpButton1(buttonTextRes, listener.convert());
     }
 
     public void setUpButton1(
-            Card.OnMainButtonClickListener listener, @StringRes int buttonTextRes) {
+            @StringRes int buttonTextRes, Card.OnMainButtonClickListener listener) {
         button1ClickListener = listener;
         this.button1TextRes = buttonTextRes;
         if (card != null) {
@@ -121,12 +120,12 @@ public class CardDialog extends BaseBottomDialog {
     }
 
     public void setUpButton2(
-            Card.OnMainButtonSimpleClickListener listener, @StringRes int buttonTextRes) {
-        setUpButton2(listener.convert(), buttonTextRes);
+            @StringRes int buttonTextRes, Card.OnMainButtonSimpleClickListener listener) {
+        setUpButton2(buttonTextRes, listener.convert());
     }
 
     public void setUpButton2(
-            Card.OnMainButtonClickListener listener, @StringRes int buttonTextRes) {
+            @StringRes int buttonTextRes, Card.OnMainButtonClickListener listener) {
         button2ClickListener = listener;
         this.button2TextRes = buttonTextRes;
         if (card != null) {
@@ -136,19 +135,17 @@ public class CardDialog extends BaseBottomDialog {
 
     public void setUpButtonN(
             int buttonNumber,
-            Card.OnMainButtonSimpleClickListener listener,
-            @StringRes int buttonTextRes) {
-        setUpButtonN(buttonNumber, listener.convert(), buttonTextRes);
+            @StringRes int buttonTextRes, Card.OnMainButtonSimpleClickListener listener) {
+        setUpButtonN(buttonNumber, buttonTextRes, listener.convert());
     }
 
     public void setUpButtonN(
             int buttonNumber,
-            Card.OnMainButtonClickListener listener,
-            @StringRes int buttonTextRes) {
+            @StringRes int buttonTextRes, Card.OnMainButtonClickListener listener) {
         if (buttonNumber == 1) {
-            setUpButton1(listener, buttonTextRes);
+            setUpButton1(buttonTextRes, listener);
         } else if (buttonNumber == 2) {
-            setUpButton2(listener, buttonTextRes);
+            setUpButton2(buttonTextRes, listener);
         } else {
             throw new IllegalArgumentException("Invalid button number: " + buttonNumber);
         }

@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo;
 import android.view.View;
 import android.widget.DatePicker;
 
+import androidx.fragment.app.Fragment;
 import androidx.test.espresso.contrib.PickerActions;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -17,6 +18,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -25,14 +27,17 @@ import java.util.Date;
 import java.util.List;
 
 import korablique.recipecalculator.R;
+import korablique.recipecalculator.RequestCodes;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.Formula;
 import korablique.recipecalculator.model.Gender;
+import korablique.recipecalculator.model.HistoryEntry;
 import korablique.recipecalculator.model.Lifestyle;
 import korablique.recipecalculator.model.NewHistoryEntry;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.UserParameters;
 import korablique.recipecalculator.model.WeightedFoodstuff;
+import korablique.recipecalculator.ui.bucketlist.BucketListActivity;
 import korablique.recipecalculator.util.EspressoUtils;
 
 import static androidx.test.espresso.Espresso.onView;
@@ -62,6 +67,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -692,6 +698,111 @@ public class MainActivityHistoryTest extends MainActivityTestsBase {
         callActivityAndFragmentsOnResume(mainThreadExecutor, mActivityRule.getActivity());
         onView(withId(R.id.title_text)).check(matches(withText(R.string.yesterday)));
     }
+
+    @Test
+    public void weightedFoodstuffReturnedByBucketListActivity_addedToHistory() {
+        mActivityRule.launchActivity(null);
+
+        Foodstuff notSavedFoodstuff = Foodstuff
+                .withName("new_foodstuff_with_new_name")
+                .withNutrition(1, 2, 3, 4);
+        Foodstuff foodstuff = databaseWorker.saveFoodstuff(notSavedFoodstuff).blockingGet();
+
+        // Check history is not displayed yet
+        onView(withId(R.id.fragment_history)).check(isNotDisplayed());
+
+        // Tell everyone about the foodstuff intended for history
+        List<Fragment> fragments = mActivityRule.getActivity().getSupportFragmentManager().getFragments();
+        mainThreadExecutor.execute(() -> {
+            for (Fragment f : fragments) {
+                f.onActivityResult(RequestCodes.MAIN_SCREEN_BUCKET_LIST_OPEN_RECIPE,
+                        Activity.RESULT_OK,
+                        BucketListActivity.createAddToHistoryResultIntent(foodstuff.withWeight(100)));
+            }
+        });
+
+        // Check history is now displayed
+        onView(withId(R.id.fragment_history)).check(matches(isDisplayed()));
+
+        // Check the foodstuff is added into history UI
+        onView(allOf(
+                withText(containsString(foodstuff.getName())),
+                isDescendantOfA(withId(R.id.fragment_history))))
+                .check(matches(isDisplayed()));
+
+        // Check the foodstuff is added into history DB
+        List<HistoryEntry> history =
+                historyWorker.requestHistoryForPeriod(
+                        timeProvider.now().withTimeAtStartOfDay().getMillis(),
+                        timeProvider.now().plusDays(1).withTimeAtStartOfDay().getMillis())
+                        .toList().blockingGet();
+        boolean found = false;
+        for (HistoryEntry entry : history) {
+            if (entry.getFoodstuff().equals(foodstuff.withWeight(100))) {
+                found = true;
+            }
+        }
+        assertTrue(found);
+    }
+
+    @Test
+    public void weightedFoodstuffReturnedByBucketListActivity_addedToHistory_intoSelectedDay() throws InterruptedException {
+        mActivityRule.launchActivity(null);
+
+        // Change date to yesterday and get back to main screen
+        onView(withId(R.id.menu_item_history)).perform(click());
+        onView(withId(R.id.history_view_pager)).perform(swipeRight());
+        Thread.sleep(500);
+        onView(withText(R.string.yesterday)).check(matches(isDisplayed()));
+        onView(withId(R.id.menu_item_foodstuffs)).perform(click());
+
+        Foodstuff notSavedFoodstuff = Foodstuff
+                .withName("new_foodstuff_with_new_name")
+                .withNutrition(1, 2, 3, 4);
+        Foodstuff foodstuff = databaseWorker.saveFoodstuff(notSavedFoodstuff).blockingGet();
+
+        // Check history is not displayed yet
+        onView(withId(R.id.fragment_history)).check(isNotDisplayed());
+
+        // Tell everyone about the foodstuff intended for history
+        List<Fragment> fragments = mActivityRule.getActivity().getSupportFragmentManager().getFragments();
+        mainThreadExecutor.execute(() -> {
+            for (Fragment f : fragments) {
+                f.onActivityResult(RequestCodes.MAIN_SCREEN_BUCKET_LIST_OPEN_RECIPE,
+                        Activity.RESULT_OK,
+                        BucketListActivity.createAddToHistoryResultIntent(foodstuff.withWeight(100)));
+            }
+        });
+
+        // Check we're asked if we want to add the foodstuff into another day
+        // And agree
+        onView(withId(R.id.two_options_dialog_layout)).check(matches(isDisplayed()));
+        onView(withId(R.id.positive_button)).perform(click());
+
+        // Check history is displayed
+        onView(withId(R.id.fragment_history)).check(matches(isDisplayed()));
+
+        // Check the foodstuff is added into history UI
+        onView(allOf(
+                withText(containsString(foodstuff.getName())),
+                isDescendantOfA(withId(R.id.fragment_history))))
+                .check(matches(isDisplayed()));
+
+        // Check the foodstuff is added into history DB into yesterday
+        List<HistoryEntry> history =
+                historyWorker.requestHistoryForPeriod(
+                        timeProvider.now().minusDays(1).withTimeAtStartOfDay().getMillis(),
+                        timeProvider.now().withTimeAtStartOfDay().getMillis())
+                        .toList().blockingGet();
+        boolean found = false;
+        for (HistoryEntry entry : history) {
+            if (entry.getFoodstuff().equals(foodstuff.withWeight(100))) {
+                found = true;
+            }
+        }
+        assertTrue(found);
+    }
+
 
     // https://stackoverflow.com/a/44840330
     public static Matcher<View> matchesDate(final int year, final int month, final int day) {

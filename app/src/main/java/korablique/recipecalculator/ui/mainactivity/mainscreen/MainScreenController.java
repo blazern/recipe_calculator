@@ -27,6 +27,7 @@ import korablique.recipecalculator.database.FoodstuffsList;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.FoodstuffsTopList;
 import korablique.recipecalculator.model.Recipe;
+import korablique.recipecalculator.model.WeightedFoodstuff;
 import korablique.recipecalculator.ui.bucketlist.BucketList;
 import korablique.recipecalculator.ui.editfoodstuff.EditFoodstuffActivity;
 import korablique.recipecalculator.ui.mainactivity.MainActivityFragmentsController;
@@ -38,6 +39,7 @@ import korablique.recipecalculator.ui.nestingadapters.SectionedFoodstuffsAdapter
 import korablique.recipecalculator.ui.nestingadapters.SingleItemAdapterChild;
 
 import static korablique.recipecalculator.ui.bucketlist.BucketListActivityKt.EXTRA_PRODUCED_RECIPE;
+import static korablique.recipecalculator.ui.bucketlist.BucketListActivityKt.EXTRA_WEIGHTED_FOODSTUFF_TO_HISTORY;
 
 @FragmentScope
 public class MainScreenController
@@ -60,6 +62,7 @@ public class MainScreenController
     private final RxFragmentSubscriptions subscriptions;
     private final MainActivityFragmentsController mainActivityFragmentsController;
     private final MainScreenModesController mainScreenModesController;
+    private final MainScreenHistoryAdditionController historyAdditionController;
     private SectionedAdapterParent adapterParent;
     private SingleItemAdapterChild topTitleAdapterChild;
     private FoodstuffsAdapterChild topAdapterChild;
@@ -82,7 +85,8 @@ public class MainScreenController
             MainScreenReadinessDispatcher readinessDispatcher,
             RxFragmentSubscriptions subscriptions,
             MainActivityFragmentsController mainActivityFragmentsController,
-            MainScreenModesController mainScreenModesController) {
+            MainScreenModesController mainScreenModesController,
+            MainScreenHistoryAdditionController historyAdditionController) {
         this.context = context;
         this.fragment = fragment;
         this.fragmentCallbacks = fragmentCallbacks;
@@ -96,6 +100,7 @@ public class MainScreenController
         this.subscriptions = subscriptions;
         this.mainActivityFragmentsController = mainActivityFragmentsController;
         this.mainScreenModesController = mainScreenModesController;
+        this.historyAdditionController = historyAdditionController;
         fragmentCallbacks.addObserver(this);
         activityCallbacks.addObserver(this);
     }
@@ -262,6 +267,12 @@ public class MainScreenController
                 cardController.showCard(recipe.getFoodstuff());
             } else {
                 cardController.hideCardAfterUserAction();
+            }
+
+            WeightedFoodstuff foodstuff = data.getParcelableExtra(EXTRA_WEIGHTED_FOODSTUFF_TO_HISTORY);
+            if (foodstuff != null) {
+                mainActivityFragmentsController.showHistory();
+                historyAdditionController.addToHistory(foodstuff);
             }
         }
     }

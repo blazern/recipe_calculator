@@ -8,9 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.lifecycle.Lifecycle;
 
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -33,7 +30,6 @@ import korablique.recipecalculator.database.RecipesRepository;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.Recipe;
 import korablique.recipecalculator.ui.KeyboardHandler;
-import korablique.recipecalculator.ui.TwoOptionsDialog;
 import korablique.recipecalculator.ui.bucketlist.BucketList;
 import korablique.recipecalculator.ui.bucketlist.BucketListActivity;
 import korablique.recipecalculator.ui.card.Card;
@@ -42,13 +38,12 @@ import korablique.recipecalculator.ui.editfoodstuff.EditFoodstuffActivity;
 import korablique.recipecalculator.ui.mainactivity.MainActivitySelectedDateStorage;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenMode;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.modes.MainScreenModesController;
+import kotlin.Unit;
 
 import static android.app.Activity.RESULT_OK;
 
 @FragmentScope
 public class MainScreenCardController implements FragmentCallbacks.Observer {
-    private static final String ADD_FOODSTUFF_TO_ANOTHER_DATE_DIALOG_TAG =
-            "ADD_FOODSTUFF_TO_ANOTHER_DATE_DIALOG_TAG";
     @StringRes
     private static final int ADD_FOODSTUFF_TO_HISTORY_CARD_TEXT = R.string.add_foodstuff_to_history;
     private final BaseActivity context;
@@ -61,6 +56,7 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
     private final FoodstuffsList foodstuffsList;
     private final RxFragmentSubscriptions rxSubscriptions;
     private final MainScreenModesController mainScreenModesController;
+    private final MainScreenHistoryAdditionController historyAdditionController;
     private final BucketList bucketList;
     private final FoodstuffsList.Observer foodstuffsListObserver = new FoodstuffsList.Observer() {
         @Override
@@ -118,6 +114,7 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
             FoodstuffsList foodstuffsList,
             RxFragmentSubscriptions rxSubscriptions,
             MainScreenModesController mainScreenModesController,
+            MainScreenHistoryAdditionController historyAdditionController,
             BucketList bucketList) {
         this.context = context;
         this.fragment = fragment;
@@ -129,6 +126,7 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
         this.foodstuffsList = foodstuffsList;
         this.rxSubscriptions = rxSubscriptions;
         this.mainScreenModesController = mainScreenModesController;
+        this.historyAdditionController = historyAdditionController;
         this.bucketList = bucketList;
         fragmentCallbacks.addObserver(this);
     }
@@ -143,49 +141,14 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
 
     @Override
     public void onFragmentViewCreated(View fragmentView, Bundle savedInstanceState) {
-        TwoOptionsDialog existingAnotherDateDialog =
-                TwoOptionsDialog.findDialog(context.getSupportFragmentManager(), ADD_FOODSTUFF_TO_ANOTHER_DATE_DIALOG_TAG);
-        if (existingAnotherDateDialog != null) {
-            // Малозначительный диалог, не будем хранить его стейт и восстанавливать при смене
-            // сессии.
-            existingAnotherDateDialog.dismiss();
-        }
-
         onAddFoodstuffToHistoryListener = foodstuff -> {
             new KeyboardHandler(context).hideKeyBoard();
-
-            LocalDate selectedDate = selectedDateStorage.getSelectedDate();
-            DateTime now = timeProvider.now();
-            String selectedDateStr = selectedDate.toString("dd.MM.yy");
-            String nowStr = now.toLocalDate().toString("dd.MM.yy");
-            if (nowStr.equals(selectedDateStr)) {
-                hideCardAfterUserAction();
-                historyWorker.saveFoodstuffToHistory(
-                        timeProvider.now().toDate(), foodstuff.getId(), foodstuff.getWeight());
-            } else {
-                TwoOptionsDialog dialog = TwoOptionsDialog.showDialog(
-                        context.getSupportFragmentManager(),
-                        ADD_FOODSTUFF_TO_ANOTHER_DATE_DIALOG_TAG,
-                        context.getString(R.string.add_foodstuff_to_other_date_dialog_title, selectedDateStr),
-                        context.getString(R.string.add_foodstuff_to_other_date_dialog_other_date_response, selectedDateStr),
-                        context.getString(R.string.add_foodstuff_to_other_date_dialog_current_day_response));
-                dialog.setOnButtonsClickListener(buttonName -> {
-                    if (buttonName == TwoOptionsDialog.ButtonName.POSITIVE) {
-                        hideCardAfterUserAction();
-                        historyWorker.saveFoodstuffToHistoryAfterAllOther(
-                                selectedDate.toDate(), foodstuff.getId(), foodstuff.getWeight());
-                    } else if (buttonName == TwoOptionsDialog.ButtonName.NEGATIVE) {
-                        hideCardAfterUserAction();
-                        historyWorker.saveFoodstuffToHistory(
-                                now.toDate(), foodstuff.getId(), foodstuff.getWeight());
-                        selectedDateStorage.setSelectedDate(now.toLocalDate());
-                    } else {
-                        throw new IllegalStateException("Unknown button: " + buttonName);
-                    }
-                    dialog.dismiss();
-                });
-
-            }
+            historyAdditionController.addToHistory(foodstuff, (added) -> {
+                if (added) {
+                    hideCardAfterUserAction();
+                }
+                return Unit.INSTANCE;
+            });
         };
         onEditButtonClickListener = foodstuff -> {
             rxSubscriptions.subscribe(
@@ -309,21 +272,21 @@ public class MainScreenCardController implements FragmentCallbacks.Observer {
                 // only then call the received clicks listener.
                 card.setUpButtonN(
                         buttonNumber,
-                        foodstuff -> {
+                        params.get().getBtnTitleStrId(), foodstuff -> {
                             if (params.get().getCloseCardOnButtonClick()) {
                                 hideCardAfterUserAction();
                             }
                             new KeyboardHandler(context).hideKeyBoard();
                             params.get().getClickListener().onClick(foodstuff);
-                        },
-                        params.get().getBtnTitleStrId());
+                        }
+                );
                 card.setDisableButtonNWhenWeight0(
                         buttonNumber, params.get().getDisableButtonWhenWeight0());
             } else if (defaultSettings != null) {
                 card.setUpButtonN(
                         buttonNumber,
-                        defaultSettings.getClickListener(),
-                        defaultSettings.getBtnTitleStrId());
+                        defaultSettings.getBtnTitleStrId(), defaultSettings.getClickListener()
+                );
                 card.setDisableButtonNWhenWeight0(
                         buttonNumber,
                         defaultSettings.getDisableButtonWhenWeight0());

@@ -8,6 +8,8 @@ import korablique.recipecalculator.model.proto.FoodstuffProtos;
 import korablique.recipecalculator.util.FloatUtils;
 
 public class Foodstuff implements Parcelable, Comparable<Foodstuff> {
+    public final static long INVALID_ID = -1;
+
     private final long id;
     private final String name;
     private final double protein;
@@ -16,7 +18,7 @@ public class Foodstuff implements Parcelable, Comparable<Foodstuff> {
     private final double calories;
 
     Foodstuff(String name, double protein, double fats, double carbs, double calories) {
-        this(-1, name, protein, fats, carbs, calories);
+        this(INVALID_ID, name, protein, fats, carbs, calories);
     }
 
     Foodstuff(long id, String name, double protein, double fats, double carbs, double calories) {
@@ -163,7 +165,7 @@ public class Foodstuff implements Parcelable, Comparable<Foodstuff> {
     }
 
     public boolean hasValidID() {
-        return id != -1;
+        return id != INVALID_ID;
     }
 
     public FoodstuffProtos.Foodstuff toProto() {
@@ -178,7 +180,7 @@ public class Foodstuff implements Parcelable, Comparable<Foodstuff> {
     }
 
     public static Foodstuff fromProto(FoodstuffProtos.Foodstuff protoFoodstuff) {
-        long id = -1;
+        long id = INVALID_ID;
         if (protoFoodstuff.hasLocalId()) {
             id = protoFoodstuff.getLocalId();
         }

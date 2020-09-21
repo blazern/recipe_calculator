@@ -51,6 +51,10 @@ public class WeightedFoodstuff implements Parcelable {
         return foodstuff;
     }
 
+    public WeightedFoodstuff recreateWithName(String name) {
+        return foodstuff.recreateWithName(name).withWeight(weight);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o instanceof WeightedFoodstuff) {

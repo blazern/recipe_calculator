@@ -123,6 +123,8 @@ data class Recipe(
                 .setComment(comment)
                 .build()
     }
+
+    fun toWeightedFoodstuff() = foodstuff.withWeight(weight.toDouble())
 }
 
 private fun readIngredients(input: Parcel): List<Ingredient> {

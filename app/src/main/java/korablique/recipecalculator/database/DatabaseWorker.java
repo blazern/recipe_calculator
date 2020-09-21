@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.reactivex.Single;
+import io.reactivex.subjects.SingleSubject;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.database.room.AppDatabase;
 import korablique.recipecalculator.database.room.DatabaseHolder;
@@ -64,9 +66,20 @@ public class DatabaseWorker {
         this.databaseThreadExecutor = databaseThreadExecutor;
     }
 
-    public void saveFoodstuff(
+    public Single<Foodstuff> saveFoodstuff(
             final Foodstuff foodstuff) {
-        saveFoodstuff(foodstuff, null);
+        SingleSubject<Foodstuff> publishSubject = SingleSubject.create();
+        saveFoodstuff(foodstuff, new SaveFoodstuffCallback() {
+            @Override
+            public void onResult(long id) {
+                publishSubject.onSuccess(foodstuff.recreateWithId(id));
+            }
+            @Override
+            public void onDuplication() {
+                publishSubject.onError(new IllegalArgumentException("Foodstuff duplication"));
+            }
+        });
+        return publishSubject;
     }
 
     public void saveFoodstuff(

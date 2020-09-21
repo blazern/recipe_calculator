@@ -1,9 +1,11 @@
 package korablique.recipecalculator.ui.mainactivity;
 
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.view.View;
 
+import androidx.fragment.app.Fragment;
 import androidx.test.espresso.Espresso;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.filters.LargeTest;
@@ -21,7 +23,9 @@ import java.util.Collections;
 import java.util.List;
 
 import korablique.recipecalculator.R;
+import korablique.recipecalculator.RequestCodes;
 import korablique.recipecalculator.database.CreateRecipeResult;
+import korablique.recipecalculator.database.DatabaseWorker;
 import korablique.recipecalculator.model.Foodstuff;
 import korablique.recipecalculator.model.Nutrition;
 import korablique.recipecalculator.model.Recipe;
@@ -45,10 +49,12 @@ import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertContains;
+import static java.util.Collections.emptyList;
 import static korablique.recipecalculator.util.EspressoUtils.hasValueRecursive;
 import static korablique.recipecalculator.util.EspressoUtils.isNotDisplayed;
 import static korablique.recipecalculator.util.EspressoUtils.matches;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertTrue;
 

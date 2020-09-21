@@ -10,10 +10,13 @@ import dagger.android.support.HasSupportFragmentInjector
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.model.WeightedFoodstuff
 import javax.inject.Inject
 
 @VisibleForTesting
 const val EXTRA_PRODUCED_RECIPE = "EXTRA_CREATED_RECIPE"
+@VisibleForTesting
+const val EXTRA_WEIGHTED_FOODSTUFF_TO_HISTORY = "EXTRA_WEIGHTED_FOODSTUFF_TO_HISTORY"
 @VisibleForTesting
 const val ACTION_DISPLAY_RECIPE = "ACTION_DISPLAY_RECIPE"
 @VisibleForTesting
@@ -41,6 +44,9 @@ class BucketListActivity() : BaseActivity(), HasSupportFragmentInjector {
         @JvmStatic
         fun createRecipeResultIntent(recipe: Recipe?): Intent =
                 BucketListActivityController.createRecipeResultIntent(recipe)
+        @JvmStatic
+        fun createAddToHistoryResultIntent(foodstuff: WeightedFoodstuff): Intent =
+                BucketListActivityController.createAddToHistoryResultIntent(foodstuff)
         @JvmStatic
         fun start(fragment: Fragment, requestCode: Int) =
                 BucketListActivityController.start(fragment, requestCode)

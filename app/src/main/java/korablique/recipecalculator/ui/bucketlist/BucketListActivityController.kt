@@ -8,17 +8,19 @@ import android.view.View
 import android.widget.TextView
 import androidx.annotation.IdRes
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.ActivityCallbacks
+import korablique.recipecalculator.base.TimeProvider
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.dagger.ActivityScope
+import korablique.recipecalculator.database.DatabaseWorker
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.model.Nutrition
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.model.WeightedFoodstuff
 import korablique.recipecalculator.ui.DecimalUtils
 import korablique.recipecalculator.ui.NutritionValuesWrapper
 import korablique.recipecalculator.ui.bucketlist.states.BucketListActivityCookingState
@@ -38,10 +40,12 @@ const val EXTRA_CURRENT_STATE_TYPE = "EXTRA_CURRENT_STATE_TYPE"
 @ActivityScope
 class BucketListActivityController @Inject constructor(
         private val activity: BucketListActivity,
+        private val databaseWorker: DatabaseWorker,
         private val recipesRepository: RecipesRepository,
         private val bucketList: BucketList,
         private val mainThreadExecutor: MainThreadExecutor,
-        private val calcKeyboardController: CalcKeyboardController)
+        private val calcKeyboardController: CalcKeyboardController,
+        private val timeProvider: TimeProvider)
     : ActivityCallbacks.Observer, BucketListActivityState.Delegate {
     private lateinit var pluralProgressBar: PluralProgressBar
     private lateinit var nutritionValuesWrapper: NutritionValuesWrapper
@@ -53,6 +57,12 @@ class BucketListActivityController @Inject constructor(
         fun createRecipeResultIntent(recipe: Recipe?): Intent {
             val resultIntent = Intent()
             resultIntent.putExtra(EXTRA_PRODUCED_RECIPE, recipe)
+            return resultIntent
+        }
+
+        fun createAddToHistoryResultIntent(foodstuff: WeightedFoodstuff): Intent {
+            val resultIntent = Intent()
+            resultIntent.putExtra(EXTRA_WEIGHTED_FOODSTUFF_TO_HISTORY, foodstuff)
             return resultIntent
         }
 
@@ -124,16 +134,20 @@ class BucketListActivityController @Inject constructor(
                 BucketListActivityState.ID.DisplayState -> {
                     BucketListActivityDisplayRecipeState(
                             stateOfState, commentLayoutController, activity, bucketList,
-                            recipesRepository, mainThreadExecutor)
+                            databaseWorker, recipesRepository,
+                            mainThreadExecutor, timeProvider)
                 }
                 BucketListActivityState.ID.EditingState -> {
                     BucketListActivityRecipeEditingState(
                             stateOfState, commentLayoutController, activity, bucketList,
-                            recipesRepository, mainThreadExecutor)
+                            databaseWorker, recipesRepository,
+                            mainThreadExecutor, timeProvider)
                 }
                 BucketListActivityState.ID.CookingState -> {
                     BucketListActivityCookingState(stateOfState, commentLayoutController,
-                            activity, bucketList, recipesRepository, mainThreadExecutor)
+                            activity, bucketList, databaseWorker,
+                            recipesRepository, mainThreadExecutor,
+                            timeProvider)
                 }
             }
         }
@@ -142,17 +156,17 @@ class BucketListActivityController @Inject constructor(
             val recipe: Recipe = activity.intent.getParcelableExtra(EXTRA_RECIPE)
             if (activity.intent.getBooleanExtra(EXTRA_EDIT_RECIPE, false)) {
                 BucketListActivityRecipeEditingState(
-                        recipe, commentLayoutController, activity, bucketList,
-                        recipesRepository, mainThreadExecutor)
+                        recipe, commentLayoutController, activity, bucketList, databaseWorker,
+                        recipesRepository, mainThreadExecutor, timeProvider)
             } else {
                 BucketListActivityDisplayRecipeState(
-                        recipe, commentLayoutController, activity, bucketList,
-                        recipesRepository, mainThreadExecutor)
+                        recipe, commentLayoutController, activity, bucketList, databaseWorker,
+                        recipesRepository, mainThreadExecutor, timeProvider)
             }
         } else {
             BucketListActivityRecipeEditingState(
-                    bucketList.getRecipe(), commentLayoutController, activity, bucketList,
-                    recipesRepository, mainThreadExecutor)
+                    bucketList.getRecipe(), commentLayoutController, activity,
+                    bucketList, databaseWorker, recipesRepository, mainThreadExecutor, timeProvider)
         }
     }
 
@@ -254,6 +268,11 @@ class BucketListActivityController @Inject constructor(
                 activity.setResult(
                         Activity.RESULT_OK,
                         createRecipeResultIntent(finishResult.recipe))
+            }
+            is FinishResult.OkAddToHistory -> {
+                activity.setResult(
+                        Activity.RESULT_OK,
+                        createAddToHistoryResultIntent(finishResult.foodstuff))
             }
             is FinishResult.Canceled -> {
                 activity.setResult(Activity.RESULT_CANCELED)

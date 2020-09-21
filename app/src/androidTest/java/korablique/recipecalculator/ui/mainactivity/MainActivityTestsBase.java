@@ -71,6 +71,7 @@ import korablique.recipecalculator.ui.mainactivity.history.pages.HistoryViewHold
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenCardController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenFragment;
+import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenHistoryAdditionController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenReadinessDispatcher;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.MainScreenSearchController;
 import korablique.recipecalculator.ui.mainactivity.mainscreen.SearchResultsFragment;
@@ -221,8 +222,8 @@ public class MainActivityTestsBase {
                                 BucketListActivity activity = (BucketListActivity) injectionTarget;
                                 BucketListActivityController bucketListActivityController =
                                         new BucketListActivityController(
-                                                activity, recipesRepository, bucketList,
-                                                mainThreadExecutor, calcKeyboardController);
+                                                activity, databaseWorker, recipesRepository, bucketList,
+                                                mainThreadExecutor, calcKeyboardController, timeProvider);
                                 return Arrays.asList(bucketListActivityController);
                             }
                             return Collections.emptyList();
@@ -272,12 +273,17 @@ public class MainActivityTestsBase {
                                     activity, fragment, fragmentCallbacks, activity.getActivityCallbacks(),
                                     mainScreenModesController, bucketList, recipesRepository,
                                     serverUserParamsRegistry, foodstuffsCorrespondenceManager);
+                            MainScreenHistoryAdditionController historyAdditionController =
+                                    new MainScreenHistoryAdditionController(
+                                            activity, timeProvider, mainActivitySelectedDateStorage,
+                                            historyWorker, fragmentCallbacks);
 
                             mainScreenCardController = new MainScreenCardController(
                                     activity, fragment, fragmentCallbacks, lifecycle,
                                     historyWorker, timeProvider,
                                     mainActivitySelectedDateStorage, recipesRepository,
-                                    foodstuffsList, subscriptions, mainScreenModesController, bucketList);
+                                    foodstuffsList, subscriptions, mainScreenModesController,
+                                    historyAdditionController, bucketList);
 
                             MainScreenSearchController searchController = new MainScreenSearchController(
                                     mainThreadExecutor, bucketList, foodstuffsList, foodstuffsSearchEngine,
@@ -293,10 +299,12 @@ public class MainActivityTestsBase {
                                     activity.getActivityCallbacks(), bucketList, topList,
                                     foodstuffsList, mainActivitySelectedDateStorage,
                                     mainScreenCardController, readinessDispatcher,
-                                    subscriptions, fragmentsController, mainScreenModesController);
+                                    subscriptions, fragmentsController, mainScreenModesController,
+                                    historyAdditionController);
                             return Arrays.asList(subscriptions, mainScreenController,
                                     upFABController, mainScreenCardController, searchController,
-                                    mainScreenModesController, mainScreenModesMenuController);
+                                    mainScreenModesController, mainScreenModesMenuController,
+                                    historyAdditionController);
 
                         } else if (fragment instanceof ProfileFragment) {
                             ProfileController profileController = new ProfileController(

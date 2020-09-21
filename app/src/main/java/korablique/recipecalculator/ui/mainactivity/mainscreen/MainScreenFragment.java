@@ -37,6 +37,8 @@ public class MainScreenFragment extends BaseFragment implements HasSupportFragme
     @Inject
     MainScreenModesMenuController mainScreenModesMenuController;
     @Inject
+    MainScreenHistoryAdditionController historyAdditionController;
+    @Inject
     DispatchingAndroidInjector<Fragment> fragmentInjector;
 
     /**

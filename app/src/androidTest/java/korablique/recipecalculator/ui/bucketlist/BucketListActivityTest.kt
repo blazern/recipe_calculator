@@ -49,20 +49,13 @@ import korablique.recipecalculator.base.executors.IOExecutor
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.base.prefs.PrefsCleaningHelper.cleanAllPrefs
 import korablique.recipecalculator.base.prefs.SharedPrefsManager
-import korablique.recipecalculator.database.CreateRecipeResult
-import korablique.recipecalculator.database.DatabaseThreadExecutor
-import korablique.recipecalculator.database.DatabaseWorker
-import korablique.recipecalculator.database.FoodstuffsList
-import korablique.recipecalculator.database.HistoryWorker
-import korablique.recipecalculator.database.RecipeDatabaseWorker
-import korablique.recipecalculator.database.RecipeDatabaseWorkerImpl
-import korablique.recipecalculator.database.RecipesRepository
-import korablique.recipecalculator.database.UserParametersWorker
+import korablique.recipecalculator.database.*
 import korablique.recipecalculator.database.room.DatabaseHolder
 import korablique.recipecalculator.model.Foodstuff
 import korablique.recipecalculator.model.Ingredient
 import korablique.recipecalculator.model.Ingredient.Companion.create
 import korablique.recipecalculator.model.Recipe
+import korablique.recipecalculator.model.WeightedFoodstuff
 import korablique.recipecalculator.ui.DecimalUtils.toDecimalString
 import korablique.recipecalculator.ui.bucketlist.BucketListActivity.Companion.createIntent
 import korablique.recipecalculator.ui.calckeyboard.CalcKeyboardController
@@ -80,16 +73,14 @@ import korablique.recipecalculator.util.FloatUtils
 import korablique.recipecalculator.util.InjectableActivityTestRule
 import korablique.recipecalculator.util.SyncMainThreadExecutor
 import korablique.recipecalculator.util.TestingTimeProvider
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.Matchers.any
 import org.hamcrest.Matchers.not
 import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -167,8 +158,8 @@ class BucketListActivityTest {
             .withActivityScoped { target: Any ->
                 if (target is BucketListActivity) {
                     val controller = BucketListActivityController(
-                            target, recipesRepository, bucketList,
-                            mainThreadExecutor, calcKeyboardController)
+                            target, databaseWorker, recipesRepository, bucketList,
+                            mainThreadExecutor, calcKeyboardController, timeProvider)
                     return@withActivityScoped listOf<Any>(controller)
                 }
                 val activity = target as MainActivity
@@ -1853,6 +1844,43 @@ class BucketListActivityTest {
         verifyRecipeDisplayingState(initialRecipe)
     }
 
+    @Test
+    fun addRecipeToHistoryFromCookingMode() {
+        // Create recipe
+        clearAllData(foodstuffsList, historyWorker, databaseHolder)
+        val initialRecipe = createSavedRecipe(
+                "cake", 30,
+                listOf(UIIngredient("dough", "10"), UIIngredient("oil", "20")))
+        val startIntent = createIntent(
+                InstrumentationRegistry.getTargetContext(),
+                initialRecipe)
+        activityRule.launchActivity(startIntent)
+
+        onView(withId(R.id.recipe_action_button)).perform(click())
+        verifyCookingState(initialRecipe)
+
+        onView(withId(R.id.recipe_action_button)).perform(click())
+        onView(withId(R.id.foodstuff_card_layout)).check(matches(isDisplayed()))
+        onView(withId(R.id.weight_edit_text)).perform(replaceText("100"))
+        onView(withId(R.id.button2)).perform(click())
+
+        // Verify the foodstuff is returned in the result
+        val resultIntent = activityRule.activityResult.resultData
+        val foodstuff = resultIntent.getParcelableExtra<WeightedFoodstuff>(EXTRA_WEIGHTED_FOODSTUFF_TO_HISTORY)
+
+        // Verify (sort of) that the name contains today's date
+        assertTrue(foodstuff.name.startsWith(initialRecipe.name))
+        assertNotEquals(foodstuff.name.length, initialRecipe.name.length)
+
+        // Verify that the created foodstuff is not listed
+        var unlistedFoodstuffs: List<Foodstuff>? = null
+        GlobalScope.launch(mainThreadExecutor) {
+            unlistedFoodstuffs = databaseWorker.requestFoodstuffsByIds(listOf(foodstuff.id))
+        }
+        while (unlistedFoodstuffs == null) /* spinlock */;
+        assertEquals(listOf(foodstuff.withoutWeight()), unlistedFoodstuffs)
+    }
+
     private fun createSavedRecipe(
             name: String,
             weight: Int,
@@ -2075,7 +2103,9 @@ class BucketListActivityTest {
 
     private fun verifyCookingState(recipe: Recipe) {
         onView(withId(R.id.button_edit)).check(isNotDisplayed())
-        onView(withId(R.id.recipe_action_button)).check(isNotDisplayed())
+        onView(withId(R.id.recipe_action_button)).check(matches(isDisplayed()))
+        onView(withId(R.id.recipe_action_button)).check(matches(
+                withText(R.string.bucket_list_action_button_add_to_history)))
         onView(withId(R.id.button_delete_recipe)).check(isNotDisplayed())
         onView(withId(R.id.title_text)).check(matches(withText(R.string.bucket_list_title_cooking)))
         onView(withId(R.id.recipe_name_edit_text)).check(matches(withText(recipe.name)))

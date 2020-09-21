@@ -15,9 +15,11 @@ import androidx.constraintlayout.widget.ConstraintSet.TOP
 import com.arlib.floatingsearchview.util.adapter.TextWatcherAdapter
 import korablique.recipecalculator.R
 import korablique.recipecalculator.base.BaseActivity
+import korablique.recipecalculator.base.TimeProvider
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.base.logging.Log
 import korablique.recipecalculator.database.CreateRecipeResult
+import korablique.recipecalculator.database.DatabaseWorker
 import korablique.recipecalculator.database.RecipesRepository
 import korablique.recipecalculator.database.UpdateRecipeResult
 import korablique.recipecalculator.model.Ingredient
@@ -45,8 +47,10 @@ class BucketListActivityRecipeEditingState private constructor(
         private val savedInstanceState: Bundle?,
         private val activity: BaseActivity,
         private val bucketList: BucketList,
+        private val databaseWorker: DatabaseWorker,
         private val recipesRepository: RecipesRepository,
-        private val mainThreadExecutor: MainThreadExecutor
+        private val mainThreadExecutor: MainThreadExecutor,
+        private val timeProvider: TimeProvider
 ) : BucketListActivityState() {
     private lateinit var buttonClose: View
     private lateinit var buttonDelete: View
@@ -63,23 +67,30 @@ class BucketListActivityRecipeEditingState private constructor(
             commentLayoutController: CommentLayoutController,
             activity: BaseActivity,
             bucketList: BucketList,
+            databaseWorker: DatabaseWorker,
             recipesRepository: RecipesRepository,
-            mainThreadExecutor: MainThreadExecutor) :
+            mainThreadExecutor: MainThreadExecutor,
+            timeProvider: TimeProvider) :
             this(initialRecipe, null, commentLayoutController, null,
-                    activity, bucketList, recipesRepository, mainThreadExecutor)
+                    activity, bucketList, databaseWorker, recipesRepository, mainThreadExecutor,
+                    timeProvider)
 
     constructor(
             savedInstanceState: Bundle,
             commentLayoutController: CommentLayoutController,
             activity: BaseActivity,
             bucketList: BucketList,
+            databaseWorker: DatabaseWorker,
             recipesRepository: RecipesRepository,
-            mainThreadExecutor: MainThreadExecutor) :
+            mainThreadExecutor: MainThreadExecutor,
+            timeProvider: TimeProvider) :
             this(savedInstanceState.getParcelable(EXTRA_INITIAL_RECIPE) as Recipe,
                     extractCommentedIngredientPosition(savedInstanceState),
                     commentLayoutController,
                     savedInstanceState,
-                    activity, bucketList, recipesRepository, mainThreadExecutor)
+                    activity, bucketList, databaseWorker,
+                    recipesRepository, mainThreadExecutor,
+                    timeProvider)
 
     override fun getStateID(): ID = ID.EditingState
     override fun getTitleStringID(): Int =
@@ -236,7 +247,8 @@ class BucketListActivityRecipeEditingState private constructor(
             bucketList.clear()
             switchState(BucketListActivityDisplayRecipeState(
                     recipe, commentLayoutController, activity,
-                    bucketList, recipesRepository, mainThreadExecutor))
+                    bucketList, databaseWorker, recipesRepository, mainThreadExecutor,
+                    timeProvider))
         }
     }
 
@@ -369,7 +381,8 @@ class BucketListActivityRecipeEditingState private constructor(
                 bucketList.clear()
                 switchState(BucketListActivityDisplayRecipeState(
                         recipeBeforeEditing, commentLayoutController, activity,
-                        bucketList, recipesRepository, mainThreadExecutor))
+                        bucketList, databaseWorker, recipesRepository, mainThreadExecutor,
+                        timeProvider))
                 return
             }
         }
@@ -401,7 +414,8 @@ class BucketListActivityRecipeEditingState private constructor(
                             }
                             switchState(BucketListActivityDisplayRecipeState(
                                     recipeBeforeEditing, commentLayoutController,
-                                    activity, bucketList, recipesRepository, mainThreadExecutor))
+                                    activity, bucketList, databaseWorker, recipesRepository,
+                                    mainThreadExecutor, timeProvider))
                         }
                     } else {
                         finish(FinishResult.Canceled)
