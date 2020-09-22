@@ -31,10 +31,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.filters.LargeTest
 import androidx.test.rule.ActivityTestRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import korablique.recipecalculator.InstantComputationsThreadsExecutor
-import korablique.recipecalculator.InstantDatabaseThreadExecutor
-import korablique.recipecalculator.InstantIOExecutor
-import korablique.recipecalculator.R
+import dagger.Lazy
+import korablique.recipecalculator.*
 import korablique.recipecalculator.base.ActivityCallbacks
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.BaseBottomDialog
@@ -139,8 +137,12 @@ class BucketListActivityTest {
                 userParametersWorker = UserParametersWorker(
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor,
                         RxGlobalSubscriptions(), timeProvider)
-                foodstuffsList = FoodstuffsList(databaseWorker, mainThreadExecutor,
-                        InstantComputationsThreadsExecutor())
+                foodstuffsList = FoodstuffsList(
+                        databaseWorker,
+                        Lazy {recipesRepository},
+                        mainThreadExecutor,
+                        InstantComputationsThreadsExecutor(),
+                        RxGlobalSubscriptions())
                 recipeDatabaseWorker = RecipeDatabaseWorkerImpl(
                         ioExecutor, databaseHolder, databaseWorker)
                 recipesRepository = RecipesRepository(

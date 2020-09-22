@@ -26,7 +26,7 @@ class FoodstuffsCorrespondenceManagerTest {
         val encodedFoodstuff = argumentCaptor<String>()
         verify(directMsgsManager).sendDirectMSGToPartner(any(), encodedFoodstuff.capture(), any())
 
-        val foodstuffsList2 = spy(FoodstuffsList(mock(), mock(), mock()))
+        val foodstuffsList2 = spy(FoodstuffsList(mock(), mock(), mock(), mock(), mock()))
         val manager2 = FoodstuffsCorrespondenceManager(directMsgsManager, foodstuffsList2, mock(), mock())
 
         verify(foodstuffsList2, never()).saveFoodstuff(any())

@@ -11,11 +11,14 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.SingleSubject;
 import korablique.recipecalculator.base.Callback;
+import korablique.recipecalculator.base.RxGlobalSubscriptions;
 import korablique.recipecalculator.base.executors.ComputationThreadsExecutor;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.model.Foodstuff;
@@ -36,8 +39,10 @@ public class FoodstuffsList {
     public final static int BATCH_SIZE = 100;
     private List<Foodstuff> all = new ArrayList<>();
     private final DatabaseWorker databaseWorker;
+    private final Lazy<RecipesRepository> recipesRepositoryLazy;
     private final MainThreadExecutor mainThreadExecutor;
     private final ComputationThreadsExecutor computationThreadsExecutor;
+    private final RxGlobalSubscriptions globalSubscriptions;
     private boolean allLoaded;
     private boolean inProcess;
     private List<Callback<List<Foodstuff>>> batchCallbacks = new ArrayList<>();
@@ -47,11 +52,19 @@ public class FoodstuffsList {
     @Inject
     public FoodstuffsList(
             DatabaseWorker databaseWorker,
+            Lazy<RecipesRepository> recipesRepositoryLazy,
             MainThreadExecutor mainThreadExecutor,
-            ComputationThreadsExecutor computationThreadsExecutor) {
+            ComputationThreadsExecutor computationThreadsExecutor,
+            RxGlobalSubscriptions globalSubscriptions) {
         this.databaseWorker = databaseWorker;
+        this.recipesRepositoryLazy = recipesRepositoryLazy;
         this.mainThreadExecutor = mainThreadExecutor;
         this.computationThreadsExecutor = computationThreadsExecutor;
+        this.globalSubscriptions = globalSubscriptions;
+    }
+
+    private RecipesRepository recipesRepository() {
+        return recipesRepositoryLazy.get();
     }
 
     /**
@@ -161,15 +174,34 @@ public class FoodstuffsList {
     }
 
     public void deleteFoodstuff(Foodstuff foodstuff) {
-        // вызов нужен для гарантии правильного состояния кеша,
+        // вызов getAllFoodstuffs нужен для гарантии правильного состояния кеша,
         // чтобы не удалить продукт во время формирования кеша
         getAllFoodstuffs(unused -> {}, unused -> {
-            all.remove(foodstuff);
-            databaseWorker.makeFoodstuffUnlisted(foodstuff, () -> {
-                for (Observer observer : observers) {
-                    observer.onFoodstuffDeleted(foodstuff);
-                }
-            });
+            Disposable d =
+                    recipesRepository().getRecipeOfFoodstuffRx(foodstuff)
+                    .subscribe((recipe) -> {
+                        if (recipe.isPresent()
+                                && !recipesRepository().isRecipeBeingDeleted(recipe.get())) {
+                            // Если продукт является рецептом и хранилище рецептов пока не начало
+                            // его удалять - перенаправим запрос в хранилище рецептов
+                            // (оно в любом случае отдаст запрос нам повторно).
+                            recipesRepository().deleteRecipe(recipe.get());
+                        } else {
+                            // Если продукт не является рецептом ИЛИ хранилище репецтов его уже
+                            // начало удалять - удалим продукт у себя.
+                            deleteFoodstuffImpl(foodstuff);
+                        }
+                    });
+            globalSubscriptions.add(d);
+        });
+    }
+
+    private void deleteFoodstuffImpl(Foodstuff foodstuff) {
+        all.remove(foodstuff);
+        databaseWorker.makeFoodstuffUnlisted(foodstuff, () -> {
+            for (Observer observer : observers) {
+                observer.onFoodstuffDeleted(foodstuff);
+            }
         });
     }
 

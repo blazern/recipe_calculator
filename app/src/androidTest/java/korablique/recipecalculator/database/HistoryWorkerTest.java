@@ -19,6 +19,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import io.reactivex.Observable;
+import korablique.recipecalculator.base.RxGlobalSubscriptions;
 import korablique.recipecalculator.base.TimeProvider;
 import korablique.recipecalculator.database.room.AppDatabase;
 import korablique.recipecalculator.database.room.DatabaseHolder;
@@ -425,8 +426,10 @@ public class HistoryWorkerTest {
     private void clearAllData() {
         FoodstuffsList foodstuffsList = new FoodstuffsList(
                 databaseWorker,
+                () -> { throw new Error("not used"); },
                 new InstantMainThreadExecutor(),
-                new InstantComputationsThreadsExecutor());
+                new InstantComputationsThreadsExecutor(),
+                new RxGlobalSubscriptions());
         DBTestingUtils.clearAllData(
                 foodstuffsList,
                 historyWorker,

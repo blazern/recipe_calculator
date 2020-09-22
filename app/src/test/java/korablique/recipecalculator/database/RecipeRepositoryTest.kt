@@ -399,12 +399,15 @@ class RecipeRepositoryTest {
             assertFalse(initialRecipes[0] in recipesRepository.getAllRecipes())
             assertNull(recipesRepository.getRecipeOfFoodstuff(initialRecipes[0].foodstuff))
         }
+        assertFalse(recipesRepository.isRecipeBeingDeleted(initialRecipes[0]))
     }
 
     @Test
     fun `delete recipe when cache is not ready`() {
         val initialRecipes = createRecipes("1", "2", "3")
         recipesRepository.deleteRecipe(initialRecipes[0])
+        // Deletion in progress, because initial recipes are not set yet
+        assertTrue(recipesRepository.isRecipeBeingDeleted(initialRecipes[0]))
 
         fakeDatabaseWorker.setInitialRecipes(initialRecipes)
 
@@ -412,6 +415,7 @@ class RecipeRepositoryTest {
             assertFalse(initialRecipes[0] in recipesRepository.getAllRecipes())
             assertNull(recipesRepository.getRecipeOfFoodstuff(initialRecipes[0].foodstuff))
         }
+        assertFalse(recipesRepository.isRecipeBeingDeleted(initialRecipes[0]))
     }
 
     private fun createRecipes(vararg names: String): List<Recipe> {

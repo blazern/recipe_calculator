@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 
+import korablique.recipecalculator.base.RxGlobalSubscriptions;
 import korablique.recipecalculator.base.executors.ComputationThreadsExecutor;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.base.prefs.PrefsCleaningHelper;
@@ -65,8 +66,10 @@ public class BucketListTest {
         foodstuffsList =
                 new FoodstuffsList(
                         databaseWorker,
+                        () -> { throw new Error("not used"); },
                         mainThreadExecutor,
-                        computationThreadsExecutor);
+                        computationThreadsExecutor,
+                        new RxGlobalSubscriptions());
         bucketList = new BucketList(prefsManager);
     }
 

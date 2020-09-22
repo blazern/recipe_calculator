@@ -43,6 +43,8 @@ class RecipesRepository @Inject constructor(
     private val recipesFoodstuffsCache = mutableMapOf<Long, Recipe>()
     private val recipesIdsCache = mutableMapOf<Long, Recipe>()
 
+    private val beingDeletedRecipes = mutableSetOf<Long>()
+
     private val cacheReadyCallbacks = mutableListOf<()->Unit>()
     private var cacheReady = false
 
@@ -192,12 +194,14 @@ class RecipesRepository @Inject constructor(
     }
 
     fun deleteRecipe(recipe: Recipe) {
+        beingDeletedRecipes.add(recipe.id)
         val action = {
             foodstuffsList.deleteFoodstuff(recipe.foodstuff)
             recipeDatabaseWorker.deleteRecipe(recipe.id)
             recipesCache.remove(recipe)
             recipesFoodstuffsCache.remove(recipe.foodstuff.id)
             recipesIdsCache.remove(recipe.id)
+            beingDeletedRecipes.remove(recipe.id)
             Unit
         }
         if (cacheReady) {
@@ -206,4 +210,7 @@ class RecipesRepository @Inject constructor(
             cacheReadyCallbacks.add(action)
         }
     }
+
+    fun isRecipeBeingDeleted(recipe: Recipe) =
+            beingDeletedRecipes.contains(recipe.id)
 }

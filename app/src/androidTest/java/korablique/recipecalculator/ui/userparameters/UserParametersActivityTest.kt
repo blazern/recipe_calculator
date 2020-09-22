@@ -18,11 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.nhaarman.mockitokotlin2.mock
-import korablique.recipecalculator.FakeHttpClient
-import korablique.recipecalculator.InstantComputationsThreadsExecutor
-import korablique.recipecalculator.InstantDatabaseThreadExecutor
-import korablique.recipecalculator.InstantIOExecutor
-import korablique.recipecalculator.R
+import korablique.recipecalculator.*
 import korablique.recipecalculator.base.BaseActivity
 import korablique.recipecalculator.base.CurrentActivityProvider
 import korablique.recipecalculator.base.RxActivitySubscriptions
@@ -30,11 +26,7 @@ import korablique.recipecalculator.base.RxGlobalSubscriptions
 import korablique.recipecalculator.base.executors.MainThreadExecutor
 import korablique.recipecalculator.base.prefs.PrefsCleaningHelper
 import korablique.recipecalculator.base.prefs.SharedPrefsManager
-import korablique.recipecalculator.database.DatabaseWorker
-import korablique.recipecalculator.database.FoodstuffsList
-import korablique.recipecalculator.database.HistoryWorker
-import korablique.recipecalculator.database.UserParametersWorker
-import korablique.recipecalculator.database.getCurrentUserParametersKx
+import korablique.recipecalculator.database.*
 import korablique.recipecalculator.database.room.DatabaseHolder
 import korablique.recipecalculator.model.FoodstuffsTopList
 import korablique.recipecalculator.model.Formula
@@ -93,8 +85,17 @@ class UserParametersActivityTest {
                 val historyWorker = HistoryWorker(
                         databaseHolder, mainThreadExecutor, databaseThreadExecutor, timeProvider)
 
+                var recipesRepository: RecipesRepository? = null
                 val foodstuffsList = FoodstuffsList(
-                        databaseWorker, mainThreadExecutor, computationThreadsExecutor)
+                        databaseWorker,
+                        dagger.Lazy { recipesRepository },
+                        mainThreadExecutor,
+                        computationThreadsExecutor,
+                        RxGlobalSubscriptions())
+                recipesRepository = RecipesRepository(
+                        RecipeDatabaseWorkerImpl(ioExecutor, databaseHolder, databaseWorker),
+                        foodstuffsList, mainThreadExecutor)
+
                 val topList = FoodstuffsTopList(historyWorker, foodstuffsList, timeProvider)
                 val mainScreenLoader = MainScreenLoader(context, foodstuffsList, topList)
 

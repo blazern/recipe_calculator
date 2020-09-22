@@ -159,7 +159,11 @@ public class MainActivityTestsBase {
                                 databaseHolder, mainThreadExecutor, databaseThreadExecutor,
                                 new RxGlobalSubscriptions(), timeProvider);
                         foodstuffsList = new FoodstuffsList(
-                                databaseWorker, mainThreadExecutor, computationThreadsExecutor);
+                                databaseWorker,
+                                () -> recipesRepository,
+                                mainThreadExecutor,
+                                computationThreadsExecutor,
+                                new RxGlobalSubscriptions());
                         topList = new FoodstuffsTopList(historyWorker, foodstuffsList, timeProvider);
                         currentActivityProvider = new CurrentActivityProvider();
                         sessionController = new SessionController(context, timeProvider, currentActivityProvider);

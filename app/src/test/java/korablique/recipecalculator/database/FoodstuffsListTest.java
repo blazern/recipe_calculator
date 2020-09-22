@@ -15,7 +15,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.reactivex.Single;
 import korablique.recipecalculator.BuildConfig;
+import korablique.recipecalculator.base.Optional;
+import korablique.recipecalculator.base.RxGlobalSubscriptions;
 import korablique.recipecalculator.base.executors.ComputationThreadsExecutor;
 import korablique.recipecalculator.base.executors.MainThreadExecutor;
 import korablique.recipecalculator.database.DatabaseWorker;
@@ -23,16 +26,24 @@ import korablique.recipecalculator.database.DatabaseWorker.FinishCallback;
 import korablique.recipecalculator.database.DatabaseWorker.FoodstuffsBatchReceiveCallback;
 import korablique.recipecalculator.database.FoodstuffsList;
 import korablique.recipecalculator.model.Foodstuff;
+import korablique.recipecalculator.model.Ingredient;
+import korablique.recipecalculator.model.Recipe;
 
 import static korablique.recipecalculator.database.FoodstuffsList.BATCH_SIZE;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest=Config.NONE)
@@ -42,6 +53,7 @@ public class FoodstuffsListTest {
     private FoodstuffsList foodstuffsList;
     private DatabaseWorker databaseWorker;
     private Context context;
+    private RecipesRepository recipesRepository;
 
     private List<Foodstuff> dbFoodstuffs;
 
@@ -50,6 +62,7 @@ public class FoodstuffsListTest {
         databaseWorker = mock(DatabaseWorker.class);
         context = mock(Context.class);
         dbFoodstuffs = new ArrayList<>();
+        recipesRepository = mock(RecipesRepository.class);
 
         doAnswer(new Answer() {
             @Override
@@ -77,7 +90,11 @@ public class FoodstuffsListTest {
                 any(FinishCallback.class));
 
         foodstuffsList = new FoodstuffsList(
-                databaseWorker, mock(MainThreadExecutor.class), mock(ComputationThreadsExecutor.class));
+                databaseWorker,
+                () -> recipesRepository,
+                mock(MainThreadExecutor.class),
+                mock(ComputationThreadsExecutor.class),
+                new RxGlobalSubscriptions());
     }
 
     // Если клиент вызвал метод, в его коллбек через неопределенное время придут фудстафы.
@@ -241,7 +258,7 @@ public class FoodstuffsListTest {
         for (FoodstuffsBatchReceiveCallback batchReceiveCallback : batchReceiveCallbacks) {
             batchReceiveCallback.onReceive(secondBatch);
         }
-        Assert.assertFalse(secondBatchDetector2.isEmpty());
+        assertFalse(secondBatchDetector2.isEmpty());
 
         // проверяем, что второй клиент в итоге получил все фудстаффы из БД
         for (FinishCallback finishCallback : finishCallbacks) {
@@ -281,5 +298,38 @@ public class FoodstuffsListTest {
         Assert.assertEquals(2, foundFoodstuffs.size());
         Assert.assertEquals(foundFoodstuffs.get(0), dbFoodstuffs.get(1));
         Assert.assertEquals(foundFoodstuffs.get(1), dbFoodstuffs.get(0));
+    }
+
+    @Test
+    public void testRecipeDeletion() {
+        Foodstuff foodstuff = Foodstuff.withId(1L).withName("apple").withNutrition(1, 2, 3, 4);
+        dbFoodstuffs.add(foodstuff);
+        Recipe recipe = Recipe.create(
+                foodstuff,
+                Arrays.asList(Ingredient.create(
+                        Foodstuff.withId(2L).withName("pinapple").withNutrition(1, 2, 3, 4),
+                        123f, "")),
+                123f,
+                "");
+
+        // Connect the recipe to the foodstuff
+        doReturn(Single.just(Optional.of(recipe))).when(
+                recipesRepository).getRecipeOfFoodstuffRx(foodstuff);
+        doReturn(false).when(recipesRepository).isRecipeBeingDeleted(recipe);
+
+        // Verify that when the foodstuff has a recipe,
+        // the deletion request is being routed to RecipesRepository
+        // and the foodstuff is still in db
+        verify(recipesRepository, never()).deleteRecipe(any());
+        foodstuffsList.deleteFoodstuff(foodstuff);
+        verify(recipesRepository).deleteRecipe(recipe);
+        verify(databaseWorker, never()).makeFoodstuffUnlisted(any(), any());
+
+        // Verify that when the recipe is marked as being deleted by the
+        // RecipesRepository, then FoodstuffsList actually deletes it
+        doReturn(true).when(recipesRepository).isRecipeBeingDeleted(recipe);
+        foodstuffsList.deleteFoodstuff(foodstuff);
+        verify(recipesRepository, times(1)).deleteRecipe(recipe); // No more calls
+        verify(databaseWorker).makeFoodstuffUnlisted(eq(foodstuff), any());
     }
 }
